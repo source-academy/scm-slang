@@ -70,6 +70,6 @@ export function breakIntoStatements(tokens: string[]) {
     return statements;
 }
 
-//console.log(breakIntoStatements(tokenize("a (define a (+ 1 2)) (+ 3 4) a    ")));
+console.log(breakIntoStatements(tokenize("a (define a (+ 1 2)) (+ 3 4) a    ")));
 
-//console.log(breakIntoStatements(tokenize("(+ (* 1 2) (/ 3 4))")));
+console.log(breakIntoStatements(tokenize("(+ (* 1 2) (/ 3 4))")));
