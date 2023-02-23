@@ -1,15 +1,17 @@
 const readline = require('readline-sync');
-import { parse } from "./parser";
-const ev = require('eval-estree-expression');
+import { Parser } from "./parser";
+import { eval_program, basic_env } from "./evaluator";
 
-function repl(prompt: string="scm-slang > ") {
+function repl(prompt: string="scm-slang PROTOTYPE > ") {
+    let env = basic_env();
     while (true) {
         let answer = readline.question(prompt);
         if (answer == "exit") {
-            break;
+            return 0;
         }
-        let ast = parse(answer);
-        console.log(ast);
+        let n = new Parser(answer);
+        let ast = n.parse();
+        console.log(eval_program(ast, env));
     }
 }
 

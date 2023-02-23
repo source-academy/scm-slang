@@ -88,6 +88,9 @@ export class Tokenizer {
         this.preTokenize();
 
         var curr: string = "";
+        var finalPos: number = 0;
+        var finalLine: number = 0;
+        var finalCol: number = 0;
         for (let p of this.preTokens) {
             if (p.char.match(/^\s*$/) !== null || specialChars.includes(p.char) || operators.includes(p.char)) {
                 // end of token due to whitespace, special char, or operator
@@ -116,7 +119,19 @@ export class Tokenizer {
                 }
             } else {
                 curr += p.char;
+                finalPos = p.pos;
+                finalLine = p.line;
+                finalCol = p.col;
             }
+        }
+        if (curr != "") {
+            this.tokens.push(new Token({
+                value: curr,
+                start: finalPos - curr.length,
+                end: finalPos,
+                line: finalLine,
+                col: finalCol,
+            }));
         }
     }
     getTokens() {
@@ -126,6 +141,6 @@ export class Tokenizer {
 
 
 // test
-//var n = new Tokenizer("(* 4.5 8)");
+//var n = new Tokenizer("(* 4.5 8) a b c    ");
 //n.tokenize();
 //console.log(n.getTokens());

@@ -10,7 +10,7 @@
 *   - Tokens in scm-slang follow acorn token convention.
 */
 
-import { Token, Tokenizer } from './tokenize'
+import { Token, Tokenizer } from './tokenizer';
 
 import {
     ArrowFunctionExpression,
@@ -59,9 +59,15 @@ function readFromTokens(tokens: Token[]): Expression {
         throw new Error("unexpected )");
     } 
     // is literal
-    return {
+    var ret: any = atom(tokens[0].value);
+    return typeof ret == "string"
+    ? {
+        type: "Identifier",
+        name: ret
+    }
+    : {
         type: "Literal",
-        value: atom(tokens[0].value)
+        value: ret
     };
 }
 
@@ -95,15 +101,11 @@ function operator(op: string): BinaryOperator {
 }
 
 function atom(token: string) {
-    try {
-        return parseInt(token);
-    } catch (error) {
-        try {
-            return parseFloat(token);
-        } catch (error) {
-            return token;
-        }
+    var ret: any = parseFloat(token);
+    if (Number.isNaN(ret)) {
+        ret = token;
     }
+    return ret;
 }
 
 // Technically only 3 relevant nodes in scheme's case,
@@ -112,7 +114,12 @@ function atom(token: string) {
 // Conditional (IfStatement)
 
 function evalStatement(tokens: Token[]): Statement {
-    if (tokens[1].value == "define") {
+    if (tokens.length < 2) {
+        return {
+            type: "ExpressionStatement",
+            expression: readFromTokens(tokens)
+        }
+    } else if (tokens[1].value == "define") {
         return {
             type: "VariableDeclaration",
             declarations: [{
@@ -200,3 +207,17 @@ export class Parser {
         }
     }
 }
+
+/*var n = new Parser("(define pi 3.14) (define r 10) (* pi (* r r))");
+var est = n.parse();
+for (let x of est.body) {
+    console.log(x);
+}*/
+
+/**var test = new Tokenizer("10 a b c");
+test.tokenize();
+console.log(test.getTokens());
+console.log(breakIntoStatements(test.getTokens()));
+for (let x of breakIntoStatements(test.getTokens())) {
+    console.log(readFromTokens(x));
+}*/
