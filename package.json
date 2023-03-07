@@ -14,15 +14,22 @@
         "name": "Source Academy",
         "url": "https://github.com/source-academy/"
     },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/source-academy/scm-slang.git"
+    },
+    "bugs": {
+        "url": "https://github.com/source-academy/scm-slang/issues"
+    },
+    "homepage": "https://github.com/source-academy/scm-slang#readme",
     "private": true,
     "dependencies": {
         "@types/estree": "^1.0.0",
-        "eval-estree-expression": "^1.1.0",
         "readline-sync": "^1.4.10"
     },
     "scripts": {},
     "meta": {},
     "devDependencies": {
-        "@types/node": "^18.11.18"
+        "@types/node": "^18.14.2"
     }
 }
