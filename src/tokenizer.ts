@@ -5,7 +5,8 @@
 // LINK 1
 // LINK 2
 
-import { TokenType } from "./tokentype";
+import { TokenType } from "./token-type";
+import { TokenizerError } from "./scheme-error";
 
 // These characters can be included as 
 // part of an identifier in scheme.
@@ -137,7 +138,12 @@ export class Tokenizer {
                     // these are definitely identifiers
                     this.identifierToken();
                 } else {
-                // error
+                    // error
+                    throw new TokenizerError.UnexpectedCharacterError(
+                        this.line, 
+                        this.col,
+                        c
+                    );
                 }
                 break;
         }
@@ -161,7 +167,10 @@ export class Tokenizer {
         }
 
         if (this.isAtEnd()) {
-            // error
+            throw new TokenizerError.UnexpectedEOFError(
+                this.line, 
+                this.col
+            );
             return;
         }
         this.addToken(this.checkKeyword());
@@ -241,7 +250,10 @@ export class Tokenizer {
         }
 
         if (this.isAtEnd()) {
-            // error
+            throw new TokenizerError.UnexpectedEOFError(
+                this.line, 
+                this.col
+            );
             return;
         }
 
