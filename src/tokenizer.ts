@@ -18,7 +18,8 @@ let keywords = new Map<string, TokenType>([
     ["define", TokenType.DEFINE],
     ["quote", TokenType.QUOTE],
     ["set!", TokenType.SET],
-    ["lambda", TokenType.LAMBDA]
+    ["lambda", TokenType.LAMBDA],
+    ["list", TokenType.LIST],
 ]);
 
 export class Token {

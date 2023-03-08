@@ -11,8 +11,8 @@ export enum TokenType {
     // Literals
     IDENTIFIER, NUMBER, BOOLEAN, STRING,
 
-    // Keywords. 5 base keywords taken from lis.py
-    IF, DEFINE, QUOTE, SET, LAMBDA,
+    // Keywords. 5 base keywords taken from lis.py + list
+    IF, DEFINE, QUOTE, SET, LAMBDA, LIST,
 
     EOF
 }
