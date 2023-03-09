@@ -8,7 +8,7 @@ import {
     BlockStatement,
     CallExpression,
     FunctionExpression,
-    VariableDeclarator,
+    VariableDeclaration,
 } from "estree";
 
 
@@ -23,5 +23,6 @@ export interface Visitor {
     visitLiteral(node: SCMNode.LiteralNode): Literal;
     visitProcedure(node: SCMNode.ProcedureNode): FunctionExpression;
     visitStatement(node: SCMNode.StatementNode): Statement;
-    visitDefinition(node: SCMNode.DefinitionNode): VariableDeclarator;
+    visitDefinition(node: SCMNode.DefinitionNode): VariableDeclaration;
+    visitExpressionStatement(node: SCMNode.ExpressionStatementNode); // define later
 }
