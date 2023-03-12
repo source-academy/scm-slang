@@ -1,6 +1,5 @@
 import { Token } from "./tokenizer";
 import { TokenType } from "./token-type";
-import { SchemeNode } from "./scheme-nodes";
 import { SchemeParserError } from "./scheme-error";
 
 export class SchemeParser {
