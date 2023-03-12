@@ -1,28 +1,16 @@
 // visitor class to convert scheme AST to JS estree
-import { SCMNode } from "./scheme-nodes";
-import {     
-    Literal, 
-    Program,
-    Statement,
-    Identifier,
-    BlockStatement,
-    CallExpression,
-    FunctionExpression,
-    VariableDeclaration,
-} from "estree";
-
+import { SchemeNode } from "./scheme-nodes"
 
 export interface Visitor {
-    visitIf(node: SCMNode.IfNode): CallExpression;
-    visitCall(node: SCMNode.CallNode): CallExpression;
-    visitList(node: SCMNode.ListNode): CallExpression; // this calls _list()
-    visitRoot(node: SCMNode.RootNode): Program;
-    visitBlock(node: SCMNode.BlockNode): BlockStatement;
-    visitQuote(node: SCMNode.QuoteNode); // to define behaviour later
-    visitSymbol(node: SCMNode.SymbolNode): Identifier;
-    visitLiteral(node: SCMNode.LiteralNode): Literal;
-    visitProcedure(node: SCMNode.ProcedureNode): FunctionExpression;
-    visitStatement(node: SCMNode.StatementNode): Statement;
-    visitDefinition(node: SCMNode.DefinitionNode): VariableDeclaration;
-    visitExpressionStatement(node: SCMNode.ExpressionStatementNode); // define later
+    visitIf(node: SchemeNode.IfNode): any;
+    visitCall(node: SchemeNode.CallNode): any;
+    visitList(node: SchemeNode.ListNode): any;
+    visitRoot(node: SchemeNode.RootNode): any;
+    visitBlock(node: SchemeNode.BlockNode): any;
+    visitQuote(node: SchemeNode.QuoteNode): any;
+    visitSymbol(node: SchemeNode.SymbolNode): any;
+    visitLiteral(node: SchemeNode.LiteralNode): any;
+    visitProcedure(node: SchemeNode.ProcedureNode): any;
+    visitDefinition(node: SchemeNode.DefinitionNode): any;
+    visitExpressionStatement(node: SchemeNode.ExpressionStatementNode): any;
 }

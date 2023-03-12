@@ -99,6 +99,12 @@ export class Tokenizer {
             case ")":
                 this.addToken(TokenType.RIGHT_PAREN);
                 break;
+            case "[":
+                this.addToken(TokenType.LEFT_BRACKET);
+                break;
+            case "]":
+                this.addToken(TokenType.RIGHT_BRACKET);
+                break;
             case "'":
                 this.addToken(TokenType.APOSTROPHE);
                 break;

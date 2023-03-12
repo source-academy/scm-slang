@@ -5,8 +5,8 @@ export enum TokenType {
     // + - * / % ^ ! = < > & | ~ etc are recognized as IDENTIFIERS
 
     // Single-character tokens
-    LEFT_PAREN, RIGHT_PAREN, APOSTROPHE,
-    BACKTICK, COMMA, HASH,
+    LEFT_PAREN, RIGHT_PAREN, LEFT_BRACKET, RIGHT_BRACKET, 
+    APOSTROPHE, BACKTICK, COMMA, HASH,
 
     // Literals
     IDENTIFIER, NUMBER, BOOLEAN, STRING,
