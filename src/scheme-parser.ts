@@ -1,10 +1,14 @@
 import { Token } from "./tokenizer";
 import { TokenType } from "./token-type";
 import { SchemeParserError } from "./scheme-error";
+import { Program } from "estree";
 
 export class SchemeParser {
     private readonly tokens: Token[];
+    private readonly estree: Program;
     private current: number = 0;
+    private quoteMode: boolean = false;
+
 
     constructor(tokens: Token[]) {
         this.tokens = tokens;
