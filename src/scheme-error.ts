@@ -1,6 +1,5 @@
-// LIST INSPIRATION HERE:
-// Ken Jin's py-slang
-
+import { Token } from "./tokenizer";
+import { TokenType } from "./token-type";
 import { SchemeParser } from "./scheme-parser";
 
 export namespace TokenizerError {
@@ -71,6 +70,32 @@ export namespace SchemeParserError {
                 col
             );
             this.name = "UnexpectedEOFError";
+        }
+    }
+
+    export class UnexpectedTokenError extends ParserError {
+        token: Token;
+        constructor(line: number, col: number, token: Token) {
+            super(
+                `Unexpected token \'${token}\' (${line}${col})`,
+                line,
+                col
+            );
+            this.token = token;
+            this.name = "UnexpectedTokenError";
+        }
+    }
+
+    export class UnsupportedTokenError extends ParserError {
+        token: Token;
+        constructor(line: number, col: number, token: Token) {
+            super(
+                `Unsupported token \'${token}\' (${line}${col})`,
+                line,
+                col
+            );
+            this.token = token;
+            this.name = "UnsupportedTokenError";
         }
     }
 }
