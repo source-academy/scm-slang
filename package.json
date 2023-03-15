@@ -25,8 +25,7 @@
     "homepage": "https://github.com/source-academy/scm-slang#readme",
     "private": true,
     "dependencies": {
-        "@types/estree": "^1.0.0",
-        "readline-sync": "^1.4.10"
+        "@types/estree": "^1.0.0"
     },
     "scripts": {},
     "meta": {},

@@ -15,11 +15,14 @@ const SPECIAL_CHARS: string = "!$%&*+-./:<=>?@^_~";
 // syntactic keywords in the scheme language
 let keywords = new Map<string, TokenType>([
   ["if", TokenType.IF],
-  ["define", TokenType.DEFINE],
-  ["quote", TokenType.QUOTE],
-  ["set!", TokenType.SET],
-  ["lambda", TokenType.LAMBDA],
   ["let", TokenType.LET],
+  ["cond", TokenType.COND],
+  ["else", TokenType.ELSE],
+  ["set!", TokenType.SET],
+  ["begin", TokenType.BEGIN],
+  ["quote", TokenType.QUOTE],
+  ["define", TokenType.DEFINE],
+  ["lambda", TokenType.LAMBDA],
 ]);
 
 export class Token {

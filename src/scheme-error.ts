@@ -51,6 +51,17 @@ export namespace SchemeParserError {
         }
     }
 
+    export class SyntaxError extends ParserError {
+        constructor(line: number, col: number) {
+            super(
+                `Syntax error (${line}${col})`,
+                line,
+                col
+            );
+            this.name = "SyntaxError";
+        }
+    }
+
     export class ParenthesisMismatchError extends ParserError {
         constructor(line: number, col: number) {
             super(

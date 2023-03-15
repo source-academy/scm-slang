@@ -15,9 +15,16 @@ export enum TokenType {
     // Literals
     IDENTIFIER, NUMBER, BOOLEAN, STRING,
 
-    // Keywords. 5 base keywords taken from lis.py + let
-    IF, DEFINE, QUOTE, SET, LAMBDA, LET,
-    QUASIQUOTE, UNQUOTE, UNQUOTE_SPLICING, VECTOR,
+    // SICP Chapter 1
+    IF, LET, COND, ELSE, BEGIN, DEFINE, LAMBDA,
+
+    // SICP Chapter 2
+    QUOTE, UNQUOTE, QUASIQUOTE,
+    
+    // SICP Chapter 3
+    SET, 
+    
+    VECTOR, UNQUOTE_SPLICING,
 
     EOF
 }
