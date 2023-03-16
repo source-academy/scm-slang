@@ -74,7 +74,7 @@ export class SchemeParser {
           if (!inList) {
             throw new SchemeParserError.UnexpectedTokenError(c.line, c.col, c);
           } else if (
-            !this.matchingParentheses(openparen as TokenType, c.type)
+            !this.matchingParentheses(openparen, c.type)
           ) {
             // ^ safe to cast openparen as this only executes
             // if inList is true, which is only the case if openparen exists
@@ -300,7 +300,14 @@ export class SchemeParser {
     // Check whether this defines a variable or a function.
     if (statement[1] instanceof Array) {
       // It's a function.
-      const identifiers = statement[1].map((token: Token) => {
+      const identifiers = statement[1].map((token: Token | any[]) => {
+				if (token instanceof Array) {
+					// Error.
+					throw new SchemeParserError.SyntaxError(
+						statement[0].line,
+						statement[0].col
+					);
+				}
         if (token.type !== TokenType.IDENTIFIER) {
           throw new SchemeParserError.SyntaxError(token.line, token.col);
         }
@@ -535,7 +542,13 @@ export class SchemeParser {
       );
     }
     const params: Identifier[] = expression[1].map((param: any) => {
-      if (param.type !== TokenType.IDENTIFIER) {
+   		if (param instanceof Array) {
+				throw new SchemeParserError.SyntaxError(
+					expression[0].line,
+					expression[0].col
+				);
+			}   
+			if (param.type !== TokenType.IDENTIFIER) {
         throw new SchemeParserError.SyntaxError(param.line, param.col);
       }
       // We have evaluated that this is an identifier.
@@ -660,13 +673,25 @@ export class SchemeParser {
         expression[1].col
       );
     }
-    const declarations: any[] = expression[1].map((declaration: any) => {
-      if (declaration.length !== 2) {
+    const declarations: any[] = expression[1].map((declaration: any[]) => {
+   		if (!(declaration instanceof Array)) {
+				throw new SchemeParserError.SyntaxError(
+					declaration.line,
+					declaration.col
+				);
+			}   
+			if (declaration.length !== 2) {
         throw new SchemeParserError.SyntaxError(
-          declaration[0].line,
-          declaration[0].col
+          expression[0].line,
+          expression[0].col
         );
       }
+			if (!(declaration[0] instanceof Token)) {
+				throw new SchemeParserError.SyntaxError(
+					expression[0].line,
+					expression[0].col
+				);
+			}
       if (declaration[0].type !== TokenType.IDENTIFIER) {
         throw new SchemeParserError.SyntaxError(
           declaration[0].line,
