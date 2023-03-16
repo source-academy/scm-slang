@@ -74,7 +74,7 @@ export class SchemeParser {
           if (!inList) {
             throw new SchemeParserError.UnexpectedTokenError(c.line, c.col, c);
           } else if (
-            !this.matchingParentheses(openparen, c.type)
+            !this.matchingParentheses(openparen as TokenType, c.type)
           ) {
             // ^ safe to cast openparen as this only executes
             // if inList is true, which is only the case if openparen exists
@@ -244,7 +244,7 @@ export class SchemeParser {
           return this.evaluateLambda(expression);
         case TokenType.LET:
           return this.evaluateLet(expression);
-        case TokenType.BEGIN:
+        case TokenType.BEGIN: // actually this is in source 3... but its body evaluation was quite important
           return this.evaluateBegin(expression);
         case TokenType.COND:
           return this.evaluateCond(expression);
@@ -317,14 +317,31 @@ export class SchemeParser {
       // Therefore, we can safely cast them to identifiers.
       const symbol: Identifier = identifiers[0] as Identifier;
       const params: Identifier[] = identifiers.slice(1) as Identifier[];
-      const body: Statement[] = statement
-        .slice(2, -1)
-        .map((expression: Token | any[]) =>
-          this.wrapInStatement(this.evaluate(expression, true))
-        );
-      body[body.length] = this.returnStatement(
-        this.evaluate(statement[statement.length - 1])
-      );
+      const body: Statement[] = []
+      let definitions = true;
+      for(let i = 2; i < statement.length; i++) {
+        if (statement[i] instanceof Token || statement[i][0].type !== TokenType.DEFINE) {
+          // The definitions block is over.
+          definitions = false;
+          body.push(
+            i < statement.length - 1
+            ? this.wrapInStatement(this.evaluate(statement[i]))
+            : this.returnStatement(this.evaluate(statement[i]))
+          );
+        } else {
+          if (definitions) {
+            body.push(
+              this.wrapInStatement(this.evaluate(statement[i]))
+            );
+          } else {
+            // The definitons block is over, and yet there is a define.
+            throw new SchemeParserError.SyntaxError(
+              statement[i][0].line,
+              statement[i][0].col
+            );
+          }
+        }
+      }
       return {
         type: "VariableDeclaration",
         loc: {
@@ -426,8 +443,8 @@ export class SchemeParser {
         : ({
             type: "Literal",
             loc: consequent.loc,
-            value: null,
-            raw: "null",
+            value: undefined,
+            raw: "undefined",
           } as Literal);
     return {
       type: "ConditionalExpression",
@@ -497,7 +514,6 @@ export class SchemeParser {
           catchAll.loc!.start = catchAll.loc!.end;
         }
       } else {
-        // it MUST be an array.
         throw new SchemeParserError.SyntaxError(
           expression[0].line,
           expression[0].col
@@ -554,14 +570,31 @@ export class SchemeParser {
       // We have evaluated that this is an identifier.
       return this.evaluateToken(param) as Identifier;
     });
-    const body: Statement[] = expression
-      .slice(2, -1)
-      .map((expression: Token | any[]) =>
-        this.wrapInStatement(this.evaluate(expression, true))
-      );
-    body[body.length] = this.returnStatement(
-      this.evaluate(expression[expression.length - 1])
-    );
+    const body: Statement[] = []
+    let definitions = true;
+    for(let i = 2; i < expression.length; i++) {
+      if (expression[i] instanceof Token || expression[i][0].type !== TokenType.DEFINE) {
+        // The definitions block is over.
+        definitions = false;
+        body.push(
+          i < expression.length - 1
+          ? this.wrapInStatement(this.evaluate(expression[i]))
+          : this.returnStatement(this.evaluate(expression[i]))
+        );
+      } else {
+        if (definitions) {
+          body.push(
+            this.wrapInStatement(this.evaluate(expression[i]))
+          );
+        } else {
+          // The definitons block is over, and yet there is a define.
+          throw new SchemeParserError.SyntaxError(
+            expression[i][0].line,
+            expression[i][0].col
+          );
+        }
+      }
+    }
     return {
       type: "FunctionExpression",
       loc: {
@@ -605,17 +638,29 @@ export class SchemeParser {
    */
   private evaluateBody(expression: any[]): CallExpression {
     const body: Statement[] = [];
-    if (expression.length > 0) {
-      body.push(
-        ...expression
-          .slice(0, -1)
-          .map((expression: any) =>
-            this.wrapInStatement(this.evaluate(expression))
-          )
-      );
-      body.push(
-        this.returnStatement(this.evaluate(expression[expression.length - 1]))
-      );
+    let definitions = true;
+    for(let i = 0; i < expression.length; i++) {
+      if (expression[i] instanceof Token || expression[i][0].type !== TokenType.DEFINE) {
+        // The definitions block is over.
+        definitions = false;
+        body.push(
+          i < expression.length - 1
+          ? this.wrapInStatement(this.evaluate(expression[i]))
+          : this.returnStatement(this.evaluate(expression[i]))
+        );
+      } else {
+        if (definitions) {
+          body.push(
+            this.wrapInStatement(this.evaluate(expression[i]))
+          );
+        } else {
+          // The definitons block is over, and yet there is a define.
+          throw new SchemeParserError.SyntaxError(
+            expression[i][0].line,
+            expression[i][0].col
+          );
+        }
+      }
     }
     return {
       type: "CallExpression",
@@ -656,9 +701,10 @@ export class SchemeParser {
 
   /**
    * Evaluates a let expression.
+   * let is syntactic sugar for an invoked lambda procedure.
    *
    * @param expression A let expression.
-   * @returns An IIFE.
+   * @returns An IIFE. 
    */
   private evaluateLet(expression: any[]): CallExpression {
     if (expression.length < 3) {
@@ -673,64 +719,94 @@ export class SchemeParser {
         expression[1].col
       );
     }
-    const declarations: any[] = expression[1].map((declaration: any[]) => {
-   		if (!(declaration instanceof Array)) {
-				throw new SchemeParserError.SyntaxError(
-					declaration.line,
-					declaration.col
-				);
-			}   
-			if (declaration.length !== 2) {
+    const declaredVariables: Identifier[] = [];
+    const declaredValues: Expression[] = [];
+    for (let i = 0; i < expression[1].length; i++) {
+      if (!(expression[1][i] instanceof Array)) {
         throw new SchemeParserError.SyntaxError(
-          expression[0].line,
-          expression[0].col
+          expression[1][i].line,
+          expression[1][i].col
         );
       }
-			if (!(declaration[0] instanceof Token)) {
-				throw new SchemeParserError.SyntaxError(
-					expression[0].line,
-					expression[0].col
-				);
-			}
-      if (declaration[0].type !== TokenType.IDENTIFIER) {
+      if (expression[1][i].length !== 2) {
         throw new SchemeParserError.SyntaxError(
-          declaration[0].line,
-          declaration[0].col
+          expression[1][i][0].line,
+          expression[1][i][0].col
         );
       }
-      const token = this.evaluateToken(declaration[0]);
-      const value = this.evaluate(declaration[1], true) as Expression;
-      return {
-        type: "VariableDeclaration",
-        loc: {
-          start: token.loc!.start,
-          end: value.loc!.end,
-        },
-        declarations: [
-          {
-            type: "VariableDeclarator",
-            loc: {
-              start: token.loc!.start,
-              end: value.loc!.end,
-            },
-            id: token,
-            init: value,
-          } as VariableDeclarator,
-        ],
-        kind: "let",
-      };
-    });
-    const body: CallExpression = this.evaluateBody(expression.slice(2));
-    if (declarations.length > 0) {
-      const IIFE = body.callee as FunctionExpression;
-      const block = IIFE.body as BlockStatement;
-      block.body = declarations.concat(block.body);
+      if (!(expression[1][i][0] instanceof Token)) {
+        throw new SchemeParserError.SyntaxError(
+          expression[1][i][0].line,
+          expression[1][i][0].col
+        );
+      }
+      if (expression[1][i][0].type !== TokenType.IDENTIFIER) {
+        throw new SchemeParserError.SyntaxError(
+          expression[1][i][0].line,
+          expression[1][i][0].col
+        );
+      }
+      // Safe to cast as we have determined that the token is an identifier.
+      declaredVariables.push(this.evaluateToken(expression[1][i][0]) as Identifier);
+      // Safe to cast as the "true" flag guarantees an expression.
+      declaredValues.push(this.evaluate(expression[1][i][1], true) as Expression);
     }
-    body.loc!.start = {
-      line: expression[0].line,
-      column: expression[0].col,
-    };
-    return body;
+    const body: Statement[] = []
+    let definitions = true;
+    for(let i = 2; i < expression.length; i++) {
+      if (expression[i] instanceof Token || expression[i][0].type !== TokenType.DEFINE) {
+        // The definitions block is over.
+        definitions = false;
+        body.push(
+          i < expression.length - 1
+          ? this.wrapInStatement(this.evaluate(expression[i]))
+          : this.returnStatement(this.evaluate(expression[i]))
+        );
+      } else {
+        if (definitions) {
+          body.push(
+            this.wrapInStatement(this.evaluate(expression[i]))
+          );
+        } else {
+          // The definitons block is over, and yet there is a define.
+          throw new SchemeParserError.SyntaxError(
+            expression[i][0].line,
+            expression[i][0].col
+          );
+        }
+      }
+    }
+    return {
+      type: "CallExpression",
+      loc: {
+        start: {
+          line: expression[0].line,
+          column: expression[0].col,
+        },
+        end: body[body.length - 1].loc!.end,
+      },
+      callee: {
+        type: "FunctionExpression",
+        loc: {
+          start: declaredVariables[0].loc!.start,
+          end: body[body.length - 1].loc!.end,
+        },
+        id: null,
+        generator: false,
+        async: false,
+        params: declaredVariables,
+        body: {
+          type: "BlockStatement",
+          loc: {
+            start: body[0].loc!.start,
+            end: body[body.length - 1].loc!.end,
+          },
+          body: body,
+        },
+      },
+      arguments: declaredValues,
+      optional: false,
+    }
   }
 
   /**

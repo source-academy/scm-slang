@@ -19,14 +19,14 @@ const str =
 ;;; Okay, another comment. the code below tests the cond code\n\
 ;;; with else.\n\
 (cond ([> x 5] 1)\n\
-      ([= 1 2] 2)\n\
+      ([= 1 2] (define a 1) 1)\n\
       (else x))\n\
 ;;; comment. the code below tests the if code\n\
 ;;; with alternate.\n\
 (if (= x 5) 1 2)\n\
 ;;; the code below tests the if code\n\
 ;;; without alternate. also tests begin code\n\
-(if (= x 5) (begin 1 2 (+ 1 2)))\n\
+(if (= x 5) (begin (define a 1) 1 2 (+ 1 2)))\n\
 ;;; the code below also tests the begin code\n\
 (begin\n\
     (define x 5)\n\
