@@ -5,7 +5,7 @@ import {
   Program,
   Expression,
   Statement,
-  BlockStatement,
+  NewExpression,
   ExpressionStatement,
   ReturnStatement,
   VariableDeclaration,
@@ -17,6 +17,7 @@ import {
   SourceLocation,
   Position,
   ConditionalExpression,
+  AssignmentExpression
 } from "estree";
 
 export class SchemeParser {
@@ -244,8 +245,6 @@ export class SchemeParser {
           return this.evaluateLambda(expression);
         case TokenType.LET:
           return this.evaluateLet(expression);
-        case TokenType.BEGIN: // actually this is in source 3... but its body evaluation was quite important
-          return this.evaluateBegin(expression);
         case TokenType.COND:
           return this.evaluateCond(expression);
         case TokenType.ELSE:
@@ -258,14 +257,24 @@ export class SchemeParser {
 
         // Scheme 2
         case TokenType.QUOTE:
-        case TokenType.UNQUOTE:
         case TokenType.QUASIQUOTE:
+          return this.evaluateQuote(expression);
+        case TokenType.UNQUOTE:
+          // This shouldn't exist outside of unquotes.
+          throw new SchemeParserError.UnexpectedTokenError(
+            firstToken.line,
+            firstToken.col,
+            firstToken
+          );
 
         // Scheme 3
         case TokenType.SET:
-        case TokenType.VECTOR:
+          return this.evaluateSet(expression);
+        case TokenType.BEGIN:
+          return this.evaluateBegin(expression);
 
         // Outside SICP
+        case TokenType.VECTOR:
         case TokenType.UNQUOTE_SPLICING:
           throw new SchemeParserError.UnsupportedTokenError(
             firstToken.line,
@@ -282,6 +291,156 @@ export class SchemeParser {
     // Top-level grouping definitely has no special form.
     // Evaluate as a function call.
     return this.evaluateApplication(expression);
+  }
+
+  /**
+   * Evaluates a quote statement.
+   * 
+   * @param expression A quote statement.
+   * @returns An expression. Can be a Literal, NewExpression
+   */
+  private evaluateQuote(expression: any[]): Expression;
+  private evaluateQuote(expression: any[], quasiquote: boolean): Expression;
+  private evaluateQuote(expression: any[], quasiquote?: boolean): Expression {
+    if (expression.length !== 2) {
+      throw new SchemeParserError.SyntaxError(
+        expression[0].line,
+        expression[0].col
+      );
+    }
+    if (quasiquote === undefined) {
+      quasiquote = expression[0].type === TokenType.QUASIQUOTE;
+    }
+    const quotedVal: Expression = this.quote(expression[1], quasiquote);
+    // Sanitize location information.
+    const formattedLoc = this.toSourceLocation(expression[0]);
+    if (quotedVal.loc === undefined) {
+      quotedVal.loc = formattedLoc;
+    } else {
+      quotedVal.loc!.start = formattedLoc.start;
+    }
+    return quotedVal;
+  }
+
+  /**
+   * Quote
+   */
+  private quote(expression: any, quasiquote: boolean): Expression {
+    if (expression instanceof Token) {
+      switch (expression.type) {
+        case TokenType.NUMBER:
+        case TokenType.STRING:
+        case TokenType.BOOLEAN:
+          // Literals
+          return this.evaluateToken(expression);
+        default:
+          // Everything else
+          return this.symbol(expression);
+      }
+    }
+    // Array
+    // Empty list
+    if (expression.length < 1) {
+      return this.list([]);
+    }
+    if (expression[0].type === TokenType.UNQUOTE && quasiquote) {
+      // "Unquote" the expression.
+      // It MUST be an expression.
+      return this.evaluate(expression[1], true) as Expression;
+    }
+    const listElements: Expression[] = expression.map((e: any) => this.quote(e, quasiquote));
+    return this.list(listElements);
+    
+  }
+
+  /**
+   * Converts any non-literal into a Symbol representing their
+   * name.
+   * 
+   * @param token A token.
+   * @returns A new Symbol(name) call
+   */
+  private symbol(token: Token): NewExpression {
+    const loc = this.toSourceLocation(token);
+    return {
+      type: "NewExpression",
+      loc: loc,
+      callee: {
+        type: "Identifier",
+        loc: loc,
+        name: "Symbol"
+      },
+      arguments: [
+        {
+          type: "Literal",
+          loc: loc,
+          value: token.lexeme,
+          raw: token.lexeme
+        }
+      ]
+    };
+  }
+
+  /**
+   * Converts an array of Expressions into a list.
+   */
+  private list(expressions: Expression[]): NewExpression {
+    return {
+      type: "NewExpression",
+      loc: expressions.length > 1 ? {
+        start: expressions[0].loc!.start,
+        end: expressions[expressions.length - 1].loc!.end
+      } as SourceLocation : undefined,
+      callee: {
+        type: "Identifier",
+              loc: expressions.length > 1 ? {
+        start: expressions[0].loc!.start,
+        end: expressions[expressions.length - 1].loc!.end
+      } as SourceLocation : undefined,
+        name: "List"
+      },
+      arguments: expressions
+    };
+  }
+
+  /**
+   * Evaluates a set expression.
+   * Direct equivalent to AssignmentExpression.
+   * !!! R7RS STATES THAT THE RETURN VALUE OF SET! IS UNSPECIFIED.
+   * !!! THIS IMPLEMENTATION RETURNS THE VALUE OF THE ASSIGNMENT.
+   * 
+   * @param expression A token.
+   * @returns An assignment axpression.
+   */
+  private evaluateSet(expression: any[]): AssignmentExpression {
+    if (expression.length !== 3) {
+      throw new SchemeParserError.SyntaxError(
+        expression[0].line,
+        expression[0].col
+      );
+    }
+    if (!(expression[1] instanceof Token) || expression[1].type !== TokenType.IDENTIFIER) {
+      throw new SchemeParserError.SyntaxError(
+        expression[0].line,
+        expression[0].col
+      );
+    }
+    // Safe to cast as we have prederermined that it is an identifier.
+    const identifier: Identifier = this.evaluateToken(expression[1]) as Identifier;
+    const newValue: Expression = this.evaluate(expression[2]) as Expression;
+    return {
+      type: "AssignmentExpression",
+      loc: {
+        start: {
+          line: expression[0].line,
+          column: expression[0].col
+        },
+        end: newValue.loc!.end
+      },
+      operator: "=",
+      left: identifier,
+      right: newValue
+    };
   }
 
   /**
@@ -397,7 +556,9 @@ export class SchemeParser {
         statement[1].col
       );
     }
+    console.log(statement[2]);
     const value = this.evaluate(statement[2], true) as Expression;
+    console.log(value);
     return {
       type: "VariableDeclaration",
       loc: {

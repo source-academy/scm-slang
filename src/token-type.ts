@@ -12,7 +12,7 @@ export enum TokenType {
     // Two-character tokens
     COMMA_AT,
 
-    // Literals
+    // Atoms: Literals or Identifiers
     IDENTIFIER, NUMBER, BOOLEAN, STRING,
 
     // SICP Chapter 1

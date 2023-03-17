@@ -89,8 +89,7 @@ export class Tokenizer {
 
   private addToken(type: TokenType): void;
   private addToken(type: TokenType, literal: any): void;
-  private addToken(type: TokenType, literal?: any): void {
-    literal = literal === undefined ? null : literal;
+  private addToken(type: TokenType, literal: any = null): void {
     const text = this.source.substring(this.start, this.current);
     this.tokens.push(
       new Token(
@@ -150,7 +149,11 @@ export class Tokenizer {
         this.addToken(TokenType.COMMA);
         break;
       case "#":
-        this.addToken(TokenType.HASH);
+        if (this.match("t") || this.match("f")) {
+          this.booleanToken();
+        } else {
+          this.addToken(TokenType.HASH);
+        }
         break;
       case ";":
         // a comment
@@ -196,7 +199,7 @@ export class Tokenizer {
   }
 
   private identifierToken(): void {
-    while (this.isAlphaNumeric(this.peek())) this.advance();
+    while (this.isValidIdentifier(this.peek())) this.advance();
     this.addToken(this.checkKeyword());
   }
 
@@ -308,6 +311,12 @@ export class Tokenizer {
     const value = this.source.substring(this.start + 1, this.current - 1);
     this.addToken(TokenType.STRING, value);
   }
+
+  private booleanToken(): void {
+    this.addToken(TokenType.BOOLEAN, this.peekPrev() === "t" ? true : false);
+  }
+    
+
 
   private match(expected: string): boolean {
     if (this.isAtEnd()) return false;

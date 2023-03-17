@@ -18,7 +18,7 @@ export namespace TokenizerError {
         char: string;
         constructor(line: number, col: number, char: string) {
             super(
-                `Unexpected character \'${char}\' (${line}${col})`, 
+                `Unexpected character \'${char}\' (${line}:${col})`, 
                 line, 
                 col
             );
@@ -30,7 +30,7 @@ export namespace TokenizerError {
     export class UnexpectedEOFError extends TokenizerError {
         constructor(line: number, col: number) {
             super(
-                `Unexpected EOF (${line}${col})`,
+                `Unexpected EOF (${line}:${col})`,
                 line,
                 col
             );
@@ -54,7 +54,7 @@ export namespace SchemeParserError {
     export class SyntaxError extends ParserError {
         constructor(line: number, col: number) {
             super(
-                `Syntax error (${line}${col})`,
+                `Syntax error (${line}:${col})`,
                 line,
                 col
             );
@@ -65,7 +65,7 @@ export namespace SchemeParserError {
     export class ParenthesisMismatchError extends ParserError {
         constructor(line: number, col: number) {
             super(
-                `Parenthesis mismatch (${line}${col})`,
+                `Parenthesis mismatch (${line}:${col})`,
                 line,
                 col
             );
@@ -76,7 +76,7 @@ export namespace SchemeParserError {
     export class UnexpectedEOFError extends ParserError {
         constructor(line: number, col: number) {
             super(
-                `Unexpected EOF (${line}${col})`,
+                `Unexpected EOF (${line}:${col})`,
                 line,
                 col
             );
@@ -88,7 +88,7 @@ export namespace SchemeParserError {
         token: Token;
         constructor(line: number, col: number, token: Token) {
             super(
-                `Unexpected token \'${token}\' (${line}${col})`,
+                `Unexpected token \'${token}\' (${line}:${col})`,
                 line,
                 col
             );
@@ -101,7 +101,7 @@ export namespace SchemeParserError {
         token: Token;
         constructor(line: number, col: number, token: Token) {
             super(
-                `Unsupported token \'${token}\' (${line}${col})`,
+                `Unsupported token \'${token}\' (${line}:${col})`,
                 line,
                 col
             );
