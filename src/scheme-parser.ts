@@ -556,9 +556,7 @@ export class SchemeParser {
         statement[1].col
       );
     }
-    console.log(statement[2]);
     const value = this.evaluate(statement[2], true) as Expression;
-    console.log(value);
     return {
       type: "VariableDeclaration",
       loc: {

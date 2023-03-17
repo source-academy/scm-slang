@@ -1,3 +1,4 @@
+;; SICP MCE. Thanks to Gary Liu for hosting this on his site https://scheme.garyliu.dev/playground
 ;; prepend for SICP MCE
 (define true #t)
 (define false #f)
