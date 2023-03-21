@@ -14,6 +14,7 @@ const SPECIAL_CHARS: string = "!$%&*+-./:<=>?@^_~";
 
 // syntactic keywords in the scheme language
 let keywords = new Map<string, TokenType>([
+  [".", TokenType.DOT],
   ["if", TokenType.IF],
   ["let", TokenType.LET],
   ["cond", TokenType.COND],
@@ -226,8 +227,9 @@ export class Tokenizer {
   private identifierNumberToken(): void {
     // only executes when the first digit was already found to be a number.
     // we treat this as a number UNTIL we find it no longer behaves like one.
+    var first = this.peekPrev();
     var validNumber: boolean = true;
-    var hasDot: boolean = this.peekPrev() === "." ? true : false;
+    var hasDot: boolean = first === "." ? true : false;
     while (this.isValidIdentifier(this.peek())) {
       var c = this.peek();
       if (!this.isDigit(c)) {
@@ -248,6 +250,10 @@ export class Tokenizer {
         }
       }
       this.advance();
+    }
+    // if the number is a single dot, it is not a number.
+    if (first === "." && this.current - this.start < 2) {
+      validNumber = false;
     }
     if (validNumber) {
       this.addToken(

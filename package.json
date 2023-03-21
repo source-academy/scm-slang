@@ -25,7 +25,10 @@
     "homepage": "https://github.com/source-academy/scm-slang#readme",
     "private": true,
     "dependencies": {
-        "@types/estree": "^1.0.0"
+        "@types/estree": "^1.0.0",
+        "acorn": "^8.8.2",
+        "acorn-walk": "^8.2.0",
+        "escodegen": "^2.0.0"
     },
     "scripts": {},
     "meta": {},

@@ -17,7 +17,7 @@ import {
   SourceLocation,
   Position,
   ConditionalExpression,
-  AssignmentExpression
+  AssignmentExpression,
 } from "estree";
 
 export class SchemeParser {
@@ -107,6 +107,7 @@ export class SchemeParser {
         case TokenType.SET:
         case TokenType.LAMBDA:
         case TokenType.LET:
+        case TokenType.DOT:
           tokens.push(c);
           break;
         case TokenType.EOF:
@@ -274,6 +275,13 @@ export class SchemeParser {
           return this.evaluateBegin(expression);
 
         // Outside SICP
+        case TokenType.DOT:
+          // This shouldn't exist here
+          throw new SchemeParserError.UnexpectedTokenError(
+            firstToken.line,
+            firstToken.col,
+            firstToken
+          );
         case TokenType.VECTOR:
         case TokenType.UNQUOTE_SPLICING:
           throw new SchemeParserError.UnsupportedTokenError(
@@ -295,7 +303,7 @@ export class SchemeParser {
 
   /**
    * Evaluates a quote statement.
-   * 
+   *
    * @param expression A quote statement.
    * @returns An expression. Can be a Literal, NewExpression
    */
@@ -348,15 +356,50 @@ export class SchemeParser {
       // It MUST be an expression.
       return this.evaluate(expression[1], true) as Expression;
     }
-    const listElements: Expression[] = expression.map((e: any) => this.quote(e, quasiquote));
-    return this.list(listElements);
-    
+    // Determines whether the quote is parsing a list or a pair.
+    var hasDot = false;
+    const listElements1: Expression[] = [];
+    const listElements2: Expression[] = [];
+    for (var i = 0; i < expression.length; i++) {
+      if (expression[i].type === TokenType.DOT) {
+        if (hasDot) {
+          throw new SchemeParserError.SyntaxError(
+            expression[i].line,
+            expression[i].col
+          );
+        } else {
+          hasDot = true;
+        }
+      } else {
+        if (hasDot) {
+          listElements2.push(this.quote(expression[i], quasiquote));
+        } else {
+          listElements1.push(this.quote(expression[i], quasiquote));
+        }
+      }
+    }
+    if (hasDot) {
+      if (listElements2.length !== 1) {
+        throw new SchemeParserError.SyntaxError(
+          expression[0].line,
+          expression[0].col
+        );
+      }
+      if (listElements1.length < 1) {
+        return listElements2[0];
+      }
+      return this.pair(
+        listElements1.length < 2 ? listElements1[0] : this.list(listElements1),
+        listElements2[0]
+      );
+    }
+    return this.list(listElements1);
   }
 
   /**
    * Converts any non-literal into a Symbol representing their
    * name.
-   * 
+   *
    * @param token A token.
    * @returns A new Symbol(name) call
    */
@@ -368,38 +411,68 @@ export class SchemeParser {
       callee: {
         type: "Identifier",
         loc: loc,
-        name: "Symbol"
+        name: "Symbol",
       },
       arguments: [
         {
           type: "Literal",
           loc: loc,
           value: token.lexeme,
-          raw: token.lexeme
-        }
-      ]
+          raw: token.lexeme,
+        },
+      ],
+    };
+  }
+
+  /**
+   * Creates a pair from two expressions.
+   */
+  private pair(car: Expression, cdr: Expression): CallExpression {
+    return {
+      type: "CallExpression",
+      loc: {
+        start: car.loc!.start,
+        end: cdr.loc!.end,
+      },
+      callee: {
+        type: "Identifier",
+        loc: {
+          start: car.loc!.start,
+          end: cdr.loc!.end,
+        },
+        name: "cons",
+      },
+      arguments: [car, cdr],
+      optional: false,
     };
   }
 
   /**
    * Converts an array of Expressions into a list.
    */
-  private list(expressions: Expression[]): NewExpression {
+  private list(expressions: Expression[]): CallExpression {
     return {
-      type: "NewExpression",
-      loc: expressions.length > 1 ? {
-        start: expressions[0].loc!.start,
-        end: expressions[expressions.length - 1].loc!.end
-      } as SourceLocation : undefined,
+      type: "CallExpression",
+      loc:
+        expressions.length > 1
+          ? ({
+              start: expressions[0].loc!.start,
+              end: expressions[expressions.length - 1].loc!.end,
+            } as SourceLocation)
+          : undefined,
       callee: {
         type: "Identifier",
-              loc: expressions.length > 1 ? {
-        start: expressions[0].loc!.start,
-        end: expressions[expressions.length - 1].loc!.end
-      } as SourceLocation : undefined,
-        name: "List"
+        loc:
+          expressions.length > 1
+            ? ({
+                start: expressions[0].loc!.start,
+                end: expressions[expressions.length - 1].loc!.end,
+              } as SourceLocation)
+            : undefined,
+        name: "list",
       },
-      arguments: expressions
+      arguments: expressions,
+      optional: false,
     };
   }
 
@@ -408,7 +481,7 @@ export class SchemeParser {
    * Direct equivalent to AssignmentExpression.
    * !!! R7RS STATES THAT THE RETURN VALUE OF SET! IS UNSPECIFIED.
    * !!! THIS IMPLEMENTATION RETURNS THE VALUE OF THE ASSIGNMENT.
-   * 
+   *
    * @param expression A token.
    * @returns An assignment axpression.
    */
@@ -419,27 +492,32 @@ export class SchemeParser {
         expression[0].col
       );
     }
-    if (!(expression[1] instanceof Token) || expression[1].type !== TokenType.IDENTIFIER) {
+    if (
+      !(expression[1] instanceof Token) ||
+      expression[1].type !== TokenType.IDENTIFIER
+    ) {
       throw new SchemeParserError.SyntaxError(
         expression[0].line,
         expression[0].col
       );
     }
     // Safe to cast as we have prederermined that it is an identifier.
-    const identifier: Identifier = this.evaluateToken(expression[1]) as Identifier;
+    const identifier: Identifier = this.evaluateToken(
+      expression[1]
+    ) as Identifier;
     const newValue: Expression = this.evaluate(expression[2]) as Expression;
     return {
       type: "AssignmentExpression",
       loc: {
         start: {
           line: expression[0].line,
-          column: expression[0].col
+          column: expression[0].col,
         },
-        end: newValue.loc!.end
+        end: newValue.loc!.end,
       },
       operator: "=",
       left: identifier,
-      right: newValue
+      right: newValue,
     };
   }
 
@@ -460,13 +538,13 @@ export class SchemeParser {
     if (statement[1] instanceof Array) {
       // It's a function.
       const identifiers = statement[1].map((token: Token | any[]) => {
-				if (token instanceof Array) {
-					// Error.
-					throw new SchemeParserError.SyntaxError(
-						statement[0].line,
-						statement[0].col
-					);
-				}
+        if (token instanceof Array) {
+          // Error.
+          throw new SchemeParserError.SyntaxError(
+            statement[0].line,
+            statement[0].col
+          );
+        }
         if (token.type !== TokenType.IDENTIFIER) {
           throw new SchemeParserError.SyntaxError(token.line, token.col);
         }
@@ -476,22 +554,23 @@ export class SchemeParser {
       // Therefore, we can safely cast them to identifiers.
       const symbol: Identifier = identifiers[0] as Identifier;
       const params: Identifier[] = identifiers.slice(1) as Identifier[];
-      const body: Statement[] = []
+      const body: Statement[] = [];
       let definitions = true;
-      for(let i = 2; i < statement.length; i++) {
-        if (statement[i] instanceof Token || statement[i][0].type !== TokenType.DEFINE) {
+      for (let i = 2; i < statement.length; i++) {
+        if (
+          statement[i] instanceof Token ||
+          statement[i][0].type !== TokenType.DEFINE
+        ) {
           // The definitions block is over.
           definitions = false;
           body.push(
             i < statement.length - 1
-            ? this.wrapInStatement(this.evaluate(statement[i]))
-            : this.returnStatement(this.evaluate(statement[i]))
+              ? this.wrapInStatement(this.evaluate(statement[i]))
+              : this.returnStatement(this.evaluate(statement[i]))
           );
         } else {
           if (definitions) {
-            body.push(
-              this.wrapInStatement(this.evaluate(statement[i]))
-            );
+            body.push(this.wrapInStatement(this.evaluate(statement[i])));
           } else {
             // The definitons block is over, and yet there is a define.
             throw new SchemeParserError.SyntaxError(
@@ -717,34 +796,35 @@ export class SchemeParser {
       );
     }
     const params: Identifier[] = expression[1].map((param: any) => {
-   		if (param instanceof Array) {
-				throw new SchemeParserError.SyntaxError(
-					expression[0].line,
-					expression[0].col
-				);
-			}   
-			if (param.type !== TokenType.IDENTIFIER) {
+      if (param instanceof Array) {
+        throw new SchemeParserError.SyntaxError(
+          expression[0].line,
+          expression[0].col
+        );
+      }
+      if (param.type !== TokenType.IDENTIFIER) {
         throw new SchemeParserError.SyntaxError(param.line, param.col);
       }
       // We have evaluated that this is an identifier.
       return this.evaluateToken(param) as Identifier;
     });
-    const body: Statement[] = []
+    const body: Statement[] = [];
     let definitions = true;
-    for(let i = 2; i < expression.length; i++) {
-      if (expression[i] instanceof Token || expression[i][0].type !== TokenType.DEFINE) {
+    for (let i = 2; i < expression.length; i++) {
+      if (
+        expression[i] instanceof Token ||
+        expression[i][0].type !== TokenType.DEFINE
+      ) {
         // The definitions block is over.
         definitions = false;
         body.push(
           i < expression.length - 1
-          ? this.wrapInStatement(this.evaluate(expression[i]))
-          : this.returnStatement(this.evaluate(expression[i]))
+            ? this.wrapInStatement(this.evaluate(expression[i]))
+            : this.returnStatement(this.evaluate(expression[i]))
         );
       } else {
         if (definitions) {
-          body.push(
-            this.wrapInStatement(this.evaluate(expression[i]))
-          );
+          body.push(this.wrapInStatement(this.evaluate(expression[i])));
         } else {
           // The definitons block is over, and yet there is a define.
           throw new SchemeParserError.SyntaxError(
@@ -798,22 +878,23 @@ export class SchemeParser {
   private evaluateBody(expression: any[]): CallExpression {
     const body: Statement[] = [];
     let definitions = true;
-    for(let i = 0; i < expression.length; i++) {
-      if (expression[i] instanceof Token || expression[i][0].type !== TokenType.DEFINE) {
+    for (let i = 0; i < expression.length; i++) {
+      if (
+        expression[i] instanceof Token ||
+        expression[i][0].type !== TokenType.DEFINE
+      ) {
         // The definitions block is over.
         definitions = false;
         body.push(
           i < expression.length - 1
-          ? this.wrapInStatement(this.evaluate(expression[i]))
-          : this.returnStatement(this.evaluate(expression[i]))
+            ? this.wrapInStatement(this.evaluate(expression[i]))
+            : this.returnStatement(this.evaluate(expression[i]))
         );
       } else {
         if (definitions) {
-          body.push(
-            this.wrapInStatement(this.evaluate(expression[i]))
-          );
+          body.push(this.wrapInStatement(this.evaluate(expression[i])));
         } else {
-          // The definitons block is over, and yet there is a define.
+          // The definitions block is over, and yet there is a define.
           throw new SchemeParserError.SyntaxError(
             expression[i][0].line,
             expression[i][0].col
@@ -863,7 +944,7 @@ export class SchemeParser {
    * let is syntactic sugar for an invoked lambda procedure.
    *
    * @param expression A let expression.
-   * @returns An IIFE. 
+   * @returns An IIFE.
    */
   private evaluateLet(expression: any[]): CallExpression {
     if (expression.length < 3) {
@@ -906,26 +987,31 @@ export class SchemeParser {
         );
       }
       // Safe to cast as we have determined that the token is an identifier.
-      declaredVariables.push(this.evaluateToken(expression[1][i][0]) as Identifier);
+      declaredVariables.push(
+        this.evaluateToken(expression[1][i][0]) as Identifier
+      );
       // Safe to cast as the "true" flag guarantees an expression.
-      declaredValues.push(this.evaluate(expression[1][i][1], true) as Expression);
+      declaredValues.push(
+        this.evaluate(expression[1][i][1], true) as Expression
+      );
     }
-    const body: Statement[] = []
+    const body: Statement[] = [];
     let definitions = true;
-    for(let i = 2; i < expression.length; i++) {
-      if (expression[i] instanceof Token || expression[i][0].type !== TokenType.DEFINE) {
+    for (let i = 2; i < expression.length; i++) {
+      if (
+        expression[i] instanceof Token ||
+        expression[i][0].type !== TokenType.DEFINE
+      ) {
         // The definitions block is over.
         definitions = false;
         body.push(
           i < expression.length - 1
-          ? this.wrapInStatement(this.evaluate(expression[i]))
-          : this.returnStatement(this.evaluate(expression[i]))
+            ? this.wrapInStatement(this.evaluate(expression[i]))
+            : this.returnStatement(this.evaluate(expression[i]))
         );
       } else {
         if (definitions) {
-          body.push(
-            this.wrapInStatement(this.evaluate(expression[i]))
-          );
+          body.push(this.wrapInStatement(this.evaluate(expression[i])));
         } else {
           // The definitons block is over, and yet there is a define.
           throw new SchemeParserError.SyntaxError(
@@ -965,7 +1051,7 @@ export class SchemeParser {
       },
       arguments: declaredValues,
       optional: false,
-    }
+    };
   }
 
   /**
