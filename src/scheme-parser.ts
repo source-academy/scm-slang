@@ -679,11 +679,10 @@ export class SchemeParser {
       expression.length === 4
         ? (this.evaluate(expression[3], true) as Expression)
         : ({
-            type: "Literal",
+            type: "Identifier",
             loc: consequent.loc,
-            value: undefined,
-            raw: "undefined",
-          } as Literal);
+            name: "undefined",
+          } as Identifier);
     return {
       type: "ConditionalExpression",
       loc: {
@@ -713,10 +712,9 @@ export class SchemeParser {
     const conditions: Expression[] = [];
     const bodies: Expression[] = [];
     let catchAll: Expression = {
-      type: "Literal",
-      value: undefined,
-      raw: "undefined",
-    } as Literal; // the body of the else clause.
+      type: "Identifier",
+      name: "undefined",
+    } as Identifier; // the body of the else clause.
     for (let i: number = 0; i < clauses.length; i++) {
       const clause = clauses[i];
       if (clause instanceof Array) {
@@ -1032,8 +1030,11 @@ export class SchemeParser {
       },
       callee: {
         type: "FunctionExpression",
-        loc: {
+        loc: declaredVariables.length > 0 ? {
           start: declaredVariables[0].loc!.start,
+          end: body[body.length - 1].loc!.end,
+        } : {
+          start: body[0].loc!.start,
           end: body[body.length - 1].loc!.end,
         },
         id: null,
@@ -1141,6 +1142,7 @@ export class SchemeParser {
       // it returns undefined
       return {
         type: "ReturnStatement",
+		argument: null,
         loc: expression.loc,
       };
     }

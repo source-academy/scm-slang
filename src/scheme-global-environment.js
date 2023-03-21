@@ -202,3 +202,7 @@ export let list = function (...args) {
 export let display = function (x) {
   console.log(x);
 };
+
+export let error = function (msg) {
+  throw new Error(msg);
+};
