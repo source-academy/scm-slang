@@ -1,0 +1,38 @@
+{
+    "name": "scm-slang",
+    "version": "0.1.0",
+    "license": "Apache-2.0",
+    "description": "Scheme-based implementations of Source, written in Typescript",
+    "keywords": [
+        "Scheme",
+        "interpreter",
+        "compiler",
+        "Source",
+        "SICP"
+    ],
+    "author": {
+        "name": "Source Academy",
+        "url": "https://github.com/source-academy/"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/source-academy/scm-slang.git"
+    },
+    "main": "index.js",
+    "bugs": {
+        "url": "https://github.com/source-academy/scm-slang/issues"
+    },
+    "homepage": "https://github.com/source-academy/scm-slang#readme",
+    "private": true,
+    "dependencies": {
+        "@types/estree": "^1.0.0",
+        "acorn": "^8.8.2",
+        "acorn-walk": "^8.2.0",
+        "escodegen": "^2.0.0"
+    },
+    "scripts": {},
+    "meta": {},
+    "devDependencies": {
+        "@types/node": "^18.14.2"
+    }
+}
