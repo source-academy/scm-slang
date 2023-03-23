@@ -22,8 +22,12 @@ export enum TokenType {
     QUOTE, UNQUOTE, QUASIQUOTE,
     
     // SICP Chapter 3
-    SET, 
+    SET,  
     
+    // Other important keywords
+    IMPORT, EXPORT,
+
+    // Not in scope at the moment
     VECTOR, UNQUOTE_SPLICING,
 
     EOF

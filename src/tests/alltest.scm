@@ -1,3 +1,7 @@
+(import "rune" (square stack beside_n))
+
+(export (define a 1))
+
 (define a 1)
 (define (f x) (+ x a))
 (define (g x f) (f (+ x a)))

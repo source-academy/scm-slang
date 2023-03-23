@@ -18,6 +18,8 @@ import {
   Position,
   ConditionalExpression,
   AssignmentExpression,
+  ImportSpecifier,
+  ModuleDeclaration,
 } from "estree";
 
 export class SchemeParser {
@@ -94,6 +96,8 @@ export class SchemeParser {
           newGroup.push(...this.grouping());
           tokens.push(newGroup);
           break;
+        case TokenType.IMPORT:
+        case TokenType.EXPORT:
         case TokenType.BEGIN:
         case TokenType.COND:
         case TokenType.ELSE:
@@ -205,18 +209,27 @@ export class SchemeParser {
    * Evaluates a group of tokens.
    *
    * @param expression An expression.
-   * @param noStatements Option to allow statements.
+   * @param onlyExpressions Option to force expressions.
+   * @param topLevel Whether the expression is top level.
    * @returns An evaluated expression.
    */
-  private evaluate(expression: Token | any[]): Statement | Expression;
+  private evaluate(
+    expression: Token | any[]
+  ): Statement | Expression | ModuleDeclaration;
   private evaluate(
     expression: Token | any[],
-    noStatements: boolean
-  ): Statement | Expression;
+    onlyExpressions: boolean
+  ): Statement | Expression | ModuleDeclaration;
   private evaluate(
     expression: Token | any[],
-    noStatements = false
-  ): Statement | Expression {
+    onlyExpressions: boolean,
+    topLevel: boolean
+  ): Statement | Expression | ModuleDeclaration;
+  private evaluate(
+    expression: Token | any[],
+    onlyExpressions = false,
+    topLevel = false
+  ): Statement | Expression | ModuleDeclaration {
     if (expression instanceof Token) {
       return this.evaluateToken(expression);
     } else if (expression.length < 1) {
@@ -232,7 +245,7 @@ export class SchemeParser {
         // Scheme 1
         case TokenType.DEFINE:
           // Assignment statements with no value.
-          if (noStatements) {
+          if (onlyExpressions) {
             throw new SchemeParserError.UnexpectedTokenError(
               firstToken.line,
               firstToken.col,
@@ -274,7 +287,39 @@ export class SchemeParser {
         case TokenType.BEGIN:
           return this.evaluateBegin(expression);
 
-        // Outside SICP
+        // Not in SICP but required for Source
+        case TokenType.IMPORT:
+          if (onlyExpressions) {
+            throw new SchemeParserError.UnexpectedTokenError(
+              firstToken.line,
+              firstToken.col,
+              firstToken
+            );
+          }
+          if (!topLevel) {
+            throw new SchemeParserError.UnexpectedTokenError(
+              firstToken.line,
+              firstToken.col,
+              firstToken
+            );
+          }
+          return this.evaluateImport(expression);
+        case TokenType.EXPORT:
+          if (onlyExpressions) {
+            throw new SchemeParserError.UnexpectedTokenError(
+              firstToken.line,
+              firstToken.col,
+              firstToken
+            );
+          }
+          if (!topLevel) {
+            throw new SchemeParserError.UnexpectedTokenError(
+              firstToken.line,
+              firstToken.col,
+              firstToken
+            );
+          }
+          return this.evaluateExport(expression);
         case TokenType.DOT:
           // This shouldn't exist here
           throw new SchemeParserError.UnexpectedTokenError(
@@ -282,6 +327,8 @@ export class SchemeParser {
             firstToken.col,
             firstToken
           );
+
+        // Outside SICP
         case TokenType.VECTOR:
         case TokenType.UNQUOTE_SPLICING:
           throw new SchemeParserError.UnsupportedTokenError(
@@ -299,6 +346,88 @@ export class SchemeParser {
     // Top-level grouping definitely has no special form.
     // Evaluate as a function call.
     return this.evaluateApplication(expression);
+  }
+
+  /**
+   * Evaluates an import statement.
+   * Special syntax for importing modules, using a similar syntax to JS.
+   * (import "module-name" (imported-name1 imported-name2 ...))
+   *
+   * @param expression An import statement in Scheme.
+   * @returns An import statement in estree form.
+   */
+  private evaluateImport(expression: any[]): ModuleDeclaration {
+    if (
+      expression.length < 3 ||
+      !(expression[1] instanceof Token) ||
+      !(expression[2] instanceof Array)
+    ) {
+      throw new SchemeParserError.SyntaxError(
+        expression[0].line,
+        expression[0].col
+      );
+    }
+    const specifiers: ImportSpecifier[] = [];
+    for (let i = 0; i < expression[2].length; i++) {
+      if (!(expression[2][i] instanceof Token)) {
+        throw new SchemeParserError.SyntaxError(
+          expression[0].line,
+          expression[0].col
+        );
+      }
+      specifiers.push({
+        type: "ImportSpecifier",
+        local: this.evaluate(expression[2][i]) as Identifier,
+        imported: this.evaluate(expression[2][i]) as Identifier,
+        loc: this.toSourceLocation(expression[2][i]),
+      });
+    }
+    return {
+      type: "ImportDeclaration",
+      specifiers: specifiers,
+      source: this.evaluate(expression[1]) as Literal,
+      loc: this.toSourceLocation(
+        expression[0],
+        expression[2][expression[2].length - 1]
+      ),
+    };
+  }
+
+  /**
+   * Evaluates an export statement.
+   * Similar syntax to JS, wherein export "wraps" around a declaration.
+   *
+   * (export (define ...))
+   * @param expression An export statement in Scheme.
+   * @returns An export statement in estree form.
+   */
+  private evaluateExport(expression: any[]): ModuleDeclaration {
+    if (expression.length !== 2) {
+      throw new SchemeParserError.SyntaxError(
+        expression[0].line,
+        expression[0].col
+      );
+    }
+    if (
+      !(expression[1][0] instanceof Token) ||
+      expression[1][0].type !== TokenType.DEFINE
+    ) {
+      throw new SchemeParserError.SyntaxError(
+        expression[0].line,
+        expression[0].col
+      );
+    }
+    const declaration = this.evaluate(expression[1]) as VariableDeclaration;
+    return {
+      type: "ExportNamedDeclaration",
+      declaration: declaration,
+      specifiers: [],
+      source: null,
+      loc: {
+        start: this.toSourceLocation(expression[0]).start,
+        end: declaration.loc!.end,
+      },
+    };
   }
 
   /**
@@ -565,12 +694,15 @@ export class SchemeParser {
           definitions = false;
           body.push(
             i < statement.length - 1
-              ? this.wrapInStatement(this.evaluate(statement[i]))
-              : this.returnStatement(this.evaluate(statement[i]))
+              ? // Safe to cast as module declarations are only top level.
+                (this.wrapInStatement(this.evaluate(statement[i])) as Statement)
+              : (this.returnStatement(this.evaluate(statement[i])) as Statement)
           );
         } else {
           if (definitions) {
-            body.push(this.wrapInStatement(this.evaluate(statement[i])));
+            body.push(
+              this.wrapInStatement(this.evaluate(statement[i])) as Statement
+            );
           } else {
             // The definitons block is over, and yet there is a define.
             throw new SchemeParserError.SyntaxError(
@@ -817,12 +949,15 @@ export class SchemeParser {
         definitions = false;
         body.push(
           i < expression.length - 1
-            ? this.wrapInStatement(this.evaluate(expression[i]))
-            : this.returnStatement(this.evaluate(expression[i]))
+            ? // Safe to cast as module declarations are only top level.
+              (this.wrapInStatement(this.evaluate(expression[i])) as Statement)
+            : (this.returnStatement(this.evaluate(expression[i])) as Statement)
         );
       } else {
         if (definitions) {
-          body.push(this.wrapInStatement(this.evaluate(expression[i])));
+          body.push(
+            this.wrapInStatement(this.evaluate(expression[i])) as Statement
+          );
         } else {
           // The definitons block is over, and yet there is a define.
           throw new SchemeParserError.SyntaxError(
@@ -885,12 +1020,15 @@ export class SchemeParser {
         definitions = false;
         body.push(
           i < expression.length - 1
-            ? this.wrapInStatement(this.evaluate(expression[i]))
-            : this.returnStatement(this.evaluate(expression[i]))
+            ? // Safe to cast as module declarations are only top level.
+              (this.wrapInStatement(this.evaluate(expression[i])) as Statement)
+            : (this.returnStatement(this.evaluate(expression[i])) as Statement)
         );
       } else {
         if (definitions) {
-          body.push(this.wrapInStatement(this.evaluate(expression[i])));
+          body.push(
+            this.wrapInStatement(this.evaluate(expression[i])) as Statement
+          );
         } else {
           // The definitions block is over, and yet there is a define.
           throw new SchemeParserError.SyntaxError(
@@ -1004,12 +1142,15 @@ export class SchemeParser {
         definitions = false;
         body.push(
           i < expression.length - 1
-            ? this.wrapInStatement(this.evaluate(expression[i]))
-            : this.returnStatement(this.evaluate(expression[i]))
+            ? // Safe to cast as module declarations are only top level.
+              (this.wrapInStatement(this.evaluate(expression[i])) as Statement)
+            : (this.returnStatement(this.evaluate(expression[i])) as Statement)
         );
       } else {
         if (definitions) {
-          body.push(this.wrapInStatement(this.evaluate(expression[i])));
+          body.push(
+            this.wrapInStatement(this.evaluate(expression[i])) as Statement
+          );
         } else {
           // The definitons block is over, and yet there is a define.
           throw new SchemeParserError.SyntaxError(
@@ -1030,13 +1171,16 @@ export class SchemeParser {
       },
       callee: {
         type: "FunctionExpression",
-        loc: declaredVariables.length > 0 ? {
-          start: declaredVariables[0].loc!.start,
-          end: body[body.length - 1].loc!.end,
-        } : {
-          start: body[0].loc!.start,
-          end: body[body.length - 1].loc!.end,
-        },
+        loc:
+          declaredVariables.length > 0
+            ? {
+                start: declaredVariables[0].loc!.start,
+                end: body[body.length - 1].loc!.end,
+              }
+            : {
+                start: body[0].loc!.start,
+                end: body[body.length - 1].loc!.end,
+              },
         id: null,
         generator: false,
         async: false,
@@ -1119,15 +1263,17 @@ export class SchemeParser {
    * @param expression An expression.
    * @returns A statement.
    */
-  private wrapInStatement(expression: Expression | Statement): Statement {
-    if (this.isStatement(expression)) {
-      return expression;
+  private wrapInStatement(
+    expression: Expression | Statement | ModuleDeclaration
+  ): Statement | ModuleDeclaration {
+    if (this.isExpression(expression)) {
+      return {
+        type: "ExpressionStatement",
+        expression: expression,
+        loc: expression.loc,
+      } as ExpressionStatement;
     }
-    return {
-      type: "ExpressionStatement",
-      expression: expression,
-      loc: expression.loc,
-    } as ExpressionStatement;
+    return expression;
   }
 
   /**
@@ -1136,35 +1282,42 @@ export class SchemeParser {
    * @param expression An expression.
    * @returns A statement.
    */
-  private returnStatement(expression: Expression | Statement): ReturnStatement {
-    if (this.isStatement(expression)) {
-      // If the expression is actually a statement,
-      // it returns undefined
+  private returnStatement(
+    expression: Expression | Statement | ModuleDeclaration
+  ): ReturnStatement {
+    if (this.isExpression(expression)) {
+      // Return the expression wrapped in a return statement.
+
       return {
         type: "ReturnStatement",
-		argument: null,
+        argument: expression,
         loc: expression.loc,
       };
     }
+    // If the expression is not a expression, return a return statement with no argument.
     return {
       type: "ReturnStatement",
-      argument: expression,
+      argument: {
+        type: "Identifier",
+        name: "undefined",
+        loc: expression.loc,
+      },
       loc: expression.loc,
     };
   }
 
   /**
-   * Typeguard to determine if a node is a statement.
+   * Typeguard to determine if a node is an expression.
    *
-   * @param maybeStatement A node.
-   * @returns True if the node is a statement.
+   * @param maybeExpression A node.
+   * @returns True if the node is an expression.
    */
-  private isStatement(
-    maybeStatement: Expression | Statement
-  ): maybeStatement is Statement {
+  private isExpression(
+    maybeStatement: Expression | Statement | ModuleDeclaration
+  ): maybeStatement is Expression {
     return (
-      maybeStatement.type.includes("Statement") ||
-      maybeStatement.type.includes("Declaration")
+      !maybeStatement.type.includes("Statement") &&
+      !maybeStatement.type.includes("Declaration")
     );
   }
 
@@ -1172,15 +1325,23 @@ export class SchemeParser {
    * Evaluates the proper sourceLocation for an expression.
    * @returns The sourceLocation for an expression.
    */
-  private toSourceLocation(startToken: Token): SourceLocation {
+  private toSourceLocation(startToken: Token): SourceLocation;
+  private toSourceLocation(startToken: Token, endToken: Token): SourceLocation;
+  private toSourceLocation(
+    startToken: Token,
+    endToken?: Token
+  ): SourceLocation {
     return {
       start: {
         line: startToken.line,
         column: startToken.col,
       } as Position,
       end: {
-        line: startToken.line,
-        column: startToken.col + startToken.lexeme.length,
+        line: endToken == undefined ? startToken.line : endToken.line,
+        column:
+          endToken == undefined
+            ? startToken.col + startToken.lexeme.length
+            : endToken.col + endToken.lexeme.length,
       } as Position,
     };
   }
@@ -1192,7 +1353,7 @@ export class SchemeParser {
         // "Unwrap" the exterior grouping
         currentStatement = currentStatement[0];
         this.estree.body.push(
-          this.wrapInStatement(this.evaluate(currentStatement))
+          this.wrapInStatement(this.evaluate(currentStatement, false, true))
         );
       }
     }

@@ -18,6 +18,20 @@
 
 - Parentheses: `scm-slang` supports the use of square brackets (i.e. []) interchangably with parentheses in order to enhance the visual representation of Scheme code, similar to [Racket](https://racket-lang.org/) or [Guile Scheme](https://www.gnu.org/software/guile/). [See relevant discussion here](http://community.schemewiki.org/?scheme-faq-language)
 
+- Import/Export: `scm-slang` follows a specialised import/export system that deviates from any standard Scheme implementation.
+
+```scheme
+;equivaent JavaScript to import:
+;import { stack, beside } from "runes";
+(import "runes" (stack beside))
+```
+
+```scheme
+;equivaent JavaScript to export:
+;export let foo = "bar";
+(export (define foo "bar"))
+```
+
 # Requirements
 
 - `node`: known working version: v16.19.0
