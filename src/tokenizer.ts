@@ -22,6 +22,8 @@ let keywords = new Map<string, TokenType>([
   ["set!", TokenType.SET],
   ["begin", TokenType.BEGIN],
   ["quote", TokenType.QUOTE],
+  ["export", TokenType.EXPORT],
+  ["import", TokenType.IMPORT],
   ["define", TokenType.DEFINE],
   ["lambda", TokenType.LAMBDA],
 ]);
