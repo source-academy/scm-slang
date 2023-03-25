@@ -540,7 +540,7 @@ export class SchemeParser {
       callee: {
         type: "Identifier",
         loc: loc,
-        name: "Symbol",
+        name: "_Symbol",
       },
       arguments: [
         {
@@ -805,7 +805,18 @@ export class SchemeParser {
         expression[0].col
       );
     }
-    const test = this.evaluate(expression[1], true) as Expression;
+    // Convert JavaScript's truthy/falsy values to Scheme's true/false.
+    const test_val = this.evaluate(expression[1], true) as Expression;
+    const test = {
+      type: "CallExpression",
+      loc: test_val.loc,
+      callee: {
+        type: "Identifier",
+        loc: test_val.loc,
+        name: "$true",
+      },
+      arguments: [test_val],
+    } as Expression;
     const consequent = this.evaluate(expression[2], true) as Expression;
     const alternate =
       expression.length === 4
@@ -873,10 +884,24 @@ export class SchemeParser {
           }
           catchAll = this.evaluateBody(clause.slice(1));
         } else {
-          const test: Expression = this.evaluate(clause[0], true) as Expression;
+          const test_val: Expression = this.evaluate(
+            clause[0],
+            true
+          ) as Expression;
+          // Convert JavaScript's truthy/falsy values to Scheme's true/false.
+          const test: Expression = {
+            type: "CallExpression",
+            loc: test_val.loc,
+            callee: {
+              type: "Identifier",
+              loc: test_val.loc,
+              name: "$true",
+            },
+            arguments: [test_val],
+          } as Expression;
           conditions.push(test);
           bodies.push(
-            clause.length < 2 ? test : this.evaluateBody(clause.slice(1))
+            clause.length < 2 ? test_val : this.evaluateBody(clause.slice(1))
           );
           catchAll.loc = bodies[bodies.length - 1].loc;
           catchAll.loc!.start = catchAll.loc!.end;
