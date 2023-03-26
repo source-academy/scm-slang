@@ -744,20 +744,15 @@ export let apply = function (proc: Function, args: any[]): any {
 };
 
 export let map = function (proc: Function, ...args: (Pair | null)[]): Pair | null {
-  let acc: Pair | null = null;
-  let len = length(args[0]);
-  for (let i = 1; i < args.length; i++) {
-    len = Math.min(len, length(args[i]));
-  }
-  for (let i = 0; i < len; i++) {
-    let arg: any[] = [];
-    for (let j = 0; j < args.length; j++) {
-      arg.push(car(args[j] as Pair));
-      args[j] = cdr(args[j] as Pair);
+  const arg: any[] = [];
+  for (let j = 0; j < args.length; j++) {
+    if (args[j] === null) {
+      return null;
     }
-    acc = new Pair(proc(...arg), acc);
+    arg.push(car(args[j] as Pair));
+    args[j] = cdr(args[j] as Pair);
   }
-  return reverse(acc);
+  return cons(proc(...arg), map(proc, ...args));
 };
 
 // Exception handling
@@ -769,10 +764,6 @@ export let error = function (msg: string): void {
 // Environments and evaluation
 
 // Input and output
-
-export let display = function (x: any): void {
-  process.stdout.write(x.toString());
-};
 
 export let newline = function (): void {
   process.stdout.write("\n");

@@ -1,6 +1,6 @@
 import { Tokenizer } from "../tokenizer";
 import { readFileSync } from "fs";
-import { SchemeParser } from "../scheme-parser"; 
+import { SchemeParser } from "../parser"; 
 const escodegen = require("escodegen");
 
 const str = readFileSync("./src/tests/test-metacircular-evaluator.scm", "utf8");

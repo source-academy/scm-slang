@@ -1,6 +1,6 @@
 import { Token } from "./tokenizer";
 import { TokenType } from "./token-type";
-import { SchemeParserError } from "./scheme-error";
+import { SchemeParserError } from "./error";
 import {
   Program,
   Expression,
@@ -99,6 +99,7 @@ export class SchemeParser {
         case TokenType.IMPORT:
         case TokenType.EXPORT:
         case TokenType.BEGIN:
+        case TokenType.DELAY:
         case TokenType.COND:
         case TokenType.ELSE:
         case TokenType.IDENTIFIER:
@@ -286,6 +287,8 @@ export class SchemeParser {
           return this.evaluateSet(expression);
         case TokenType.BEGIN:
           return this.evaluateBegin(expression);
+        case TokenType.DELAY:
+          return this.evaluateDelay(expression);
 
         // Not in SICP but required for Source
         case TokenType.IMPORT:
@@ -346,6 +349,40 @@ export class SchemeParser {
     // Top-level grouping definitely has no special form.
     // Evaluate as a function call.
     return this.evaluateApplication(expression);
+  }
+
+  /**
+   * Evaluates a delay procedure call.
+   * 
+   * @param expression A delay procedure call in Scheme.
+   * @returns A lambda function that takes no arguments and returns the delayed expression.
+   */
+  private evaluateDelay(expression: any[]): FunctionExpression {
+    if (expression.length !== 2) {
+      throw new SchemeParserError.SyntaxError(
+        expression[0].line,
+        expression[0].col
+      );
+    }
+    const delayed: Statement = this.returnStatement(
+      this.evaluate(expression[1], true, false)
+    );
+    return {
+      type: "FunctionExpression",
+      loc: {
+        start: this.toSourceLocation(expression[0]).start,
+        end: delayed.loc!.end
+      },
+      id: null,
+      params: [],
+      body: {
+        type: "BlockStatement",
+        loc: delayed.loc,
+        body: [delayed]
+      },
+      generator: false,
+      async: false,
+    };
   }
 
   /**

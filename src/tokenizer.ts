@@ -6,7 +6,7 @@
 // py-slang: https://github.com/source-academy/py-slang
 
 import { TokenType } from "./token-type";
-import { TokenizerError } from "./scheme-error";
+import { TokenizerError } from "./error";
 
 // These characters can be included as
 // part of an identifier in scheme.
@@ -21,6 +21,7 @@ let keywords = new Map<string, TokenType>([
   ["else", TokenType.ELSE],
   ["set!", TokenType.SET],
   ["begin", TokenType.BEGIN],
+  ["delay", TokenType.DELAY],
   ["quote", TokenType.QUOTE],
   ["export", TokenType.EXPORT],
   ["import", TokenType.IMPORT],
