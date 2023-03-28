@@ -1,6 +1,6 @@
 import { Token } from "./tokenizer";
 import { TokenType } from "./token-type";
-import { SchemeParserError } from "./scheme-error";
+import { SchemeParserError } from "./error";
 import {
   Program,
   Expression,
@@ -23,11 +23,13 @@ import {
 } from "estree";
 
 export class SchemeParser {
+  private readonly source: string;
   private readonly tokens: Token[];
   private readonly estree: Program;
   private current: number = 0;
 
-  constructor(tokens: Token[]) {
+  constructor(source: string, tokens: Token[]) {
+    this.source = source;
     this.tokens = tokens;
     this.estree = {
       type: "Program",
@@ -99,6 +101,7 @@ export class SchemeParser {
         case TokenType.IMPORT:
         case TokenType.EXPORT:
         case TokenType.BEGIN:
+        case TokenType.DELAY:
         case TokenType.COND:
         case TokenType.ELSE:
         case TokenType.IDENTIFIER:
@@ -286,6 +289,8 @@ export class SchemeParser {
           return this.evaluateSet(expression);
         case TokenType.BEGIN:
           return this.evaluateBegin(expression);
+        case TokenType.DELAY:
+          return this.evaluateDelay(expression);
 
         // Not in SICP but required for Source
         case TokenType.IMPORT:
@@ -346,6 +351,40 @@ export class SchemeParser {
     // Top-level grouping definitely has no special form.
     // Evaluate as a function call.
     return this.evaluateApplication(expression);
+  }
+
+  /**
+   * Evaluates a delay procedure call.
+   * 
+   * @param expression A delay procedure call in Scheme.
+   * @returns A lambda function that takes no arguments and returns the delayed expression.
+   */
+  private evaluateDelay(expression: any[]): FunctionExpression {
+    if (expression.length !== 2) {
+      throw new SchemeParserError.SyntaxError(
+        expression[0].line,
+        expression[0].col
+      );
+    }
+    const delayed: Statement = this.returnStatement(
+      this.evaluate(expression[1], true, false)
+    );
+    return {
+      type: "FunctionExpression",
+      loc: {
+        start: this.toSourceLocation(expression[0]).start,
+        end: delayed.loc!.end
+      },
+      id: null,
+      params: [],
+      body: {
+        type: "BlockStatement",
+        loc: delayed.loc,
+        body: [delayed]
+      },
+      generator: false,
+      async: false,
+    };
   }
 
   /**
@@ -540,7 +579,7 @@ export class SchemeParser {
       callee: {
         type: "Identifier",
         loc: loc,
-        name: "Symbol",
+        name: "_Symbol",
       },
       arguments: [
         {
@@ -805,7 +844,18 @@ export class SchemeParser {
         expression[0].col
       );
     }
-    const test = this.evaluate(expression[1], true) as Expression;
+    // Convert JavaScript's truthy/falsy values to Scheme's true/false.
+    const test_val = this.evaluate(expression[1], true) as Expression;
+    const test = {
+      type: "CallExpression",
+      loc: test_val.loc,
+      callee: {
+        type: "Identifier",
+        loc: test_val.loc,
+        name: "$true",
+      },
+      arguments: [test_val],
+    } as Expression;
     const consequent = this.evaluate(expression[2], true) as Expression;
     const alternate =
       expression.length === 4
@@ -873,10 +923,24 @@ export class SchemeParser {
           }
           catchAll = this.evaluateBody(clause.slice(1));
         } else {
-          const test: Expression = this.evaluate(clause[0], true) as Expression;
+          const test_val: Expression = this.evaluate(
+            clause[0],
+            true
+          ) as Expression;
+          // Convert JavaScript's truthy/falsy values to Scheme's true/false.
+          const test: Expression = {
+            type: "CallExpression",
+            loc: test_val.loc,
+            callee: {
+              type: "Identifier",
+              loc: test_val.loc,
+              name: "$true",
+            },
+            arguments: [test_val],
+          } as Expression;
           conditions.push(test);
           bodies.push(
-            clause.length < 2 ? test : this.evaluateBody(clause.slice(1))
+            clause.length < 2 ? test_val : this.evaluateBody(clause.slice(1))
           );
           catchAll.loc = bodies[bodies.length - 1].loc;
           catchAll.loc!.start = catchAll.loc!.end;

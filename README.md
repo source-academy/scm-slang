@@ -14,9 +14,13 @@
 
 - Continuations: Continuations do not currently have first-class status in Source. Hence, procedures such as `call/cc`, which operate on continuations, are not yet implemented.
 
-- Numerical types: `scm-slang` does not support complex numbers.
+- Types: `scm-slang` does not support complex numbers or characters.
 
 - Parentheses: `scm-slang` supports the use of square brackets (i.e. []) interchangably with parentheses in order to enhance the visual representation of Scheme code, similar to [Racket](https://racket-lang.org/) or [Guile Scheme](https://www.gnu.org/software/guile/). [See relevant discussion here](http://community.schemewiki.org/?scheme-faq-language)
+
+- Named let is not supported.
+
+- Variadic functions: `scm-slang` does not currently support variadic functions with usage of the `.` operator or the `case-lambda` syntax.
 
 - Import/Export: `scm-slang` follows a specialised import/export system that deviates from any standard Scheme implementation. It follows more closely to JavaScript syntax so as to maintain compatibility with current Source Academy modules.
 

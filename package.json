@@ -27,12 +27,13 @@
     "dependencies": {
         "@types/estree": "^1.0.0",
         "acorn": "^8.8.2",
-        "acorn-walk": "^8.2.0",
-        "escodegen": "^2.0.0"
+        "acorn-walk": "^8.2.0"
+
     },
     "scripts": {},
     "meta": {},
     "devDependencies": {
-        "@types/node": "^18.14.2"
+        "@types/node": "^18.14.2",
+        "escodegen": "^2.0.0"
     }
 }

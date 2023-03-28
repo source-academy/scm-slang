@@ -1,6 +1,6 @@
 import { Token } from "./tokenizer";
 import { TokenType } from "./token-type";
-import { SchemeParser } from "./scheme-parser";
+import { SchemeParser } from "./parser";
 
 export namespace TokenizerError {
     export abstract class TokenizerError extends Error {

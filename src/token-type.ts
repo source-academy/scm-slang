@@ -16,13 +16,13 @@ export enum TokenType {
     IDENTIFIER, NUMBER, BOOLEAN, STRING,
 
     // SICP Chapter 1
-    IF, LET, COND, ELSE, BEGIN, DEFINE, LAMBDA,
+    IF, LET, COND, ELSE, DEFINE, LAMBDA,
 
     // SICP Chapter 2
     QUOTE, UNQUOTE, QUASIQUOTE,
     
     // SICP Chapter 3
-    SET,  
+    SET, BEGIN, DELAY, 
     
     // Other important keywords
     IMPORT, EXPORT,
