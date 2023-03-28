@@ -280,26 +280,6 @@ export class Tokenizer {
     return TokenType.IDENTIFIER;
   }
 
-  private numberToken(): void {
-    while (this.isDigit(this.peek())) this.advance();
-
-    // look for a fractional part
-    if (
-      this.peek() === "." &&
-      (this.isDigit(this.peekNext()) || this.isWhitespace(this.peekNext()))
-    ) {
-      // consume the "."
-      this.advance();
-
-      while (this.isDigit(this.peek())) this.advance();
-    }
-
-    this.addToken(
-      TokenType.NUMBER,
-      parseFloat(this.source.substring(this.start, this.current))
-    );
-  }
-
   private stringToken(): void {
     while (this.peek() != '"' && !this.isAtEnd()) {
       if (this.peek() === "\n") {

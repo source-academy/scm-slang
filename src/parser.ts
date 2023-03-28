@@ -47,10 +47,6 @@ export class Parser {
     return this.current >= this.tokens.length;
   }
 
-  private peek(): Token {
-    return this.tokens[this.current];
-  }
-
   private previous(): Token {
     return this.tokens[this.current - 1];
   }
