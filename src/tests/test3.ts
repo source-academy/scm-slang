@@ -1,12 +1,12 @@
 import { readFileSync } from "fs";
 import { Tokenizer } from "../tokenizer";
-import { SchemeParser } from "../parser"; 
+import { Parser } from "../parser"; 
 const escodegen = require("escodegen");
-
+/*
 const acorn = require("acorn");
 const walk = require("acorn-walk");
 
-const glob = readFileSync("./src/scheme-global-environment.js", "utf8");
+const glob = readFileSync("./src/lib/scheme-base.ts", "utf8");
 const tree = acorn.parse(glob, {ecmaVersion: 2020, sourceType: "module"});
 
 let keywords = new Map<string, string>([
@@ -24,15 +24,15 @@ walk.simple(tree, {
         }
     }
 });
-
+*/
 const str = readFileSync("./src/tests/quotation.scm", "utf8");
 
 const tz = new Tokenizer(str);
 
 const tok = tz.scanTokens();
 
-const ps = new SchemeParser(tok);
+const ps = new Parser(str, tok);
 
-tree.body.push(...ps.parse().body);
+//tree.body.push(...ps.parse().body);
 
-console.log(escodegen.generate(tree));
+console.log(escodegen.generate(ps.parse()));
