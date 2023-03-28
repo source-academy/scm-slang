@@ -1,6 +1,6 @@
 import { Token } from "./tokenizer";
 import { TokenType } from "./token-type";
-import { SchemeParserError } from "./error";
+import { ParserError } from "./error";
 import {
   Program,
   Expression,
@@ -22,7 +22,7 @@ import {
   ModuleDeclaration,
 } from "estree";
 
-export class SchemeParser {
+export class Parser {
   private readonly source: string;
   private readonly tokens: Token[];
   private readonly estree: Program;
@@ -77,13 +77,13 @@ export class SchemeParser {
         case TokenType.RIGHT_PAREN:
         case TokenType.RIGHT_BRACKET:
           if (!inList) {
-            throw new SchemeParserError.UnexpectedTokenError(c.line, c.col, c);
+            throw new ParserError.UnexpectedTokenError(this.source, c.line, c.col, c);
           } else if (
             !this.matchingParentheses(openparen as TokenType, c.type)
           ) {
             // ^ safe to cast openparen as this only executes
             // if inList is true, which is only the case if openparen exists
-            throw new SchemeParserError.ParenthesisMismatchError(c.line, c.col);
+            throw new ParserError.ParenthesisMismatchError(this.source, c.line, c.col);
           }
           inList = false;
           break;
@@ -119,13 +119,13 @@ export class SchemeParser {
           break;
         case TokenType.EOF:
           if (inList) {
-            throw new SchemeParserError.UnexpectedEOFError(c.line, c.col);
+            throw new ParserError.UnexpectedEOFError(this.source, c.line, c.col);
           } else {
             tokens.push(c);
           }
           break;
         default:
-          throw new SchemeParserError.UnexpectedTokenError(c.line, c.col, c);
+          throw new ParserError.UnexpectedTokenError(this.source, c.line, c.col, c);
       }
     } while (inList);
     return tokens;
@@ -249,7 +249,7 @@ export class SchemeParser {
         case TokenType.DEFINE:
           // Assignment statements with no value.
           if (onlyExpressions) {
-            throw new SchemeParserError.UnexpectedTokenError(
+            throw new ParserError.UnexpectedTokenError(this.source, 
               firstToken.line,
               firstToken.col,
               firstToken
@@ -266,7 +266,7 @@ export class SchemeParser {
           return this.evaluateCond(expression);
         case TokenType.ELSE:
           // This shouldn't exist outside of cond.
-          throw new SchemeParserError.UnexpectedTokenError(
+          throw new ParserError.UnexpectedTokenError(this.source, 
             firstToken.line,
             firstToken.col,
             firstToken
@@ -278,7 +278,7 @@ export class SchemeParser {
           return this.evaluateQuote(expression);
         case TokenType.UNQUOTE:
           // This shouldn't exist outside of unquotes.
-          throw new SchemeParserError.UnexpectedTokenError(
+          throw new ParserError.UnexpectedTokenError(this.source, 
             firstToken.line,
             firstToken.col,
             firstToken
@@ -295,14 +295,14 @@ export class SchemeParser {
         // Not in SICP but required for Source
         case TokenType.IMPORT:
           if (onlyExpressions) {
-            throw new SchemeParserError.UnexpectedTokenError(
+            throw new ParserError.UnexpectedTokenError(this.source, 
               firstToken.line,
               firstToken.col,
               firstToken
             );
           }
           if (!topLevel) {
-            throw new SchemeParserError.UnexpectedTokenError(
+            throw new ParserError.UnexpectedTokenError(this.source, 
               firstToken.line,
               firstToken.col,
               firstToken
@@ -311,14 +311,14 @@ export class SchemeParser {
           return this.evaluateImport(expression);
         case TokenType.EXPORT:
           if (onlyExpressions) {
-            throw new SchemeParserError.UnexpectedTokenError(
+            throw new ParserError.UnexpectedTokenError(this.source, 
               firstToken.line,
               firstToken.col,
               firstToken
             );
           }
           if (!topLevel) {
-            throw new SchemeParserError.UnexpectedTokenError(
+            throw new ParserError.UnexpectedTokenError(this.source, 
               firstToken.line,
               firstToken.col,
               firstToken
@@ -327,7 +327,7 @@ export class SchemeParser {
           return this.evaluateExport(expression);
         case TokenType.DOT:
           // This shouldn't exist here
-          throw new SchemeParserError.UnexpectedTokenError(
+          throw new ParserError.UnexpectedTokenError(this.source, 
             firstToken.line,
             firstToken.col,
             firstToken
@@ -336,7 +336,7 @@ export class SchemeParser {
         // Outside SICP
         case TokenType.VECTOR:
         case TokenType.UNQUOTE_SPLICING:
-          throw new SchemeParserError.UnsupportedTokenError(
+          throw new ParserError.UnsupportedTokenError(this.source, 
             firstToken.line,
             firstToken.col,
             firstToken
@@ -361,7 +361,7 @@ export class SchemeParser {
    */
   private evaluateDelay(expression: any[]): FunctionExpression {
     if (expression.length !== 2) {
-      throw new SchemeParserError.SyntaxError(
+      throw new ParserError.SyntaxError(this.source, 
         expression[0].line,
         expression[0].col
       );
@@ -401,7 +401,7 @@ export class SchemeParser {
       !(expression[1] instanceof Token) ||
       !(expression[2] instanceof Array)
     ) {
-      throw new SchemeParserError.SyntaxError(
+      throw new ParserError.SyntaxError(this.source, 
         expression[0].line,
         expression[0].col
       );
@@ -409,7 +409,7 @@ export class SchemeParser {
     const specifiers: ImportSpecifier[] = [];
     for (let i = 0; i < expression[2].length; i++) {
       if (!(expression[2][i] instanceof Token)) {
-        throw new SchemeParserError.SyntaxError(
+        throw new ParserError.SyntaxError(this.source, 
           expression[0].line,
           expression[0].col
         );
@@ -442,7 +442,7 @@ export class SchemeParser {
    */
   private evaluateExport(expression: any[]): ModuleDeclaration {
     if (expression.length !== 2) {
-      throw new SchemeParserError.SyntaxError(
+      throw new ParserError.SyntaxError(this.source, 
         expression[0].line,
         expression[0].col
       );
@@ -451,7 +451,7 @@ export class SchemeParser {
       !(expression[1][0] instanceof Token) ||
       expression[1][0].type !== TokenType.DEFINE
     ) {
-      throw new SchemeParserError.SyntaxError(
+      throw new ParserError.SyntaxError(this.source, 
         expression[0].line,
         expression[0].col
       );
@@ -479,7 +479,7 @@ export class SchemeParser {
   private evaluateQuote(expression: any[], quasiquote: boolean): Expression;
   private evaluateQuote(expression: any[], quasiquote?: boolean): Expression {
     if (expression.length !== 2) {
-      throw new SchemeParserError.SyntaxError(
+      throw new ParserError.SyntaxError(this.source, 
         expression[0].line,
         expression[0].col
       );
@@ -531,7 +531,7 @@ export class SchemeParser {
     for (var i = 0; i < expression.length; i++) {
       if (expression[i].type === TokenType.DOT) {
         if (hasDot) {
-          throw new SchemeParserError.SyntaxError(
+          throw new ParserError.SyntaxError(this.source, 
             expression[i].line,
             expression[i].col
           );
@@ -548,7 +548,7 @@ export class SchemeParser {
     }
     if (hasDot) {
       if (listElements2.length !== 1) {
-        throw new SchemeParserError.SyntaxError(
+        throw new ParserError.SyntaxError(this.source, 
           expression[0].line,
           expression[0].col
         );
@@ -655,7 +655,7 @@ export class SchemeParser {
    */
   private evaluateSet(expression: any[]): AssignmentExpression {
     if (expression.length !== 3) {
-      throw new SchemeParserError.SyntaxError(
+      throw new ParserError.SyntaxError(this.source, 
         expression[0].line,
         expression[0].col
       );
@@ -664,7 +664,7 @@ export class SchemeParser {
       !(expression[1] instanceof Token) ||
       expression[1].type !== TokenType.IDENTIFIER
     ) {
-      throw new SchemeParserError.SyntaxError(
+      throw new ParserError.SyntaxError(this.source, 
         expression[0].line,
         expression[0].col
       );
@@ -697,7 +697,7 @@ export class SchemeParser {
   private evaluateDefine(statement: any[]): VariableDeclaration {
     // Validate statement.
     if (statement.length < 3) {
-      throw new SchemeParserError.SyntaxError(
+      throw new ParserError.SyntaxError(this.source, 
         statement[0].line,
         statement[0].col
       );
@@ -708,13 +708,13 @@ export class SchemeParser {
       const identifiers = statement[1].map((token: Token | any[]) => {
         if (token instanceof Array) {
           // Error.
-          throw new SchemeParserError.SyntaxError(
+          throw new ParserError.SyntaxError(this.source, 
             statement[0].line,
             statement[0].col
           );
         }
         if (token.type !== TokenType.IDENTIFIER) {
-          throw new SchemeParserError.SyntaxError(token.line, token.col);
+          throw new ParserError.SyntaxError(this.source, token.line, token.col);
         }
         return this.evaluateToken(token);
       });
@@ -744,7 +744,7 @@ export class SchemeParser {
             );
           } else {
             // The definitons block is over, and yet there is a define.
-            throw new SchemeParserError.SyntaxError(
+            throw new ParserError.SyntaxError(this.source, 
               statement[i][0].line,
               statement[i][0].col
             );
@@ -793,7 +793,7 @@ export class SchemeParser {
     // It's a variable.
     // Once again, validate statement.
     if (statement.length > 3) {
-      throw new SchemeParserError.SyntaxError(
+      throw new ParserError.SyntaxError(this.source, 
         statement[0].line,
         statement[0].col
       );
@@ -801,7 +801,7 @@ export class SchemeParser {
     const symbol = this.evaluateToken(statement[1]);
     // Validate symbol.
     if (symbol.type !== "Identifier") {
-      throw new SchemeParserError.SyntaxError(
+      throw new ParserError.SyntaxError(this.source, 
         statement[1].line,
         statement[1].col
       );
@@ -839,7 +839,7 @@ export class SchemeParser {
    */
   private evaluateIf(expression: any[]): ConditionalExpression {
     if (expression.length < 3 || expression.length > 4) {
-      throw new SchemeParserError.SyntaxError(
+      throw new ParserError.SyntaxError(this.source, 
         expression[0].line,
         expression[0].col
       );
@@ -885,7 +885,7 @@ export class SchemeParser {
    */
   private evaluateCond(expression: any[]): ConditionalExpression {
     if (expression.length < 2) {
-      throw new SchemeParserError.SyntaxError(
+      throw new ParserError.SyntaxError(this.source, 
         expression[0].line,
         expression[0].col
       );
@@ -902,7 +902,7 @@ export class SchemeParser {
       if (clause instanceof Array) {
         // Verify that the clause is not empty.
         if (clause.length < 1) {
-          throw new SchemeParserError.SyntaxError(
+          throw new ParserError.SyntaxError(this.source, 
             expression[0].line,
             expression[0].col
           );
@@ -910,13 +910,13 @@ export class SchemeParser {
         // Check if this is an else clause.
         if (clause[0].type === TokenType.ELSE) {
           if (i < clauses.length - 1) {
-            throw new SchemeParserError.SyntaxError(
+            throw new ParserError.SyntaxError(this.source, 
               clause[0].line,
               clause[0].col
             );
           }
           if (clause.length < 2) {
-            throw new SchemeParserError.SyntaxError(
+            throw new ParserError.SyntaxError(this.source, 
               clause[0].line,
               clause[0].col
             );
@@ -946,7 +946,7 @@ export class SchemeParser {
           catchAll.loc!.start = catchAll.loc!.end;
         }
       } else {
-        throw new SchemeParserError.SyntaxError(
+        throw new ParserError.SyntaxError(this.source, 
           expression[0].line,
           expression[0].col
         );
@@ -978,26 +978,26 @@ export class SchemeParser {
    */
   private evaluateLambda(expression: any[]): FunctionExpression {
     if (expression.length < 3) {
-      throw new SchemeParserError.SyntaxError(
+      throw new ParserError.SyntaxError(this.source, 
         expression[0].line,
         expression[0].col
       );
     }
     if (!(expression[1] instanceof Array)) {
-      throw new SchemeParserError.SyntaxError(
+      throw new ParserError.SyntaxError(this.source, 
         expression[1].line,
         expression[1].col
       );
     }
     const params: Identifier[] = expression[1].map((param: any) => {
       if (param instanceof Array) {
-        throw new SchemeParserError.SyntaxError(
+        throw new ParserError.SyntaxError(this.source, 
           expression[0].line,
           expression[0].col
         );
       }
       if (param.type !== TokenType.IDENTIFIER) {
-        throw new SchemeParserError.SyntaxError(param.line, param.col);
+        throw new ParserError.SyntaxError(this.source, param.line, param.col);
       }
       // We have evaluated that this is an identifier.
       return this.evaluateToken(param) as Identifier;
@@ -1024,7 +1024,7 @@ export class SchemeParser {
           );
         } else {
           // The definitons block is over, and yet there is a define.
-          throw new SchemeParserError.SyntaxError(
+          throw new ParserError.SyntaxError(this.source, 
             expression[i][0].line,
             expression[i][0].col
           );
@@ -1095,7 +1095,7 @@ export class SchemeParser {
           );
         } else {
           // The definitions block is over, and yet there is a define.
-          throw new SchemeParserError.SyntaxError(
+          throw new ParserError.SyntaxError(this.source, 
             expression[i][0].line,
             expression[i][0].col
           );
@@ -1148,13 +1148,13 @@ export class SchemeParser {
    */
   private evaluateLet(expression: any[]): CallExpression {
     if (expression.length < 3) {
-      throw new SchemeParserError.SyntaxError(
+      throw new ParserError.SyntaxError(this.source, 
         expression[0].line,
         expression[0].col
       );
     }
     if (!(expression[1] instanceof Array)) {
-      throw new SchemeParserError.SyntaxError(
+      throw new ParserError.SyntaxError(this.source, 
         expression[1].line,
         expression[1].col
       );
@@ -1163,25 +1163,25 @@ export class SchemeParser {
     const declaredValues: Expression[] = [];
     for (let i = 0; i < expression[1].length; i++) {
       if (!(expression[1][i] instanceof Array)) {
-        throw new SchemeParserError.SyntaxError(
+        throw new ParserError.SyntaxError(this.source, 
           expression[1][i].line,
           expression[1][i].col
         );
       }
       if (expression[1][i].length !== 2) {
-        throw new SchemeParserError.SyntaxError(
+        throw new ParserError.SyntaxError(this.source, 
           expression[1][i][0].line,
           expression[1][i][0].col
         );
       }
       if (!(expression[1][i][0] instanceof Token)) {
-        throw new SchemeParserError.SyntaxError(
+        throw new ParserError.SyntaxError(this.source, 
           expression[1][i][0].line,
           expression[1][i][0].col
         );
       }
       if (expression[1][i][0].type !== TokenType.IDENTIFIER) {
-        throw new SchemeParserError.SyntaxError(
+        throw new ParserError.SyntaxError(this.source, 
           expression[1][i][0].line,
           expression[1][i][0].col
         );
@@ -1217,7 +1217,7 @@ export class SchemeParser {
           );
         } else {
           // The definitons block is over, and yet there is a define.
-          throw new SchemeParserError.SyntaxError(
+          throw new ParserError.SyntaxError(this.source, 
             expression[i][0].line,
             expression[i][0].col
           );
@@ -1293,7 +1293,7 @@ export class SchemeParser {
    * @param token A token, which should be an expression.
    *              Either a literal or an identifier.
    * @returns An expression.
-   * @throws SchemeParserError.UnexpectedTokenError
+   * @throws ParserError.UnexpectedTokenError
    */
   private evaluateToken(token: Token): Literal | Identifier {
     switch (token.type) {
@@ -1313,7 +1313,7 @@ export class SchemeParser {
           loc: this.toSourceLocation(token),
         };
       default:
-        throw new SchemeParserError.UnexpectedTokenError(
+        throw new ParserError.UnexpectedTokenError(this.source, 
           token.line,
           token.col,
           token

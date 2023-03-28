@@ -1,6 +1,4 @@
 import { Token } from "./tokenizer";
-import { TokenType } from "./token-type";
-import { SchemeParser } from "./parser";
 
 export namespace TokenizerError {
     export abstract class TokenizerError extends Error {
@@ -39,22 +37,32 @@ export namespace TokenizerError {
     }
 }
 
-export namespace SchemeParserError {
+export namespace ParserError {
+
+    function extractLine(source: string, line: number): string {
+        let lines = source.split("\n");
+        return lines[line - 1];
+    }
+
+    function showPoint(col: number): string {
+        return "^".padStart(col, " ");
+    }
+
     export abstract class ParserError extends Error {
         // This base error shouldn't be used directly.
         line: number;
         col: number;
         constructor(message: string, line: number, col: number) {
-            super(message);
+            super(`Syntax error at (${line}:${col})\n${message}`);
             this.line = line;
             this.col = col;
         }
     }
 
     export class SyntaxError extends ParserError {
-        constructor(line: number, col: number) {
+        constructor(source: string, line: number, col: number) {
             super(
-                `Syntax error (${line}:${col})`,
+                extractLine(source, line) + "\n" + showPoint(col),
                 line,
                 col
             );
@@ -63,9 +71,9 @@ export namespace SchemeParserError {
     }
 
     export class ParenthesisMismatchError extends ParserError {
-        constructor(line: number, col: number) {
+        constructor(source: string, line: number, col: number) {
             super(
-                `Parenthesis mismatch (${line}:${col})`,
+                extractLine(source, line) + "\n" + showPoint(col) + "\n" + "Mismatched parenthesis",
                 line,
                 col
             );
@@ -74,9 +82,9 @@ export namespace SchemeParserError {
     }
 
     export class UnexpectedEOFError extends ParserError {
-        constructor(line: number, col: number) {
+        constructor(source: string, line: number, col: number) {
             super(
-                `Unexpected EOF (${line}:${col})`,
+                extractLine(source, line) + "\n" + "Unexpected EOF",
                 line,
                 col
             );
@@ -86,9 +94,9 @@ export namespace SchemeParserError {
 
     export class UnexpectedTokenError extends ParserError {
         token: Token;
-        constructor(line: number, col: number, token: Token) {
+        constructor(source: string, line: number, col: number, token: Token) {
             super(
-                `Unexpected token \'${token}\' (${line}:${col})`,
+                extractLine(source, line) + "\n" + showPoint(col) + "\n" + `Unexpected token \'${token}\'`,
                 line,
                 col
             );
@@ -99,9 +107,9 @@ export namespace SchemeParserError {
 
     export class UnsupportedTokenError extends ParserError {
         token: Token;
-        constructor(line: number, col: number, token: Token) {
+        constructor(source: string, line: number, col: number, token: Token) {
             super(
-                `Unsupported token \'${token}\' (${line}:${col})`,
+                extractLine(source, line) + "\n" + showPoint(col) + "\n" + `Unsupported token \'${token}\'`,
                 line,
                 col
             );
