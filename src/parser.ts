@@ -23,11 +23,13 @@ import {
 } from "estree";
 
 export class SchemeParser {
+  private readonly source: string;
   private readonly tokens: Token[];
   private readonly estree: Program;
   private current: number = 0;
 
-  constructor(tokens: Token[]) {
+  constructor(source: string, tokens: Token[]) {
+    this.source = source;
     this.tokens = tokens;
     this.estree = {
       type: "Program",

@@ -3,9 +3,10 @@ convention:
 
 _ --> - 
 E --> = (since all scheme basic procedures are in lower case)
-__ --> ->
 Q --> ?
 B --> !
+L --> <
+G --> >
 
 to be changed with regex.
 */
@@ -83,7 +84,7 @@ export let equal = function (...args: number[]): boolean {
   return acc;
 };
 
-export let less = function (...args: number[]): boolean {
+export let L = function (...args: number[]): boolean {
   let acc = true;
   for (let i = 0; i < args.length - 1; i++) {
     acc = acc && args[i] < args[i + 1];
@@ -91,7 +92,7 @@ export let less = function (...args: number[]): boolean {
   return acc;
 };
 
-export let greater = function (...args: number[]): boolean {
+export let G = function (...args: number[]): boolean {
   let acc = true;
   for (let i = 0; i < args.length - 1; i++) {
     acc = acc && args[i] > args[i + 1];
@@ -99,7 +100,7 @@ export let greater = function (...args: number[]): boolean {
   return acc;
 };
 
-export let less_equal = function (...args: number[]): boolean {
+export let LE = function (...args: number[]): boolean {
   let acc = true;
   for (let i = 0; i < args.length - 1; i++) {
     acc = acc && args[i] <= args[i + 1];
@@ -107,7 +108,7 @@ export let less_equal = function (...args: number[]): boolean {
   return acc;
 };
 
-export let greater_equal = function (...args: number[]): boolean {
+export let GE = function (...args: number[]): boolean {
   let acc = true;
   for (let i = 0; i < args.length - 1; i++) {
     acc = acc && args[i] >= args[i + 1];
@@ -230,11 +231,11 @@ export let exact = function(x: number): number {
     return x;
 }
 
-export let number__string = function(x: number): string {
+export let number_Gstring = function(x: number): string {
     return x.toString();
 }
 
-export let string__number = function(x: string): number {
+export let string_Gnumber = function(x: string): number {
     return Number(x);
 }
 
@@ -510,11 +511,11 @@ export let symbolEQ = function (s1: any, s2: any): boolean {
   return s1 instanceof _Symbol && s2 instanceof _Symbol && s1.equals(s2);
 };
 
-export let symbol__string = function (s: _Symbol): string {
+export let symbol_Gstring = function (s: _Symbol): string {
   return s.sym;
 };
 
-export let string__symbol = function (s: string): _Symbol {
+export let string_Gsymbol = function (s: string): _Symbol {
   return new _Symbol(s);
 };
 
@@ -553,19 +554,19 @@ export let stringEQ = function (s1: string, s2: string): boolean {
   return s1 === s2;
 };
 
-export let stringlessQ = function (s1: string, s2: string): boolean {
+export let stringLQ = function (s1: string, s2: string): boolean {
   return s1 < s2;
 };
 
-export let stringgreaterQ = function (s1: string, s2: string): boolean {
+export let stringGQ = function (s1: string, s2: string): boolean {
   return s1 > s2;
 };
 
-export let stringless__equalQ = function (s1: string, s2: string): boolean {
+export let stringLEQ = function (s1: string, s2: string): boolean {
   return s1 <= s2;
 };
 
-export let stringgreater__equalQ = function (s1: string, s2: string): boolean {
+export let stringGEQ = function (s1: string, s2: string): boolean {
   return s1 >= s2;
 };
 
@@ -581,7 +582,7 @@ export let string_append = function (...args: string[]): string {
   return args.join("");
 };
 
-export let string__list = function (s: string): Pair | null {
+export let string_Glist = function (s: string): Pair | null {
   let acc: Pair | null = null;
   for (let i = s.length - 1; i >= 0; i--) {
     acc = new Pair(s[i], acc);
@@ -589,7 +590,7 @@ export let string__list = function (s: string): Pair | null {
   return acc;
 };
 
-export let list__string = function (p: Pair | null): string {
+export let list_Gstring = function (p: Pair | null): string {
   let acc = "";
   while (p !== null) {
     acc += p.car;
@@ -673,7 +674,7 @@ export let vector_setB = function (v: Vector, n: number, item: any): void {
   v.vec[n] = item;
 };
 
-export let vector__list = function (v: Vector): Pair | null {
+export let vector_Glist = function (v: Vector): Pair | null {
   let acc: Pair | null = null;
   for (let i = v.vec.length - 1; i >= 0; i--) {
     acc = new Pair(v.vec[i], acc);
@@ -681,7 +682,7 @@ export let vector__list = function (v: Vector): Pair | null {
   return acc;
 };
 
-export let list__vector = function (p: Pair | null): Vector {
+export let list_Gvector = function (p: Pair | null): Vector {
   let acc: any[] = [];
   while (p !== null) {
     acc.push(p.car);
@@ -690,7 +691,7 @@ export let list__vector = function (p: Pair | null): Vector {
   return new Vector(acc);
 };
 
-export let vector__string = function (v: Vector): string {
+export let vector_Gstring = function (v: Vector): string {
   let acc = "";
   for (let i = 0; i < v.vec.length; i++) {
     acc += v.vec[i];
@@ -698,7 +699,7 @@ export let vector__string = function (v: Vector): string {
   return acc;
 };
 
-export let string__vector = function (s: string): Vector {
+export let string_Gvector = function (s: string): Vector {
   let acc: any[] = [];
   for (let i = 0; i < s.length; i++) {
     acc.push(s[i]);
