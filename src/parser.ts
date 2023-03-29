@@ -1055,7 +1055,10 @@ export class Parser {
       params: params,
       body: {
         type: "BlockStatement",
-        loc: body[body.length - 1].loc,
+        loc: {
+          start: body[0].loc!.start,
+          end: body[body.length - 1].loc!.end,
+        },
         body: body,
       },
       generator: false,
