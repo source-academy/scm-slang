@@ -1,7 +1,7 @@
 import { Token } from "./tokenizer";
 
 export namespace TokenizerError {
-    export abstract class TokenizerError extends Error {
+    export abstract class TokenizerError extends.GenericSyntaxError {
         // This base error shouldn't be used directly.
         line: number;
         col: number;
@@ -48,25 +48,25 @@ export namespace ParserError {
         return "^".padStart(col, " ");
     }
 
-    export abstract class ParserError extends Error {
+    export abstract class ParserError extends.GenericSyntaxError {
         // This base error shouldn't be used directly.
         line: number;
         col: number;
         constructor(message: string, line: number, col: number) {
-            super(`Syntax error at (${line}:${col})\n${message}`);
+            super(.GenericSyntax error at (${line}:${col})\n${message}`);
             this.line = line;
             this.col = col;
         }
     }
 
-    export class SyntaxError extends ParserError {
+    export class Generi.GenericSyntaxError extends ParserError {
         constructor(source: string, line: number, col: number) {
             super(
                 extractLine(source, line) + "\n" + showPoint(col),
                 line,
                 col
             );
-            this.name = "SyntaxError";
+            this.name = "Generi.GenericSyntaxError";
         }
     }
 
@@ -109,7 +109,7 @@ export namespace ParserError {
         token: Token;
         constructor(source: string, line: number, col: number, token: Token, chapter: number) {
             super(
-                extractLine(source, line) + "\n" + showPoint(col) + "\n" + `Syntax ${token} not allowed at chapter ${chapter}`,
+                extractLine(source, line) + "\n" + showPoint(col) + "\n" + .GenericSyntax ${token} not allowed at chapter ${chapter}`,
                 line,
                 col
             );

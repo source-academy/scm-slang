@@ -375,7 +375,7 @@ export class Parser {
    */
   private evaluateDelay(expression: any[]): FunctionExpression {
     if (expression.length !== 2) {
-      throw new ParserError.SyntaxError(this.source, 
+      throw new ParserError.GenericSyntaxError(this.source, 
         expression[0].line,
         expression[0].col
       );
@@ -415,7 +415,7 @@ export class Parser {
       !(expression[1] instanceof Token) ||
       !(expression[2] instanceof Array)
     ) {
-      throw new ParserError.SyntaxError(this.source, 
+      throw new ParserError.GenericSyntaxError(this.source, 
         expression[0].line,
         expression[0].col
       );
@@ -423,7 +423,7 @@ export class Parser {
     const specifiers: ImportSpecifier[] = [];
     for (let i = 0; i < expression[2].length; i++) {
       if (!(expression[2][i] instanceof Token)) {
-        throw new ParserError.SyntaxError(this.source, 
+        throw new ParserError.GenericSyntaxError(this.source, 
           expression[0].line,
           expression[0].col
         );
@@ -456,7 +456,7 @@ export class Parser {
    */
   private evaluateExport(expression: any[]): ModuleDeclaration {
     if (expression.length !== 2) {
-      throw new ParserError.SyntaxError(this.source, 
+      throw new ParserError.GenericSyntaxError(this.source, 
         expression[0].line,
         expression[0].col
       );
@@ -465,7 +465,7 @@ export class Parser {
       !(expression[1][0] instanceof Token) ||
       expression[1][0].type !== TokenType.DEFINE
     ) {
-      throw new ParserError.SyntaxError(this.source, 
+      throw new ParserError.GenericSyntaxError(this.source, 
         expression[0].line,
         expression[0].col
       );
@@ -493,7 +493,7 @@ export class Parser {
   private evaluateQuote(expression: any[], quasiquote: boolean): Expression;
   private evaluateQuote(expression: any[], quasiquote?: boolean): Expression {
     if (expression.length !== 2) {
-      throw new ParserError.SyntaxError(this.source, 
+      throw new ParserError.GenericSyntaxError(this.source, 
         expression[0].line,
         expression[0].col
       );
@@ -545,7 +545,7 @@ export class Parser {
     for (var i = 0; i < expression.length; i++) {
       if (expression[i].type === TokenType.DOT) {
         if (hasDot) {
-          throw new ParserError.SyntaxError(this.source, 
+          throw new ParserError.GenericSyntaxError(this.source, 
             expression[i].line,
             expression[i].col
           );
@@ -562,7 +562,7 @@ export class Parser {
     }
     if (hasDot) {
       if (listElements2.length !== 1) {
-        throw new ParserError.SyntaxError(this.source, 
+        throw new ParserError.GenericSyntaxError(this.source, 
           expression[0].line,
           expression[0].col
         );
@@ -669,7 +669,7 @@ export class Parser {
    */
   private evaluateSet(expression: any[]): AssignmentExpression {
     if (expression.length !== 3) {
-      throw new ParserError.SyntaxError(this.source, 
+      throw new ParserError.GenericSyntaxError(this.source, 
         expression[0].line,
         expression[0].col
       );
@@ -678,7 +678,7 @@ export class Parser {
       !(expression[1] instanceof Token) ||
       expression[1].type !== TokenType.IDENTIFIER
     ) {
-      throw new ParserError.SyntaxError(this.source, 
+      throw new ParserError.GenericSyntaxError(this.source, 
         expression[0].line,
         expression[0].col
       );
@@ -711,7 +711,7 @@ export class Parser {
   private evaluateDefine(statement: any[]): VariableDeclaration {
     // Validate statement.
     if (statement.length < 3) {
-      throw new ParserError.SyntaxError(this.source, 
+      throw new ParserError.GenericSyntaxError(this.source, 
         statement[0].line,
         statement[0].col
       );
@@ -722,13 +722,13 @@ export class Parser {
       const identifiers = statement[1].map((token: Token | any[]) => {
         if (token instanceof Array) {
           // Error.
-          throw new ParserError.SyntaxError(this.source, 
+          throw new ParserError.GenericSyntaxError(this.source, 
             statement[0].line,
             statement[0].col
           );
         }
         if (token.type !== TokenType.IDENTIFIER) {
-          throw new ParserError.SyntaxError(this.source, token.line, token.col);
+          throw new ParserError.GenericSyntaxError(this.source, token.line, token.col);
         }
         return this.evaluateToken(token);
       });
@@ -758,7 +758,7 @@ export class Parser {
             );
           } else {
             // The definitons block is over, and yet there is a define.
-            throw new ParserError.SyntaxError(this.source, 
+            throw new ParserError.GenericSyntaxError(this.source, 
               statement[i][0].line,
               statement[i][0].col
             );
@@ -807,7 +807,7 @@ export class Parser {
     // It's a variable.
     // Once again, validate statement.
     if (statement.length > 3) {
-      throw new ParserError.SyntaxError(this.source, 
+      throw new ParserError.GenericSyntaxError(this.source, 
         statement[0].line,
         statement[0].col
       );
@@ -815,7 +815,7 @@ export class Parser {
     const symbol = this.evaluateToken(statement[1]);
     // Validate symbol.
     if (symbol.type !== "Identifier") {
-      throw new ParserError.SyntaxError(this.source, 
+      throw new ParserError.GenericSyntaxError(this.source, 
         statement[1].line,
         statement[1].col
       );
@@ -853,7 +853,7 @@ export class Parser {
    */
   private evaluateIf(expression: any[]): ConditionalExpression {
     if (expression.length < 3 || expression.length > 4) {
-      throw new ParserError.SyntaxError(this.source, 
+      throw new ParserError.GenericSyntaxError(this.source, 
         expression[0].line,
         expression[0].col
       );
@@ -899,7 +899,7 @@ export class Parser {
    */
   private evaluateCond(expression: any[]): ConditionalExpression {
     if (expression.length < 2) {
-      throw new ParserError.SyntaxError(this.source, 
+      throw new ParserError.GenericSyntaxError(this.source, 
         expression[0].line,
         expression[0].col
       );
@@ -916,7 +916,7 @@ export class Parser {
       if (clause instanceof Array) {
         // Verify that the clause is not empty.
         if (clause.length < 1) {
-          throw new ParserError.SyntaxError(this.source, 
+          throw new ParserError.GenericSyntaxError(this.source, 
             expression[0].line,
             expression[0].col
           );
@@ -924,13 +924,13 @@ export class Parser {
         // Check if this is an else clause.
         if (clause[0].type === TokenType.ELSE) {
           if (i < clauses.length - 1) {
-            throw new ParserError.SyntaxError(this.source, 
+            throw new ParserError.GenericSyntaxError(this.source, 
               clause[0].line,
               clause[0].col
             );
           }
           if (clause.length < 2) {
-            throw new ParserError.SyntaxError(this.source, 
+            throw new ParserError.GenericSyntaxError(this.source, 
               clause[0].line,
               clause[0].col
             );
@@ -960,7 +960,7 @@ export class Parser {
           catchAll.loc!.start = catchAll.loc!.end;
         }
       } else {
-        throw new ParserError.SyntaxError(this.source, 
+        throw new ParserError.GenericSyntaxError(this.source, 
           expression[0].line,
           expression[0].col
         );
@@ -992,26 +992,26 @@ export class Parser {
    */
   private evaluateLambda(expression: any[]): FunctionExpression {
     if (expression.length < 3) {
-      throw new ParserError.SyntaxError(this.source, 
+      throw new ParserError.GenericSyntaxError(this.source, 
         expression[0].line,
         expression[0].col
       );
     }
     if (!(expression[1] instanceof Array)) {
-      throw new ParserError.SyntaxError(this.source, 
+      throw new ParserError.GenericSyntaxError(this.source, 
         expression[1].line,
         expression[1].col
       );
     }
     const params: Identifier[] = expression[1].map((param: any) => {
       if (param instanceof Array) {
-        throw new ParserError.SyntaxError(this.source, 
+        throw new ParserError.GenericSyntaxError(this.source, 
           expression[0].line,
           expression[0].col
         );
       }
       if (param.type !== TokenType.IDENTIFIER) {
-        throw new ParserError.SyntaxError(this.source, param.line, param.col);
+        throw new ParserError.GenericSyntaxError(this.source, param.line, param.col);
       }
       // We have evaluated that this is an identifier.
       return this.evaluateToken(param) as Identifier;
@@ -1038,7 +1038,7 @@ export class Parser {
           );
         } else {
           // The definitons block is over, and yet there is a define.
-          throw new ParserError.SyntaxError(this.source, 
+          throw new ParserError.GenericSyntaxError(this.source, 
             expression[i][0].line,
             expression[i][0].col
           );
@@ -1109,7 +1109,7 @@ export class Parser {
           );
         } else {
           // The definitions block is over, and yet there is a define.
-          throw new ParserError.SyntaxError(this.source, 
+          throw new ParserError.GenericSyntaxError(this.source, 
             expression[i][0].line,
             expression[i][0].col
           );
@@ -1162,13 +1162,13 @@ export class Parser {
    */
   private evaluateLet(expression: any[]): CallExpression {
     if (expression.length < 3) {
-      throw new ParserError.SyntaxError(this.source, 
+      throw new ParserError.GenericSyntaxError(this.source, 
         expression[0].line,
         expression[0].col
       );
     }
     if (!(expression[1] instanceof Array)) {
-      throw new ParserError.SyntaxError(this.source, 
+      throw new ParserError.GenericSyntaxError(this.source, 
         expression[1].line,
         expression[1].col
       );
@@ -1177,25 +1177,25 @@ export class Parser {
     const declaredValues: Expression[] = [];
     for (let i = 0; i < expression[1].length; i++) {
       if (!(expression[1][i] instanceof Array)) {
-        throw new ParserError.SyntaxError(this.source, 
+        throw new ParserError.GenericSyntaxError(this.source, 
           expression[1][i].line,
           expression[1][i].col
         );
       }
       if (expression[1][i].length !== 2) {
-        throw new ParserError.SyntaxError(this.source, 
+        throw new ParserError.GenericSyntaxError(this.source, 
           expression[1][i][0].line,
           expression[1][i][0].col
         );
       }
       if (!(expression[1][i][0] instanceof Token)) {
-        throw new ParserError.SyntaxError(this.source, 
+        throw new ParserError.GenericSyntaxError(this.source, 
           expression[1][i][0].line,
           expression[1][i][0].col
         );
       }
       if (expression[1][i][0].type !== TokenType.IDENTIFIER) {
-        throw new ParserError.SyntaxError(this.source, 
+        throw new ParserError.GenericSyntaxError(this.source, 
           expression[1][i][0].line,
           expression[1][i][0].col
         );
@@ -1231,7 +1231,7 @@ export class Parser {
           );
         } else {
           // The definitons block is over, and yet there is a define.
-          throw new ParserError.SyntaxError(this.source, 
+          throw new ParserError.GenericSyntaxError(this.source, 
             expression[i][0].line,
             expression[i][0].col
           );
