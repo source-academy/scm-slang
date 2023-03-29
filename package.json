@@ -28,7 +28,6 @@
         "@types/estree": "^1.0.0",
         "acorn": "^8.8.2",
         "acorn-walk": "^8.2.0"
-
     },
     "scripts": {},
     "meta": {},

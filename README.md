@@ -4,6 +4,8 @@
 
 `scm-slang` is an **experimental** implementation of the [Scheme](https://www.scheme.org/) programming language designed for compatibiity with the online learning environment of [Source Academy](https://sourceacademy.org/). It aims to be faithful to the original *Structure and Interpretation of Computer Programs* (SICP) book whilst maintaining compatibility with modules designed for use with [`js-slang`](https://github.com/source-academy/js-slang), a subset of JavaScript intended for use with the SICP JS book in Source Academy.
 
+`scm-slang` provides a special Scheme parser that is able to parse Scheme code.
+
 ## How does it work?
 
 `scm-slang` parses a subset of Scheme (minimally, enough to fulfil SICP chapters 1-4) and generates an `estree`-compatible AST. This way, `scm-slang` allows code written in SCM Source Languages to use modules written for JS Source Languages.
