@@ -26,11 +26,13 @@ export class Parser {
   private readonly source: string;
   private readonly tokens: Token[];
   private readonly estree: Program;
+  private readonly chapter: number;
   private current: number = 0;
 
-  constructor(source: string, tokens: Token[]) {
+  constructor(source: string, tokens: Token[], chapter: number = 100) {
     this.source = source;
     this.tokens = tokens;
+    this.chapter = chapter;
     this.estree = {
       type: "Program",
       body: [],
@@ -49,6 +51,18 @@ export class Parser {
 
   private previous(): Token {
     return this.tokens[this.current - 1];
+  }
+
+  private validateChapter(c: Token, chapter: number): void {
+    if (this.chapter < chapter) {
+        throw new ParserError.DisallowedTokenError(
+          this.source,
+          c.line,
+          c.col,
+          c,
+          this.chapter
+        );
+    }
   }
 
   /**
@@ -271,6 +285,7 @@ export class Parser {
         // Scheme 2
         case TokenType.QUOTE:
         case TokenType.QUASIQUOTE:
+          this.validateChapter(firstToken, 2);
           return this.evaluateQuote(expression);
         case TokenType.UNQUOTE:
           // This shouldn't exist outside of unquotes.
@@ -282,10 +297,13 @@ export class Parser {
 
         // Scheme 3
         case TokenType.SET:
+          this.validateChapter(firstToken, 3);
           return this.evaluateSet(expression);
         case TokenType.BEGIN:
+          this.validateChapter(firstToken, 3);
           return this.evaluateBegin(expression);
         case TokenType.DELAY:
+          this.validateChapter(firstToken, 3);
           return this.evaluateDelay(expression);
 
         // Not in SICP but required for Source

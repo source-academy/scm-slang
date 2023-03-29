@@ -105,6 +105,19 @@ export namespace ParserError {
         }
     }
 
+    export class DisallowedTokenError extends ParserError {
+        token: Token;
+        constructor(source: string, line: number, col: number, token: Token, chapter: number) {
+            super(
+                extractLine(source, line) + "\n" + showPoint(col) + "\n" + `Syntax ${token} not allowed at chapter ${chapter}`,
+                line,
+                col
+            );
+            this.token = token;
+            this.name = "DisallowedTokenError";
+        }
+    }
+
     export class UnsupportedTokenError extends ParserError {
         token: Token;
         constructor(source: string, line: number, col: number, token: Token) {

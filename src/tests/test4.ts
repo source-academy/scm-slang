@@ -1,6 +1,5 @@
 import { readFileSync } from "fs";
-import { Tokenizer } from "../tokenizer";
-import { Parser } from "../parser"; 
+import { schemeParse } from ".."; 
 const escodegen = require("escodegen");
 /*
 const acorn = require("acorn");
@@ -27,12 +26,6 @@ walk.simple(tree, {
 */
 const str = readFileSync("./src/tests/alltest.scm", "utf8");
 
-const tz = new Tokenizer(str);
-
-const tok = tz.scanTokens();
-
-const ps = new Parser(str, tok);
-
 //tree.body.push(...ps.parse().body);
 
-console.log(escodegen.generate(ps.parse()));
+console.log(escodegen.generate(schemeParse(str)));
