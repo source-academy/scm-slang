@@ -1,14 +1,19 @@
 import { Token } from "./tokenizer";
+import { Position } from "estree";
 
 export namespace TokenizerError {
     export abstract class TokenizerError extends SyntaxError {
         // This base error shouldn't be used directly.
-        line: number;
-        col: number;
+        loc: Position;
         constructor(message: string, line: number, col: number) {
             super(message);
-            this.line = line;
-            this.col = col;
+            this.loc = {
+                line: line,
+                column: col
+            };
+        }
+        toString(): string {
+            return this.message;
         }
     }
 
@@ -50,12 +55,16 @@ export namespace ParserError {
 
     export abstract class ParserError extends SyntaxError {
         // This base error shouldn't be used directly.
-        line: number;
-        col: number;
+        loc: Position;
         constructor(message: string, line: number, col: number) {
             super(`Syntax error at (${line}:${col})\n${message}`);
-            this.line = line;
-            this.col = col;
+            this.loc = {
+                line: line,
+                column: col
+            };
+        }
+        toString(): string {
+            return this.message;
         }
     }
 
