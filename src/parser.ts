@@ -1062,6 +1062,7 @@ export class Parser {
         body: body,
       },
       generator: false,
+      async: false,
     };
   }
 
