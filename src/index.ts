@@ -1,7 +1,6 @@
 import { Tokenizer } from "./tokenizer";
 import { Parser } from "./parser";
 import { Program } from "estree";
-const walk = require("acorn-walk");
 
 export * from "./prelude-visitor";
 export * from "./error";
