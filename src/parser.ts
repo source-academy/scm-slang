@@ -1321,7 +1321,9 @@ export class Parser {
         return {
           type: "Literal",
           value: token.literal,
-          raw: token.lexeme,
+          raw: token.type === TokenType.BOOLEAN
+          ? (token.literal ? "true" : "false")
+          : token.lexeme,
           loc: this.toSourceLocation(token),
         };
       case TokenType.IDENTIFIER:
