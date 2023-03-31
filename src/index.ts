@@ -13,7 +13,7 @@ export * from "./error";
  * @returns An encoded identifier that follows JS naming conventions.
  */
 export function encode(identifier: string): string {
-  return b64Encode(identifier).replace(
+  return "scheme_" + b64Encode(identifier).replace(
     /([^a-zA-Z0-9])/g,
     (match: string) => `\$${match.charCodeAt(0)}\$`
   );
@@ -27,7 +27,7 @@ export function encode(identifier: string): string {
  */
 export function decode(identifier: string): string {
   return b64Decode(
-    identifier.replace(
+    identifier.slice(7).replace(
       /\$([0-9]+)\$/g, 
       (_, code: string) => String.fromCharCode(parseInt(code))
     )
