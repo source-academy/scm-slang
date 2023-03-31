@@ -8,10 +8,6 @@
 import { TokenType } from "./token-type";
 import { TokenizerError } from "./error";
 
-// These characters can be included as
-// part of an identifier in scheme.
-const SPECIAL_CHARS: string = "!$%&*+-./:<=>?@^_~";
-
 // syntactic keywords in the scheme language
 let keywords = new Map<string, TokenType>([
   [".", TokenType.DOT],
@@ -329,24 +325,16 @@ export class Tokenizer {
     return this.source.charAt(this.current - 1);
   }
 
-  private isAlpha(c: string): boolean {
-    return (c >= "a" && c <= "z") || (c >= "A" && c <= "Z");
-  }
-
   private isDigit(c: string): boolean {
     return c >= "0" && c <= "9";
   }
 
-  private isSpecial(c: string): boolean {
-    return SPECIAL_CHARS.includes(c);
-  }
-
-  private isAlphaNumeric(c: string): boolean {
-    return this.isAlpha(c) || this.isDigit(c);
+  private isSpecialSyntax(c: string): boolean {
+    return c === "(" || c === ")" || c === "[" || c === "]" || c === ";" || c === "|";
   }
 
   private isValidIdentifier(c: string): boolean {
-    return this.isAlphaNumeric(c) || this.isSpecial(c);
+    return !this.isWhitespace(c) && !this.isSpecialSyntax(c);
   }
 
   private isWhitespace(c: string): boolean {

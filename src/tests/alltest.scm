@@ -1,6 +1,16 @@
 (import "rune" (square stack beside_n))
 
-(export (define a 1))
+(export (define 你好世界 1))
+
+;testinng the tokenizer name rules
+#t
+bad#name,butstillvalid!
+#f
+'a
+a'
+`a
+a`
+`(a b ,c d, )
 
 (define a 1)
 (define (f x) (+ x a))
