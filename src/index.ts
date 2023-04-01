@@ -6,6 +6,51 @@ import { encode as b64Encode, decode as b64Decode } from "js-base64";
 export * from "./prelude-visitor";
 export * from "./error";
 
+const JS_KEYWORDS: string[] = [
+  "break",
+  "case",
+  "catch",
+  "class",
+  "const",
+  "continue",
+  "debugger",
+  "default",
+  "delete",
+  "do",
+  "else",
+  "export",
+  "extends",
+  "finally",
+  "for",
+  "function",
+  "if",
+  "import",
+  "in",
+  "instanceof",
+  "new",
+  "return",
+  "super",
+  "switch",
+  "this",
+  "throw",
+  "try",
+  "typeof",
+  "var",
+  "void",
+  "while",
+  "with",
+  "yield",
+  "enum",
+  "await",
+  "implements",
+  "package",
+  "protected",
+  "static",
+  "interface",
+  "private",
+  "public",
+];
+
 /**
  * Takes a Scheme identifier and encodes it to follow JS naming conventions.
  *
@@ -13,10 +58,20 @@ export * from "./error";
  * @returns An encoded identifier that follows JS naming conventions.
  */
 export function encode(identifier: string): string {
-  return "scheme_" + b64Encode(identifier).replace(
-    /([^a-zA-Z0-9])/g,
-    (match: string) => `\$${match.charCodeAt(0)}\$`
-  );
+  if (JS_KEYWORDS.includes(identifier) || identifier.startsWith("$scheme_")) {
+    return (
+      "$scheme_" +
+      b64Encode(identifier).replace(
+        /([^a-zA-Z0-9])/g,
+        (match: string) => `\$${match.charCodeAt(0)}\$`
+      )
+    );
+  } else {
+    return identifier.replace(
+      /([^a-zA-Z0-9])/g,
+      (match: string) => `\$${match.charCodeAt(0)}\$`
+    );
+  }
 }
 
 /**
@@ -26,12 +81,19 @@ export function encode(identifier: string): string {
  * @returns A decoded identifier that follows Scheme naming conventions.
  */
 export function decode(identifier: string): string {
-  return b64Decode(
-    identifier.slice(7).replace(
-      /\$([0-9]+)\$/g, 
-      (_, code: string) => String.fromCharCode(parseInt(code))
-    )
-  );
+  if (identifier.startsWith("$scheme_")) {
+    return b64Decode(
+      identifier
+        .slice(8)
+        .replace(/\$([0-9]+)\$/g, (_, code: string) =>
+          String.fromCharCode(parseInt(code))
+        )
+    );
+  } else {
+    return identifier.replace(/\$([0-9]+)\$/g, (_, code: string) =>
+      String.fromCharCode(parseInt(code))
+    );
+  }
 }
 
 export function schemeParse(source: string, chapter?: number): Program {
