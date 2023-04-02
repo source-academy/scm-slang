@@ -1046,7 +1046,7 @@ export class Parser {
     return {
       type: "FunctionExpression",
       loc: {
-        start: expression[0].start,
+        start: this.toSourceLocation(expression[0]).start,
         end: body[body.length - 1].loc!.end,
       },
       id: null,
@@ -1058,7 +1058,7 @@ export class Parser {
           end: body[body.length - 1].loc!.end,
         },
         body: body,
-      },
+      }
     };
   }
 
@@ -1071,10 +1071,7 @@ export class Parser {
    */
   private evaluateBegin(expression: any[]): CallExpression {
     const beginBody = this.evaluateBody(expression.slice(1));
-    beginBody.loc!.start = {
-      line: expression[0].line,
-      column: expression[0].col,
-    };
+    beginBody.loc!.start = this.toSourceLocation(expression[0]).start;
     return beginBody;
   }
 
@@ -1241,10 +1238,7 @@ export class Parser {
     return {
       type: "CallExpression",
       loc: {
-        start: {
-          line: expression[0].line,
-          column: expression[0].col,
-        },
+        start: this.toSourceLocation(expression[0]).start,
         end: body[body.length - 1].loc!.end,
       },
       callee: {
