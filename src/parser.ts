@@ -396,8 +396,6 @@ export class Parser {
         loc: delayed.loc,
         body: [delayed]
       },
-      generator: false,
-      async: false,
     };
   }
 
@@ -1061,8 +1059,6 @@ export class Parser {
         },
         body: body,
       },
-      generator: false,
-      async: false,
     };
   }
 
@@ -1264,8 +1260,6 @@ export class Parser {
                 end: body[body.length - 1].loc!.end,
               },
         id: null,
-        generator: false,
-        async: false,
         params: declaredVariables,
         body: {
           type: "BlockStatement",

@@ -1,6 +1,6 @@
 import * as acorn from 'acorn';
 import { preludeModifier } from '../prelude-visitor';
-const escodegen = require('escodegen');
+import { generate } from 'astring';
 
 const tree: any = acorn.Parser.parse(`
 function plus(x, y) {
@@ -22,4 +22,4 @@ function vector_Gstring(v) {
 
 //preludeModifier(tree);
 
-console.log(escodegen.generate(preludeModifier(tree)));
+console.log(generate(preludeModifier(tree)));

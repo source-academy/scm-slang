@@ -34,6 +34,6 @@
     "meta": {},
     "devDependencies": {
         "@types/node": "^18.14.2",
-        "escodegen": "^2.0.0"
+        "astring": "^1.8.4"
     }
 }

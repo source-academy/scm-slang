@@ -1,6 +1,6 @@
 import { readFileSync } from "fs";
 import { schemeParse } from ".."; 
-const escodegen = require("escodegen");
+import { generate } from "astring";
 /*
 const acorn = require("acorn");
 const walk = require("acorn-walk");
@@ -28,4 +28,4 @@ const str = readFileSync("./src/tests/alltest.scm", "utf8");
 
 //tree.body.push(...ps.parse().body);
 
-console.log(escodegen.generate(schemeParse(str)));
+console.log(generate(schemeParse(str)));
