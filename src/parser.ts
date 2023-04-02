@@ -766,10 +766,7 @@ export class Parser {
       return {
         type: "VariableDeclaration",
         loc: {
-          start: {
-            line: statement[0].line,
-            column: statement[0].col,
-          },
+          start: this.toSourceLocation(statement[0]).start,
           end: body[body.length - 1].loc!.end,
         },
         declarations: [
@@ -822,10 +819,7 @@ export class Parser {
     return {
       type: "VariableDeclaration",
       loc: {
-        start: {
-          line: statement[0].line,
-          column: statement[0].col,
-        },
+        start: this.toSourceLocation(statement[0]).start,
         end: value.loc!.end,
       },
       declarations: [
