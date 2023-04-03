@@ -597,7 +597,7 @@ export class Parser {
           type: "Literal",
           loc: loc,
           value: token.lexeme,
-          raw: token.lexeme,
+          raw: `"${token.lexeme}"`,
         },
       ],
       optional: false,
