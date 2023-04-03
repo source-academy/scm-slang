@@ -794,33 +794,37 @@ export let error = function (msg: string): void {
 // Input and output
 
 export let display = function (x: any) {
-  if (listQ(x)) {
-    process.stdout.write("(");
-    let p = x as Pair;
-    while (p !== null) {
-      display(p.car);
-      p = p.cdr;
-      if (p !== null) {
-        process.stdout.write(" ");
+  function display_helper(x: any): string {
+    let str: string = ''
+    if (listQ(x)) {
+      str = '('
+      let p = x as Pair
+      while (p !== null) {
+        str += display_helper(p.car)
+        p = p.cdr
+        if (p !== null) {
+          str += ' '
+        }
       }
-    }
-    process.stdout.write(")");
-    return;
-  } else if (vectorQ(x)) {
-    process.stdout.write("#(");
-    let v = x as Vector;
-    for (let i = 0; i < v.vec.length; i++) {
-      display(v.vec[i]);
-      if (i !== v.vec.length - 1) {
-        process.stdout.write(" ");
+      str += ')'
+    } else if (vectorQ(x)) {
+      str = '#('
+      let v = x as Vector
+      for (let i = 0; i < v.vec.length; i++) {
+        str += display_helper(v.vec[i])
+        if (i !== v.vec.length - 1) {
+          str += ' '
+        }
       }
+      str += ')'
+    } else {
+      str = x.toString()
     }
-    process.stdout.write(")");
-    return;
+    return str
   }
-  process.stdout.write(x.toString());
-};
+  console.log(display_helper(x))
+}
 
 export let newline = function (): void {
-  process.stdout.write("\n");
-};
+  console.log()
+}
