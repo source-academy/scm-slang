@@ -79,6 +79,9 @@ export let exact_integerQ = function (n: any): boolean {
 export let E = function (...args: number[]): boolean {
   let acc: boolean = true;
   for (let i: number = 0; i < args.length - 1; i++) {
+    if (!numberQ(args[i])) {
+      throw new Error("procedure =: expected number, got " + args[i].toString());
+    }
     acc = acc && args[i] === args[i + 1];
   }
   return acc;
@@ -87,6 +90,9 @@ export let E = function (...args: number[]): boolean {
 export let L = function (...args: number[]): boolean {
   let acc = true;
   for (let i = 0; i < args.length - 1; i++) {
+        if (!numberQ(args[i])) {
+      throw new Error("procedure <: expected number, got " + args[i].toString());
+    }
     acc = acc && args[i] < args[i + 1];
   }
   return acc;
@@ -95,6 +101,9 @@ export let L = function (...args: number[]): boolean {
 export let G = function (...args: number[]): boolean {
   let acc = true;
   for (let i = 0; i < args.length - 1; i++) {
+        if (!numberQ(args[i])) {
+      throw new Error("procedure >: expected number, got " + args[i].toString());
+    }
     acc = acc && args[i] > args[i + 1];
   }
   return acc;
@@ -103,6 +112,9 @@ export let G = function (...args: number[]): boolean {
 export let LE = function (...args: number[]): boolean {
   let acc = true;
   for (let i = 0; i < args.length - 1; i++) {
+        if (!numberQ(args[i])) {
+      throw new Error("procedure <=: expected number, got " + args[i].toString());
+    }
     acc = acc && args[i] <= args[i + 1];
   }
   return acc;
@@ -111,28 +123,37 @@ export let LE = function (...args: number[]): boolean {
 export let GE = function (...args: number[]): boolean {
   let acc = true;
   for (let i = 0; i < args.length - 1; i++) {
+        if (!numberQ(args[i])) {
+      throw new Error("procedure >=: expected number, got " + args[i].toString());
+    }
     acc = acc && args[i] >= args[i + 1];
   }
   return acc;
 };
 
 export let zeroQ = function (n: number): boolean {
-  return n === 0;
+  return E(n, 0);
 };
 
 export let positiveQ = function (n: number): boolean {
-  return n > 0;
+  return G(n, 0);
 };
 
 export let negativeQ = function (n: number): boolean {
-  return n < 0;
+  return L(n, 0);
 };
 
 export let oddQ = function (n: number): boolean {
+      if (!numberQ(n)) {
+      throw new Error("procedure odd?: expected number, got " + n.toString());
+    }
   return n % 2 !== 0;
 };
 
 export let evenQ = function (n: number): boolean {
+        if (!numberQ(n)) {
+      throw new Error("procedure even?: expected number, got " + n.toString());
+    }
   return n % 2 === 0;
 };
 
@@ -776,17 +797,38 @@ export let newline = function (): void {
   process.stdout.write("\n");
 };
 
-/*
 // The global environment of Scheme.
 
 export let display = function (x: any) {
+  if (listQ(x)) {
+    process.stdout.write("(");
+    let p = x as Pair;
+    while (p !== null) {
+      display(p.car);
+      p = p.cdr;
+      if (p !== null) {
+        process.stdout.write(" ");
+      }
+    }
+    process.stdout.write(")");
+    return;
+  } else if (vectorQ(x)) {
+    process.stdout.write("#(");
+    let v = x as Vector;
+    for (let i = 0; i < v.vec.length; i++) {
+      display(v.vec[i]);
+      if (i !== v.vec.length - 1) {
+        process.stdout.write(" ");
+      }
+    }
+    process.stdout.write(")");
+    return;
+  }
   process.stdout.write(x.toString());
 };
 
-export let error = function (msg: string) {
+export let $error = function (msg: string) {
   throw new Error(msg);
 };
 
 display(1);
-
-*/
