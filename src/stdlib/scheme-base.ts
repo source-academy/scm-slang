@@ -76,7 +76,7 @@ export let exact_integerQ = function (n: any): boolean {
   return typeof n === "number" && n % 1 === 0;
 };
 
-export let equal = function (...args: number[]): boolean {
+export let E = function (...args: number[]): boolean {
   let acc: boolean = true;
   for (let i: number = 0; i < args.length - 1; i++) {
     acc = acc && args[i] === args[i + 1];
@@ -153,11 +153,17 @@ export let multiply = function (...args: number[]): number {
 };
 
 export let minus = function (...args: number[]): number {
-  return args.reduce((a, b) => a - b, 0);
+  if (args.length < 2) {
+    return -args[0];
+  }
+  return args.slice(1).reduce((a, b) => a - b, args[0]);
 };
 
 export let divide = function (...args: number[]): number {
-  return args.reduce((a, b) => a / b, 1);
+  if (args.length < 2) {
+    return 1 / args[0];
+  }
+  return args.slice(1).reduce((a, b) => a / b, args[0]);
 };
 
 export let abs = function(x: number): number {
