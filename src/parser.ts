@@ -581,17 +581,17 @@ export class Parser {
    * name.
    *
    * @param token A token.
-   * @returns A new Symbol(name) call
+   * @returns A call to string->symbol.
    */
-  private symbol(token: Token): NewExpression {
+  private symbol(token: Token): CallExpression {
     const loc = this.toSourceLocation(token);
     return {
-      type: "NewExpression",
+      type: "CallExpression",
       loc: loc,
       callee: {
         type: "Identifier",
         loc: loc,
-        name: "_Symbol",
+        name: "string->symbol",
       },
       arguments: [
         {
@@ -601,6 +601,7 @@ export class Parser {
           raw: token.lexeme,
         },
       ],
+      optional: false,
     };
   }
 
