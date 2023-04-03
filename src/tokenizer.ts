@@ -250,14 +250,22 @@ export class Tokenizer {
       }
       this.advance();
     }
-    // if the number is a single dot, it is not a number.
-    if (first === "." && this.current - this.start < 2) {
-      validNumber = false;
+    // if the number is a single dot, single - or just "-.", it is not a number.
+    let lexeme = this.source.substring(this.start, this.current);
+    switch (lexeme) {
+      case ".":
+      case "-":
+      case "-.":
+        validNumber = false;
+        break;
+      default:
+        // do nothing
+        break;
     }
     if (validNumber) {
       this.addToken(
         TokenType.NUMBER,
-        parseFloat(this.source.substring(this.start, this.current))
+        parseFloat(lexeme)
       );
     } else {
       this.addToken(this.checkKeyword());
