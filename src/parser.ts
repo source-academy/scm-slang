@@ -5,7 +5,6 @@ import {
   Program,
   Expression,
   Statement,
-  NewExpression,
   ExpressionStatement,
   ReturnStatement,
   VariableDeclaration,
