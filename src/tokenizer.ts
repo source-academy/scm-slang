@@ -179,7 +179,7 @@ export class Tokenizer {
         // Deviates slightly from the original tokenizer.
         // Scheme allows for identifiers to start with a digit
         // or include a specific set of symbols.
-        if (this.isDigit(c) || c === ".") {
+        if (this.isDigit(c) || c === "-"|| c === ".") {
           // may or may not be a number
           this.identifierNumberToken();
         } else if (this.isValidIdentifier(c)) {
