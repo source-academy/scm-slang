@@ -793,12 +793,6 @@ export let error = function (msg: string): void {
 
 // Input and output
 
-export let newline = function (): void {
-  process.stdout.write("\n");
-};
-
-// The global environment of Scheme.
-
 export let display = function (x: any) {
   if (listQ(x)) {
     process.stdout.write("(");
@@ -827,8 +821,6 @@ export let display = function (x: any) {
   process.stdout.write(x.toString());
 };
 
-export let $error = function (msg: string) {
-  throw new Error(msg);
+export let newline = function (): void {
+  process.stdout.write("\n");
 };
-
-display(1);

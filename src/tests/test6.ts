@@ -15,7 +15,7 @@ function encodeTree(tree: Program): Program {
   }
   
 
-const estree = schemeParse("+ - / * = < > <= >= ? ! $");
+const estree = schemeParse("error");
 const sourceMap = new SourceMapGenerator({ file: 'source' })
 
 console.log(generate(estree, { sourceMap }));
