@@ -10,7 +10,7 @@ import {
   VariableDeclaration,
   VariableDeclarator,
   CallExpression,
-  FunctionExpression,
+  ArrowFunctionExpression,
   Literal,
   Identifier,
   SourceLocation,
@@ -372,7 +372,7 @@ export class Parser {
    * @param expression A delay procedure call in Scheme.
    * @returns A lambda function that takes no arguments and returns the delayed expression.
    */
-  private evaluateDelay(expression: any[]): FunctionExpression {
+  private evaluateDelay(expression: any[]): ArrowFunctionExpression {
     if (expression.length !== 2) {
       throw new ParserError.GenericSyntaxError(this.source, 
         expression[0].line,
@@ -383,18 +383,18 @@ export class Parser {
       this.evaluate(expression[1], true, false)
     );
     return {
-      type: "FunctionExpression",
+      type: "ArrowFunctionExpression",
       loc: {
         start: this.toSourceLocation(expression[0]).start,
         end: delayed.loc!.end
       },
-      id: null,
       params: [],
       body: {
         type: "BlockStatement",
         loc: delayed.loc,
         body: [delayed]
       },
+      expression: false
     };
   }
 
@@ -778,12 +778,11 @@ export class Parser {
             },
             id: symbol,
             init: {
-              type: "FunctionExpression",
+              type: "ArrowFunctionExpression",
               loc: {
                 start: symbol.loc!.start,
                 end: body[body.length - 1].loc!.end,
               },
-              id: null,
               params: params,
               body: {
                 type: "BlockStatement",
@@ -793,6 +792,7 @@ export class Parser {
                 },
                 body: body,
               },
+              expression: false,
             },
           } as VariableDeclarator,
         ],
@@ -982,7 +982,7 @@ export class Parser {
    * @param expression A lambda expression.
    * @returns A function expression.
    */
-  private evaluateLambda(expression: any[]): FunctionExpression {
+  private evaluateLambda(expression: any[]): ArrowFunctionExpression {
     if (expression.length < 3) {
       throw new ParserError.GenericSyntaxError(this.source, 
         expression[0].line,
@@ -1038,12 +1038,11 @@ export class Parser {
       }
     }
     return {
-      type: "FunctionExpression",
+      type: "ArrowFunctionExpression",
       loc: {
         start: this.toSourceLocation(expression[0]).start,
         end: body[body.length - 1].loc!.end,
       },
-      id: null,
       params: params,
       body: {
         type: "BlockStatement",
@@ -1052,7 +1051,8 @@ export class Parser {
           end: body[body.length - 1].loc!.end,
         },
         body: body,
-      }
+      },
+      expression: false,
     };
   }
 
@@ -1117,7 +1117,7 @@ export class Parser {
             }
           : undefined,
       callee: {
-        type: "FunctionExpression",
+        type: "ArrowFunctionExpression",
         loc:
           body[0] !== undefined
             ? {
@@ -1125,7 +1125,6 @@ export class Parser {
                 end: body[body.length - 1].loc!.end,
               }
             : undefined,
-        id: null,
         params: [],
         body: {
           type: "BlockStatement",
@@ -1138,6 +1137,7 @@ export class Parser {
               : undefined,
           body: body,
         },
+        expression: false,
       },
       arguments: [],
       optional: false,
@@ -1236,7 +1236,7 @@ export class Parser {
         end: body[body.length - 1].loc!.end,
       },
       callee: {
-        type: "FunctionExpression",
+        type: "ArrowFunctionExpression",
         loc:
           declaredVariables.length > 0
             ? {
@@ -1247,7 +1247,6 @@ export class Parser {
                 start: body[0].loc!.start,
                 end: body[body.length - 1].loc!.end,
               },
-        id: null,
         params: declaredVariables,
         body: {
           type: "BlockStatement",
@@ -1257,6 +1256,7 @@ export class Parser {
           },
           body: body,
         },
+        expression: false,
       },
       arguments: declaredValues,
       optional: false,
