@@ -6,7 +6,6 @@ import {
   Expression,
   Statement,
   ExpressionStatement,
-  ReturnStatement,
   VariableDeclaration,
   VariableDeclarator,
   CallExpression,
