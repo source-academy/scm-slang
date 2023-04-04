@@ -153,6 +153,9 @@ export class Tokenizer {
       case "#":
         if (this.match("t") || this.match("f")) {
           this.booleanToken();
+        } else if (this.match("|")) {
+          // a multiline comment
+          this.comment();
         } else {
           this.addToken(TokenType.HASH);
         }
@@ -198,6 +201,23 @@ export class Tokenizer {
         }
         break;
     }
+  }
+    
+  private comment(): void {
+    while (!(this.peek() == "|" && this.peekNext() == "#") && !this.isAtEnd()) {
+      if (this.peek() === "\n") {
+        this.line++;
+        this.col = 0;
+      }
+      this.advance();
+    }
+
+    if (this.isAtEnd()) {
+      throw new TokenizerError.UnexpectedEOFError(this.line, this.col);
+    }
+
+    this.jump();
+    this.jump();
   }
 
   private identifierToken(): void {
