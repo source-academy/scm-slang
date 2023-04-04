@@ -99,7 +99,7 @@ export namespace ParserError {
         token: Token;
         constructor(source: string, pos: Position, token: Token) {
             super(
-                extractLine(source, pos) + "\n" + showPoint(pos) + "\n" + `Unexpected token \'${token}\'`,
+                extractLine(source, pos) + "\n" + showPoint(pos) + "\n" + `Unexpected \'${token}\'`,
                 pos
             );
             this.token = token;
@@ -107,11 +107,25 @@ export namespace ParserError {
         }
     }
 
+    export class ExpectedTokenError extends ParserError {
+        token: Token;
+        expected: string;
+        constructor(source: string, pos: Position, token: Token, expected: string) {
+            super(
+                extractLine(source, pos) + "\n" + showPoint(pos) + "\n" + `Expected \'${expected}\' but got \'${token}\'`,
+                pos
+            );
+            this.token = token;
+            this.expected = expected;
+            this.name = "ExpectedTokenError";
+        }
+    }
+
     export class DisallowedTokenError extends ParserError {
         token: Token;
         constructor(source: string, pos: Position, token: Token, chapter: number) {
             super(
-                extractLine(source, pos) + "\n" + showPoint(pos) + "\n" + `Syntax ${token} not allowed at chapter ${chapter}`,
+                extractLine(source, pos) + "\n" + showPoint(pos) + "\n" + `Syntax \'${token}\' not allowed at Scheme \xa7${chapter}`,
                 pos
             );
             this.token = token;
@@ -123,7 +137,7 @@ export namespace ParserError {
         token: Token;
         constructor(source: string, pos: Position, token: Token) {
             super(
-                extractLine(source, pos) + "\n" + showPoint(pos) + "\n" + `Unsupported token \'${token}\'`,
+                extractLine(source, pos) + "\n" + showPoint(pos) + "\n" + `Syntax \'${token}\' not supported yet`,
                 pos
             );
             this.token = token;
