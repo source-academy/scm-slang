@@ -1238,6 +1238,10 @@ export class Parser {
         this.source,
         tokens[1].loc.start
       );
+    } else if (tokens[1].type !== TokenType.STRING) {
+      throw new ParserError.GenericSyntaxError(
+        this.source, 
+        tokens[1].pos);
     } else if (!(tokens[2] instanceof Group)) {
       throw new ParserError.GenericSyntaxError(
         this.source,
@@ -1251,6 +1255,11 @@ export class Parser {
         throw new ParserError.GenericSyntaxError(
           this.source,
           (specifierTokens[i] as Group).loc.start
+        );
+      } else if ((specifierTokens[i] as Token).type !== TokenType.IDENTIFIER) {
+        throw new ParserError.GenericSyntaxError(
+          this.source,
+          (specifierTokens[i] as Token).pos
         );
       }
       specifiers.push({
