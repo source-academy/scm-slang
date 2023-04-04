@@ -7,6 +7,7 @@
 
 import { TokenType } from "./token-type";
 import { TokenizerError } from "./error";
+import { Position } from "estree";
 
 // syntactic keywords in the scheme language
 let keywords = new Map<string, TokenType>([
@@ -31,8 +32,7 @@ export class Token {
   literal: any;
   start: number;
   end: number;
-  line: number;
-  col: number;
+  pos: Position;
 
   constructor(
     type: TokenType,
@@ -48,8 +48,10 @@ export class Token {
     this.literal = literal;
     this.start = start;
     this.end = end;
-    this.line = line;
-    this.col = col;
+    this.pos = {
+      line: line,
+      column: col,
+    };
   }
 
   public toString(): string {
@@ -151,6 +153,9 @@ export class Tokenizer {
       case "#":
         if (this.match("t") || this.match("f")) {
           this.booleanToken();
+        } else if (this.match("|")) {
+          // a multiline comment
+          this.comment();
         } else {
           this.addToken(TokenType.HASH);
         }
@@ -196,6 +201,23 @@ export class Tokenizer {
         }
         break;
     }
+  }
+    
+  private comment(): void {
+    while (!(this.peek() == "|" && this.peekNext() == "#") && !this.isAtEnd()) {
+      if (this.peek() === "\n") {
+        this.line++;
+        this.col = 0;
+      }
+      this.advance();
+    }
+
+    if (this.isAtEnd()) {
+      throw new TokenizerError.UnexpectedEOFError(this.line, this.col);
+    }
+
+    this.jump();
+    this.jump();
   }
 
   private identifierToken(): void {

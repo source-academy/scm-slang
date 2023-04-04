@@ -44,24 +44,21 @@ export namespace TokenizerError {
 
 export namespace ParserError {
 
-    function extractLine(source: string, line: number): string {
+    function extractLine(source: string, pos: Position): string {
         let lines = source.split("\n");
-        return lines[line - 1];
+        return lines[pos.line - 1];
     }
 
-    function showPoint(col: number): string {
-        return "^".padStart(col, " ");
+    function showPoint(pos: Position): string {
+        return "^".padStart(pos.column, " ");
     }
 
     export abstract class ParserError extends SyntaxError {
         // This base error shouldn't be used directly.
         loc: Position;
-        constructor(message: string, line: number, col: number) {
-            super(`Syntax error at (${line}:${col})\n${message}`);
-            this.loc = {
-                line: line,
-                column: col
-            };
+        constructor(message: string, pos: Position) {
+            super(`Syntax error at (${pos.line}:${pos.column})\n${message}`);
+            this.loc = pos;
         }
         toString(): string {
             return this.message;
@@ -69,33 +66,30 @@ export namespace ParserError {
     }
 
     export class GenericSyntaxError extends ParserError {
-        constructor(source: string, line: number, col: number) {
+        constructor(source: string, pos: Position) {
             super(
-                extractLine(source, line) + "\n" + showPoint(col),
-                line,
-                col
+                extractLine(source, pos) + "\n" + showPoint(pos),
+                pos
             );
             this.name = "GenericSyntaxError";
         }
     }
 
     export class ParenthesisMismatchError extends ParserError {
-        constructor(source: string, line: number, col: number) {
+        constructor(source: string, pos: Position) {
             super(
-                extractLine(source, line) + "\n" + showPoint(col) + "\n" + "Mismatched parenthesis",
-                line,
-                col
+                extractLine(source, pos) + "\n" + showPoint(pos) + "\n" + "Mismatched parenthesis",
+                pos
             );
             this.name = "ParenthesisMismatchError";
         }
     }
 
     export class UnexpectedEOFError extends ParserError {
-        constructor(source: string, line: number, col: number) {
+        constructor(source: string, pos: Position) {
             super(
-                extractLine(source, line) + "\n" + "Unexpected EOF",
-                line,
-                col
+                extractLine(source, pos) + "\n" + "Unexpected EOF",
+                pos
             );
             this.name = "UnexpectedEOFError";
         }
@@ -103,24 +97,36 @@ export namespace ParserError {
 
     export class UnexpectedTokenError extends ParserError {
         token: Token;
-        constructor(source: string, line: number, col: number, token: Token) {
+        constructor(source: string, pos: Position, token: Token) {
             super(
-                extractLine(source, line) + "\n" + showPoint(col) + "\n" + `Unexpected token \'${token}\'`,
-                line,
-                col
+                extractLine(source, pos) + "\n" + showPoint(pos) + "\n" + `Unexpected \'${token}\'`,
+                pos
             );
             this.token = token;
             this.name = "UnexpectedTokenError";
         }
     }
 
+    export class ExpectedTokenError extends ParserError {
+        token: Token;
+        expected: string;
+        constructor(source: string, pos: Position, token: Token, expected: string) {
+            super(
+                extractLine(source, pos) + "\n" + showPoint(pos) + "\n" + `Expected \'${expected}\' but got \'${token}\'`,
+                pos
+            );
+            this.token = token;
+            this.expected = expected;
+            this.name = "ExpectedTokenError";
+        }
+    }
+
     export class DisallowedTokenError extends ParserError {
         token: Token;
-        constructor(source: string, line: number, col: number, token: Token, chapter: number) {
+        constructor(source: string, pos: Position, token: Token, chapter: number) {
             super(
-                extractLine(source, line) + "\n" + showPoint(col) + "\n" + `Syntax ${token} not allowed at chapter ${chapter}`,
-                line,
-                col
+                extractLine(source, pos) + "\n" + showPoint(pos) + "\n" + `Syntax \'${token}\' not allowed at Scheme \xa7${chapter}`,
+                pos
             );
             this.token = token;
             this.name = "DisallowedTokenError";
@@ -129,11 +135,10 @@ export namespace ParserError {
 
     export class UnsupportedTokenError extends ParserError {
         token: Token;
-        constructor(source: string, line: number, col: number, token: Token) {
+        constructor(source: string, pos: Position, token: Token) {
             super(
-                extractLine(source, line) + "\n" + showPoint(col) + "\n" + `Unsupported token \'${token}\'`,
-                line,
-                col
+                extractLine(source, pos) + "\n" + showPoint(pos) + "\n" + `Syntax \'${token}\' not supported yet`,
+                pos
             );
             this.token = token;
             this.name = "UnsupportedTokenError";

@@ -14,12 +14,47 @@ import {
   Literal,
   Identifier,
   SourceLocation,
-  Position,
   ConditionalExpression,
   AssignmentExpression,
   ImportSpecifier,
   ModuleDeclaration,
 } from "estree";
+
+class Group {
+  group: (Token | Group)[];
+  loc: SourceLocation;
+  constructor(
+    group: (Token | Group)[],
+    openparen: Token | undefined,
+    closeparen: Token | undefined = openparen
+  ) {
+    this.group = group;
+    this.loc = openparen
+      ? // if openparen exists, then closeparen exists as well
+        {
+          start: openparen.pos,
+          end: closeparen!.pos,
+        }
+      : // only go to this case if grouping() was called.
+      // 2 cases:
+      // 1. group contains a single Token
+      // 2. group contains a single Group
+      // in both cases we steal the inner group's location
+      group[0] instanceof Group
+      ? group[0].loc
+      : {
+          start: group[0].pos,
+          end: group[0].pos,
+        };
+  }
+  public unwrap(): (Token | Group)[] {
+    return this.group;
+  }
+
+  public length(): number {
+    return this.group.length;
+  }
+}
 
 export class Parser {
   private readonly source: string;
@@ -54,13 +89,12 @@ export class Parser {
 
   private validateChapter(c: Token, chapter: number): void {
     if (this.chapter < chapter) {
-        throw new ParserError.DisallowedTokenError(
-          this.source,
-          c.line,
-          c.col,
-          c,
-          this.chapter
-        );
+      throw new ParserError.DisallowedTokenError(
+        this.source,
+        c.pos,
+        c,
+        this.chapter
+      );
     }
   }
 
@@ -71,29 +105,29 @@ export class Parser {
    * @param openparen The type of opening parenthesis.
    * @returns A group of tokens or groups of tokens.
    */
-  private grouping(): any[];
-  private grouping(openparen: TokenType): any[];
-  private grouping(openparen?: TokenType): any[] {
+  private grouping(): Group;
+  private grouping(openparen: Token): Group;
+  private grouping(openparen?: Token): Group {
     let inList = openparen === undefined ? false : true;
-    const tokens: any[] = [];
+    let closeparen: Token | undefined = undefined;
+    const tokens: (Token | Group)[] = [];
     do {
       let c = this.advance();
       switch (c.type) {
         case TokenType.LEFT_PAREN:
         case TokenType.LEFT_BRACKET:
-          tokens.push(this.grouping(c.type));
+          tokens.push(this.grouping(c));
           break;
         case TokenType.RIGHT_PAREN:
         case TokenType.RIGHT_BRACKET:
           if (!inList) {
-            throw new ParserError.UnexpectedTokenError(this.source, c.line, c.col, c);
-          } else if (
-            !this.matchingParentheses(openparen as TokenType, c.type)
-          ) {
+            throw new ParserError.UnexpectedTokenError(this.source, c.pos, c);
+          } else if (!this.matchingParentheses(openparen as Token, c)) {
             // ^ safe to cast openparen as this only executes
             // if inList is true, which is only the case if openparen exists
-            throw new ParserError.ParenthesisMismatchError(this.source, c.line, c.col);
+            throw new ParserError.ParenthesisMismatchError(this.source, c.pos);
           }
+          closeparen = c;
           inList = false;
           break;
         case TokenType.APOSTROPHE:
@@ -103,9 +137,13 @@ export class Parser {
         case TokenType.COMMA_AT:
           // These special notations are converted to their
           // corresponding "procedure-style" tokens.
-          let newGroup: any[] = [this.convertToken(c)];
-          newGroup.push(...this.grouping());
-          tokens.push(newGroup);
+          const convertedToken = this.convertToken(c);
+          // add this token to the next group
+          const nextGroup = this.grouping();
+          nextGroup.group.unshift(convertedToken);
+          // modify the next group's location
+          nextGroup.loc.start = this.toSourceLocation(c).start;
+          tokens.push(nextGroup);
           break;
         case TokenType.IMPORT:
         case TokenType.EXPORT:
@@ -128,16 +166,16 @@ export class Parser {
           break;
         case TokenType.EOF:
           if (inList) {
-            throw new ParserError.UnexpectedEOFError(this.source, c.line, c.col);
+            throw new ParserError.UnexpectedEOFError(this.source, c.pos);
           } else {
             tokens.push(c);
           }
           break;
         default:
-          throw new ParserError.UnexpectedTokenError(this.source, c.line, c.col, c);
+          throw new ParserError.UnexpectedTokenError(this.source, c.pos, c);
       }
     } while (inList);
-    return tokens;
+    return new Group(tokens, openparen, closeparen);
   }
 
   /**
@@ -147,10 +185,12 @@ export class Parser {
    * @param rParen
    * @returns Whether the parentheses match.
    */
-  private matchingParentheses(lParen: TokenType, rParen: TokenType) {
+  private matchingParentheses(lParen: Token, rParen: Token) {
     return (
-      (lParen === TokenType.LEFT_PAREN && rParen === TokenType.RIGHT_PAREN) ||
-      (lParen === TokenType.LEFT_BRACKET && rParen === TokenType.RIGHT_BRACKET)
+      (lParen.type === TokenType.LEFT_PAREN &&
+        rParen.type === TokenType.RIGHT_PAREN) ||
+      (lParen.type === TokenType.LEFT_BRACKET &&
+        rParen.type === TokenType.RIGHT_BRACKET)
     );
   }
 
@@ -169,8 +209,8 @@ export class Parser {
           token.literal,
           token.start,
           token.end,
-          token.line,
-          token.col
+          token.pos.line,
+          token.pos.column
         );
       case TokenType.BACKTICK:
         return new Token(
@@ -179,8 +219,8 @@ export class Parser {
           token.literal,
           token.start,
           token.end,
-          token.line,
-          token.col
+          token.pos.line,
+          token.pos.column
         );
       case TokenType.HASH:
         return new Token(
@@ -189,8 +229,8 @@ export class Parser {
           token.literal,
           token.start,
           token.end,
-          token.line,
-          token.col
+          token.pos.line,
+          token.pos.column
         );
       case TokenType.COMMA:
         return new Token(
@@ -199,8 +239,8 @@ export class Parser {
           token.literal,
           token.start,
           token.end,
-          token.line,
-          token.col
+          token.pos.line,
+          token.pos.column
         );
       case TokenType.COMMA_AT:
         return new Token(
@@ -209,8 +249,8 @@ export class Parser {
           token.literal,
           token.start,
           token.end,
-          token.line,
-          token.col
+          token.pos.line,
+          token.pos.column
         );
       default:
         return token;
@@ -226,30 +266,31 @@ export class Parser {
    * @returns An evaluated expression.
    */
   private evaluate(
-    expression: Token | any[]
+    expression: Token | Group
   ): Statement | Expression | ModuleDeclaration;
   private evaluate(
-    expression: Token | any[],
+    expression: Token | Group,
     onlyExpressions: boolean
   ): Statement | Expression | ModuleDeclaration;
   private evaluate(
-    expression: Token | any[],
+    expression: Token | Group,
     onlyExpressions: boolean,
     topLevel: boolean
   ): Statement | Expression | ModuleDeclaration;
   private evaluate(
-    expression: Token | any[],
+    expression: Token | Group,
     onlyExpressions = false,
     topLevel = false
   ): Statement | Expression | ModuleDeclaration {
     if (expression instanceof Token) {
       return this.evaluateToken(expression);
-    } else if (expression.length < 1) {
+    } else if (expression.length() < 1) {
       // Empty expression.
       // To create a better error message in the future.
       throw new Error("Empty expression.");
     }
-    const firstToken = expression[0]; // First token in expression. Dictates what to do.
+    const tokens = expression.unwrap();
+    const firstToken = tokens[0]; // First token in expression. Dictates what to do.
     if (firstToken instanceof Token) {
       // First token could be a special form.
       // Need to check and handle accordingly.
@@ -258,9 +299,9 @@ export class Parser {
         case TokenType.DEFINE:
           // Assignment statements with no value.
           if (onlyExpressions) {
-            throw new ParserError.UnexpectedTokenError(this.source, 
-              firstToken.line,
-              firstToken.col,
+            throw new ParserError.UnexpectedTokenError(
+              this.source,
+              firstToken.pos,
               firstToken
             );
           }
@@ -275,9 +316,9 @@ export class Parser {
           return this.evaluateCond(expression);
         case TokenType.ELSE:
           // This shouldn't exist outside of cond.
-          throw new ParserError.UnexpectedTokenError(this.source, 
-            firstToken.line,
-            firstToken.col,
+          throw new ParserError.UnexpectedTokenError(
+            this.source,
+            firstToken.pos,
             firstToken
           );
 
@@ -288,9 +329,9 @@ export class Parser {
           return this.evaluateQuote(expression);
         case TokenType.UNQUOTE:
           // This shouldn't exist outside of unquotes.
-          throw new ParserError.UnexpectedTokenError(this.source, 
-            firstToken.line,
-            firstToken.col,
+          throw new ParserError.UnexpectedTokenError(
+            this.source,
+            firstToken.pos,
             firstToken
           );
 
@@ -308,50 +349,50 @@ export class Parser {
         // Not in SICP but required for Source
         case TokenType.IMPORT:
           if (onlyExpressions) {
-            throw new ParserError.UnexpectedTokenError(this.source, 
-              firstToken.line,
-              firstToken.col,
+            throw new ParserError.UnexpectedTokenError(
+              this.source,
+              firstToken.pos,
               firstToken
             );
           }
           if (!topLevel) {
-            throw new ParserError.UnexpectedTokenError(this.source, 
-              firstToken.line,
-              firstToken.col,
+            throw new ParserError.UnexpectedTokenError(
+              this.source,
+              firstToken.pos,
               firstToken
             );
           }
           return this.evaluateImport(expression);
         case TokenType.EXPORT:
           if (onlyExpressions) {
-            throw new ParserError.UnexpectedTokenError(this.source, 
-              firstToken.line,
-              firstToken.col,
+            throw new ParserError.UnexpectedTokenError(
+              this.source,
+              firstToken.pos,
               firstToken
             );
           }
           if (!topLevel) {
-            throw new ParserError.UnexpectedTokenError(this.source, 
-              firstToken.line,
-              firstToken.col,
+            throw new ParserError.UnexpectedTokenError(
+              this.source,
+              firstToken.pos,
               firstToken
             );
           }
           return this.evaluateExport(expression);
         case TokenType.DOT:
           // This shouldn't exist here
-          throw new ParserError.UnexpectedTokenError(this.source, 
-            firstToken.line,
-            firstToken.col,
+          throw new ParserError.UnexpectedTokenError(
+            this.source,
+            firstToken.pos,
             firstToken
           );
 
         // Outside SICP
         case TokenType.VECTOR:
         case TokenType.UNQUOTE_SPLICING:
-          throw new ParserError.UnsupportedTokenError(this.source, 
-            firstToken.line,
-            firstToken.col,
+          throw new ParserError.UnsupportedTokenError(
+            this.source,
+            firstToken.pos,
             firstToken
           );
         default:
@@ -367,117 +408,474 @@ export class Parser {
   }
 
   /**
-   * Evaluates a delay procedure call.
-   * 
-   * @param expression A delay procedure call in Scheme.
-   * @returns A lambda function that takes no arguments and returns the delayed expression.
+   * Evaluates a definition statement.
+   *
+   * @param statement A definition statement.
    */
-  private evaluateDelay(expression: any[]): ArrowFunctionExpression {
-    if (expression.length !== 2) {
-      throw new ParserError.GenericSyntaxError(this.source, 
-        expression[0].line,
-        expression[0].col
+  private evaluateDefine(statement: Group): VariableDeclaration {
+    // Validate statement.
+    const tokens = statement.unwrap();
+    if (tokens.length < 3) {
+      throw new ParserError.GenericSyntaxError(
+        this.source,
+        (tokens[0] as Token).pos
       );
     }
-    const delayed: Statement = this.returnStatement(
-      this.evaluate(expression[1], true, false)
-    );
+
+    // This determines the allowing of constants or variables
+    // in the current chapter.
+    const definitionLevel = this.chapter < 3 ? "const" : "let";
+
+    // Check whether this defines a variable or a function.
+    if (tokens[1] instanceof Group) {
+      // It's a function.
+      const identifiers = tokens[1].unwrap().map((token: Token | Group) => {
+        if (token instanceof Group) {
+          // Error.
+          throw new ParserError.GenericSyntaxError(
+            this.source,
+            token.loc.start
+          );
+        }
+        if (token.type !== TokenType.IDENTIFIER) {
+          throw new ParserError.GenericSyntaxError(this.source, token.pos);
+        }
+        return this.evaluateToken(token);
+      });
+      // We have previously checked if all of these values are identifiers.
+      // Therefore, we can safely cast them to identifiers.
+      const symbol: Identifier = identifiers[0] as Identifier;
+      const params: Identifier[] = identifiers.slice(1) as Identifier[];
+      const body: Statement[] = [];
+      let definitions = true;
+      for (let i = 2; i < tokens.length; i++) {
+        if (
+          tokens[i] instanceof Token ||
+          (tokens[i] as Group).unwrap()[0] instanceof Group ||
+          ((tokens[i] as Group).unwrap()[0] as Token).type !== TokenType.DEFINE
+        ) {
+          // The definitions block is over.
+          definitions = false;
+          body.push(
+            i < tokens.length - 1
+              ? // Safe to cast as module declarations are only top level.
+                (this.wrapInStatement(this.evaluate(tokens[i])) as Statement)
+              : (this.returnStatement(this.evaluate(tokens[i])) as Statement)
+          );
+        } else {
+          if (definitions) {
+            body.push(
+              this.wrapInStatement(this.evaluate(tokens[i])) as Statement
+            );
+          } else {
+            // The definitons block is over, and yet there is a define.
+            throw new ParserError.GenericSyntaxError(
+              this.source,
+              ((tokens[i] as Group).unwrap()[0] as Token).pos
+            );
+          }
+        }
+      }
+      return {
+        type: "VariableDeclaration",
+        loc: statement.loc,
+        declarations: [
+          {
+            type: "VariableDeclarator",
+            loc: {
+              start: this.toSourceLocation(tokens[0] as Token).start,
+              end: body[body.length - 1].loc!.end,
+            },
+            id: symbol,
+            init: {
+              type: "ArrowFunctionExpression",
+              loc: {
+                start: symbol.loc!.start,
+                end: body[body.length - 1].loc!.end,
+              },
+              params: params,
+              body: {
+                type: "BlockStatement",
+                loc: {
+                  start: body[0].loc!.start,
+                  end: body[body.length - 1].loc!.end,
+                },
+                body: body,
+              },
+              expression: false,
+            },
+          } as VariableDeclarator,
+        ],
+        kind: definitionLevel,
+      };
+    }
+    // It's a variable.
+    // Once again, validate statement.
+    if (tokens.length > 3) {
+      throw new ParserError.GenericSyntaxError(
+        this.source,
+        (tokens[0] as Token).pos
+      );
+    }
+    const symbol = this.evaluateToken(tokens[1]);
+    // Validate symbol.
+    if (symbol.type !== "Identifier") {
+      throw new ParserError.GenericSyntaxError(this.source, tokens[1].pos);
+    }
+    const value = this.evaluate(tokens[2], true) as Expression;
+    return {
+      type: "VariableDeclaration",
+      loc: statement.loc,
+      declarations: [
+        {
+          type: "VariableDeclarator",
+          loc: {
+            start: this.toSourceLocation(tokens[0] as Token).start,
+            end: value.loc!.end,
+          },
+          id: symbol,
+          init: value,
+        } as VariableDeclarator,
+      ],
+      kind: definitionLevel,
+    };
+  }
+
+  /**
+   * Evaluates an if statement.
+   *
+   * @param expression An if expression.
+   * @returns A conditional expression.
+   */
+  private evaluateIf(expression: Group): ConditionalExpression {
+    const tokens = expression.unwrap();
+    // Validate expression.
+    if (tokens.length < 3 || tokens.length > 4) {
+      throw new ParserError.GenericSyntaxError(
+        this.source,
+        (tokens[0] as Token).pos
+      );
+    }
+    // Convert JavaScript's truthy/falsy values to Scheme's true/false.
+    const test_val = this.evaluate(tokens[1], true) as Expression;
+    const test = {
+      type: "CallExpression",
+      loc: test_val.loc,
+      callee: {
+        type: "Identifier",
+        loc: test_val.loc,
+        name: "$true",
+      },
+      arguments: [test_val],
+    } as Expression;
+    const consequent = this.evaluate(tokens[2], true) as Expression;
+    const alternate =
+      tokens.length === 4
+        ? (this.evaluate(tokens[3], true) as Expression)
+        : ({
+            type: "Identifier",
+            loc: consequent.loc,
+            name: "undefined",
+          } as Identifier);
+    return {
+      type: "ConditionalExpression",
+      loc: expression.loc,
+      test: test,
+      consequent: consequent,
+      alternate: alternate,
+    };
+  }
+
+  /**
+   * Evaluates a lambda expression.
+   *
+   * @param expression A lambda expression.
+   * @returns A function expression.
+   */
+  private evaluateLambda(expression: Group): ArrowFunctionExpression {
+    const tokens = expression.unwrap();
+    if (tokens.length < 3) {
+      throw new ParserError.GenericSyntaxError(
+        this.source,
+        (tokens[0] as Token).pos
+      );
+    }
+    if (!(tokens[1] instanceof Group)) {
+      throw new ParserError.GenericSyntaxError(this.source, tokens[1].pos);
+    }
+    const params: Identifier[] = tokens[1]
+      .unwrap()
+      .map((param: Token | Group) => {
+        if (param instanceof Group) {
+          throw new ParserError.GenericSyntaxError(
+            this.source,
+            param.loc.start
+          );
+        }
+        if (param.type !== TokenType.IDENTIFIER) {
+          throw new ParserError.GenericSyntaxError(this.source, param.pos);
+        }
+        // We have evaluated that this is an identifier.
+        return this.evaluateToken(param) as Identifier;
+      });
+    const body: Statement[] = [];
+    let definitions = true;
+    for (let i = 2; i < tokens.length; i++) {
+      if (
+        tokens[i] instanceof Token ||
+        (tokens[i] as Group).unwrap()[0] instanceof Group ||
+        ((tokens[i] as Group).unwrap()[0] as Token).type !== TokenType.DEFINE
+      ) {
+        // The definitions block is over.
+        definitions = false;
+        body.push(
+          i < tokens.length - 1
+            ? // Safe to cast as module declarations are only top level.
+              (this.wrapInStatement(this.evaluate(tokens[i])) as Statement)
+            : (this.returnStatement(this.evaluate(tokens[i])) as Statement)
+        );
+      } else {
+        if (definitions) {
+          body.push(
+            this.wrapInStatement(this.evaluate(tokens[i])) as Statement
+          );
+        } else {
+          // The definitons block is over, and yet there is a define.
+          throw new ParserError.GenericSyntaxError(
+            this.source,
+            ((tokens[i] as Group).unwrap()[0] as Token).pos
+          );
+        }
+      }
+    }
     return {
       type: "ArrowFunctionExpression",
-      loc: {
-        start: this.toSourceLocation(expression[0]).start,
-        end: delayed.loc!.end
-      },
-      params: [],
+      loc: expression.loc,
+      params: params,
       body: {
         type: "BlockStatement",
-        loc: delayed.loc,
-        body: [delayed]
+        loc: {
+          start: body[0].loc!.start,
+          end: body[body.length - 1].loc!.end,
+        },
+        body: body,
       },
-      expression: false
+      expression: false,
     };
   }
 
   /**
-   * Evaluates an import statement.
-   * Special syntax for importing modules, using a similar syntax to JS.
-   * (import "module-name" (imported-name1 imported-name2 ...))
+   * Evaluates a let expression.
+   * let is syntactic sugar for an invoked lambda procedure.
    *
-   * @param expression An import statement in Scheme.
-   * @returns An import statement in estree form.
+   * @param expression A let expression.
+   * @returns An IIFE.
    */
-  private evaluateImport(expression: any[]): ModuleDeclaration {
-    if (
-      expression.length < 3 ||
-      !(expression[1] instanceof Token) ||
-      !(expression[2] instanceof Array)
-    ) {
-      throw new ParserError.GenericSyntaxError(this.source, 
-        expression[0].line,
-        expression[0].col
+  private evaluateLet(expression: Group): CallExpression {
+    const tokens = expression.unwrap();
+    if (tokens.length < 3) {
+      throw new ParserError.GenericSyntaxError(
+        this.source,
+        (tokens[0] as Token).pos
       );
     }
-    const specifiers: ImportSpecifier[] = [];
-    for (let i = 0; i < expression[2].length; i++) {
-      if (!(expression[2][i] instanceof Token)) {
-        throw new ParserError.GenericSyntaxError(this.source, 
-          expression[0].line,
-          expression[0].col
+    if (!(tokens[1] instanceof Group)) {
+      throw new ParserError.GenericSyntaxError(this.source, tokens[1].pos);
+    }
+    const declaredVariables: Identifier[] = [];
+    const declaredValues: Expression[] = [];
+    const declarations = tokens[1].unwrap();
+    for (let i = 0; i < declarations.length; i++) {
+      // Make sure that the declaration is a group.
+      if (!(declarations[i] instanceof Group)) {
+        throw new ParserError.GenericSyntaxError(
+          this.source,
+          (declarations[i] as Token).pos
         );
       }
-      specifiers.push({
-        type: "ImportSpecifier",
-        local: this.evaluate(expression[2][i]) as Identifier,
-        imported: this.evaluate(expression[2][i]) as Identifier,
-        loc: this.toSourceLocation(expression[2][i]),
-      });
+      // Make sure that the declaration is of the form (x y).
+      if ((declarations[i] as Group).length() !== 2) {
+        throw new ParserError.GenericSyntaxError(
+          this.source,
+          (declarations[i] as Group).loc.start
+        );
+      }
+      const declaration = (declarations[i] as Group).unwrap();
+      if (!(declaration[0] instanceof Token)) {
+        throw new ParserError.GenericSyntaxError(
+          this.source,
+          declaration[0].loc.start
+        );
+      }
+      if (declaration[0].type !== TokenType.IDENTIFIER) {
+        throw new ParserError.GenericSyntaxError(
+          this.source,
+          declaration[0].pos
+        );
+      }
+      // Safe to cast as we have determined that the token is an identifier.
+      declaredVariables.push(this.evaluateToken(declaration[0]) as Identifier);
+      // Safe to cast as the "true" flag guarantees an expression.
+      declaredValues.push(this.evaluate(declaration[1], true) as Expression);
+    }
+    const body: Statement[] = [];
+    let definitions = true;
+    for (let i = 2; i < tokens.length; i++) {
+      if (
+        tokens[i] instanceof Token ||
+        (tokens[i] as Group).unwrap()[0] instanceof Group ||
+        ((tokens[i] as Group).unwrap()[0] as Token).type !== TokenType.DEFINE
+      ) {
+        // The definitions block is over.
+        definitions = false;
+        body.push(
+          i < tokens.length - 1
+            ? // Safe to cast as module declarations are only top level.
+              (this.wrapInStatement(this.evaluate(tokens[i])) as Statement)
+            : (this.returnStatement(this.evaluate(tokens[i])) as Statement)
+        );
+      } else {
+        if (definitions) {
+          body.push(
+            this.wrapInStatement(this.evaluate(tokens[i])) as Statement
+          );
+        } else {
+          // The definitons block is over, and yet there is a define.
+          throw new ParserError.GenericSyntaxError(
+            this.source,
+            ((tokens[i] as Group).unwrap()[0] as Token).pos
+          );
+        }
+      }
     }
     return {
-      type: "ImportDeclaration",
-      specifiers: specifiers,
-      source: this.evaluate(expression[1]) as Literal,
-      loc: this.toSourceLocation(
-        expression[0],
-        expression[2][expression[2].length - 1]
-      ),
+      type: "CallExpression",
+      loc: expression.loc,
+      callee: {
+        type: "ArrowFunctionExpression",
+        loc:
+          declaredVariables.length > 0
+            ? {
+                start: declaredVariables[0].loc!.start,
+                end: body[body.length - 1].loc!.end,
+              }
+            : {
+                start: body[0].loc!.start,
+                end: body[body.length - 1].loc!.end,
+              },
+        params: declaredVariables,
+        body: {
+          type: "BlockStatement",
+          loc: {
+            start: body[0].loc!.start,
+            end: body[body.length - 1].loc!.end,
+          },
+          body: body,
+        },
+        expression: false,
+      },
+      arguments: declaredValues,
+      optional: false,
     };
   }
 
   /**
-   * Evaluates an export statement.
-   * Similar syntax to JS, wherein export "wraps" around a declaration.
+   * Evaluates a conditional expression.
    *
-   * (export (define ...))
-   * @param expression An export statement in Scheme.
-   * @returns An export statement in estree form.
+   * @param expression A conditional expression.
+   * @returns A conditional expression.
    */
-  private evaluateExport(expression: any[]): ModuleDeclaration {
-    if (expression.length !== 2) {
-      throw new ParserError.GenericSyntaxError(this.source, 
-        expression[0].line,
-        expression[0].col
+  private evaluateCond(expression: Group): ConditionalExpression {
+    const tokens = expression.unwrap();
+    if (tokens.length < 2) {
+      throw new ParserError.GenericSyntaxError(
+        this.source,
+        (tokens[0] as Token).pos
       );
     }
-    if (
-      !(expression[1][0] instanceof Token) ||
-      expression[1][0].type !== TokenType.DEFINE
-    ) {
-      throw new ParserError.GenericSyntaxError(this.source, 
-        expression[0].line,
-        expression[0].col
-      );
+    const clauses = tokens.slice(1);
+    const conditions: Expression[] = [];
+    const bodies: Expression[] = [];
+    let catchAll: Expression = {
+      type: "Identifier",
+      name: "undefined",
+    } as Identifier; // the body of the else clause.
+    for (let i: number = 0; i < clauses.length; i++) {
+      const clause = clauses[i];
+      if (clause instanceof Group) {
+        // Verify that the clause is not empty.
+        if (clause.length() < 1) {
+          throw new ParserError.GenericSyntaxError(
+            this.source,
+            clause.loc.start
+          );
+        }
+        // Check if this is an else clause.
+        const clauseTokens = clause.unwrap();
+        if (
+          clauseTokens[0] instanceof Token &&
+          clauseTokens[0].type === TokenType.ELSE
+        ) {
+          if (i < clauses.length - 1) {
+            throw new ParserError.GenericSyntaxError(
+              this.source,
+              clauseTokens[0].pos
+            );
+          }
+          if (clause.length() < 2) {
+            throw new ParserError.GenericSyntaxError(
+              this.source,
+              clauseTokens[0].pos
+            );
+          }
+          catchAll = this.evaluateBody(clauseTokens.slice(1));
+        } else {
+          const test_val: Expression = this.evaluate(
+            clauseTokens[0],
+            true
+          ) as Expression;
+          // Convert JavaScript's truthy/falsy values to Scheme's true/false.
+          const test: Expression = {
+            type: "CallExpression",
+            loc: test_val.loc,
+            callee: {
+              type: "Identifier",
+              loc: test_val.loc,
+              name: "$true",
+            },
+            arguments: [test_val],
+          } as Expression;
+          conditions.push(test);
+          bodies.push(
+            clause.length() < 2
+              ? test_val
+              : this.evaluateBody(clauseTokens.slice(1))
+          );
+          catchAll.loc = bodies[bodies.length - 1].loc;
+          catchAll.loc!.start = catchAll.loc!.end;
+        }
+      } else {
+        throw new ParserError.GenericSyntaxError(this.source, clause.pos);
+      }
     }
-    const declaration = this.evaluate(expression[1]) as VariableDeclaration;
-    return {
-      type: "ExportNamedDeclaration",
-      declaration: declaration,
-      specifiers: [],
-      source: null,
-      loc: {
-        start: this.toSourceLocation(expression[0]).start,
-        end: declaration.loc!.end,
-      },
-    };
+    let finalConditionalExpression: Expression = catchAll;
+    for (let i: number = conditions.length - 1; i >= 0; i--) {
+      finalConditionalExpression = {
+        type: "ConditionalExpression",
+        loc: {
+          start: conditions[i].loc!.start,
+          end: finalConditionalExpression!.loc!.end,
+        },
+        test: conditions[i],
+        consequent: bodies[i],
+        alternate: finalConditionalExpression!,
+      };
+    }
+    // Wrap the last conditional expression with the expression location.
+    finalConditionalExpression.loc = expression.loc;
+    // There is at least one conditional expression.
+    // This cast is safe.
+    return finalConditionalExpression as ConditionalExpression;
   }
 
   /**
@@ -486,33 +884,33 @@ export class Parser {
    * @param expression A quote statement.
    * @returns An expression. Can be a Literal, NewExpression
    */
-  private evaluateQuote(expression: any[]): Expression;
-  private evaluateQuote(expression: any[], quasiquote: boolean): Expression;
-  private evaluateQuote(expression: any[], quasiquote?: boolean): Expression {
-    if (expression.length !== 2) {
-      throw new ParserError.GenericSyntaxError(this.source, 
-        expression[0].line,
-        expression[0].col
+  private evaluateQuote(expression: Group): Expression;
+  private evaluateQuote(expression: Group, quasiquote: boolean): Expression;
+  private evaluateQuote(expression: Group, quasiquote?: boolean): Expression {
+    const tokens = expression.unwrap();
+    if (tokens.length !== 2) {
+      throw new ParserError.GenericSyntaxError(
+        this.source,
+        (tokens[0] as Token).pos
       );
     }
     if (quasiquote === undefined) {
-      quasiquote = expression[0].type === TokenType.QUASIQUOTE;
+      quasiquote = (tokens[0] as Token).type === TokenType.QUASIQUOTE;
     }
-    const quotedVal: Expression = this.quote(expression[1], quasiquote);
+    const quotedVal: Expression = this.quote(tokens[1], quasiquote);
     // Sanitize location information.
-    const formattedLoc = this.toSourceLocation(expression[0]);
-    if (quotedVal.loc === undefined) {
-      quotedVal.loc = formattedLoc;
-    } else {
-      quotedVal.loc!.start = formattedLoc.start;
-    }
+    quotedVal.loc = expression.loc;
     return quotedVal;
   }
 
   /**
-   * Quote
+   * Quote prevents evaluation of an expression, leaving it as itself/a list.
+   *
+   * @param expression An expression to quote.
+   * @param quasiquote Whether or not this is a quasiquote.
+   * @returns An expression.
    */
-  private quote(expression: any, quasiquote: boolean): Expression {
+  private quote(expression: Token | Group, quasiquote: boolean): Expression {
     if (expression instanceof Token) {
       switch (expression.type) {
         case TokenType.NUMBER:
@@ -527,42 +925,50 @@ export class Parser {
     }
     // Array
     // Empty list
-    if (expression.length < 1) {
-      return this.list([]);
+    if (expression.length() < 1) {
+      const null_list = this.list([]);
+      null_list.loc = expression.loc;
+      return null_list;
     }
-    if (expression[0].type === TokenType.UNQUOTE && quasiquote) {
+    // Not an empty list
+    const tokens = expression.unwrap();
+    if (
+      tokens[0] instanceof Token &&
+      tokens[0].type === TokenType.UNQUOTE &&
+      quasiquote
+    ) {
       // "Unquote" the expression.
       // It MUST be an expression.
-      return this.evaluate(expression[1], true) as Expression;
+      return this.evaluate(tokens[1], true) as Expression;
     }
     // Determines whether the quote is parsing a list or a pair.
-    var hasDot = false;
+    var dot;
     const listElements1: Expression[] = [];
     const listElements2: Expression[] = [];
-    for (var i = 0; i < expression.length; i++) {
-      if (expression[i].type === TokenType.DOT) {
-        if (hasDot) {
-          throw new ParserError.GenericSyntaxError(this.source, 
-            expression[i].line,
-            expression[i].col
+    for (var i = 0; i < tokens.length; i++) {
+      if (
+        tokens[i] instanceof Token &&
+        (tokens[i] as Token).type === TokenType.DOT
+      ) {
+        if (dot !== undefined) {
+          throw new ParserError.GenericSyntaxError(
+            this.source,
+            (tokens[i] as Token).pos
           );
         } else {
-          hasDot = true;
+          dot = tokens[i] as Token;
         }
       } else {
-        if (hasDot) {
-          listElements2.push(this.quote(expression[i], quasiquote));
+        if (dot !== undefined) {
+          listElements2.push(this.quote(tokens[i], quasiquote));
         } else {
-          listElements1.push(this.quote(expression[i], quasiquote));
+          listElements1.push(this.quote(tokens[i], quasiquote));
         }
       }
     }
-    if (hasDot) {
+    if (dot !== undefined) {
       if (listElements2.length !== 1) {
-        throw new ParserError.GenericSyntaxError(this.source, 
-          expression[0].line,
-          expression[0].col
-        );
+        throw new ParserError.GenericSyntaxError(this.source, dot.pos);
       }
       if (listElements1.length < 1) {
         return listElements2[0];
@@ -634,7 +1040,7 @@ export class Parser {
     return {
       type: "CallExpression",
       loc:
-        expressions.length > 1
+        expressions.length > 0
           ? ({
               start: expressions[0].loc!.start,
               end: expressions[expressions.length - 1].loc!.end,
@@ -643,7 +1049,7 @@ export class Parser {
       callee: {
         type: "Identifier",
         loc:
-          expressions.length > 1
+          expressions.length > 0
             ? ({
                 start: expressions[0].loc!.start,
                 end: expressions[expressions.length - 1].loc!.end,
@@ -665,394 +1071,31 @@ export class Parser {
    * @param expression A token.
    * @returns An assignment axpression.
    */
-  private evaluateSet(expression: any[]): AssignmentExpression {
-    if (expression.length !== 3) {
-      throw new ParserError.GenericSyntaxError(this.source, 
-        expression[0].line,
-        expression[0].col
+  private evaluateSet(expression: Group): AssignmentExpression {
+    const tokens = expression.unwrap();
+    if (tokens.length !== 3) {
+      throw new ParserError.GenericSyntaxError(
+        this.source,
+        (tokens[0] as Token).pos
       );
     }
-    if (
-      !(expression[1] instanceof Token) ||
-      expression[1].type !== TokenType.IDENTIFIER
-    ) {
-      throw new ParserError.GenericSyntaxError(this.source, 
-        expression[0].line,
-        expression[0].col
+    if (!(tokens[1] instanceof Token)) {
+      throw new ParserError.GenericSyntaxError(
+        this.source,
+        tokens[1].loc.start
       );
+    } else if (tokens[1].type !== TokenType.IDENTIFIER) {
+      throw new ParserError.GenericSyntaxError(this.source, tokens[1].pos);
     }
-    // Safe to cast as we have prederermined that it is an identifier.
-    const identifier: Identifier = this.evaluateToken(
-      expression[1]
-    ) as Identifier;
-    const newValue: Expression = this.evaluate(expression[2]) as Expression;
+    // Safe to cast as we have predetermined that it is an identifier.
+    const identifier: Identifier = this.evaluateToken(tokens[1]) as Identifier;
+    const newValue: Expression = this.evaluate(tokens[2]) as Expression;
     return {
       type: "AssignmentExpression",
-      loc: {
-        start: {
-          line: expression[0].line,
-          column: expression[0].col,
-        },
-        end: newValue.loc!.end,
-      },
+      loc: expression.loc,
       operator: "=",
       left: identifier,
       right: newValue,
-    };
-  }
-
-  /**
-   * Evaluates a definition statement.
-   *
-   * @param statement A definition statement.
-   */
-  private evaluateDefine(statement: any[]): VariableDeclaration {
-    // Validate statement.
-    if (statement.length < 3) {
-      throw new ParserError.GenericSyntaxError(this.source, 
-        statement[0].line,
-        statement[0].col
-      );
-    }
-    // Check whether this defines a variable or a function.
-    if (statement[1] instanceof Array) {
-      // It's a function.
-      const identifiers = statement[1].map((token: Token | any[]) => {
-        if (token instanceof Array) {
-          // Error.
-          throw new ParserError.GenericSyntaxError(this.source, 
-            statement[0].line,
-            statement[0].col
-          );
-        }
-        if (token.type !== TokenType.IDENTIFIER) {
-          throw new ParserError.GenericSyntaxError(this.source, token.line, token.col);
-        }
-        return this.evaluateToken(token);
-      });
-      // We have previously checked if all of these values are identifiers.
-      // Therefore, we can safely cast them to identifiers.
-      const symbol: Identifier = identifiers[0] as Identifier;
-      const params: Identifier[] = identifiers.slice(1) as Identifier[];
-      const body: Statement[] = [];
-      let definitions = true;
-      for (let i = 2; i < statement.length; i++) {
-        if (
-          statement[i] instanceof Token ||
-          statement[i][0].type !== TokenType.DEFINE
-        ) {
-          // The definitions block is over.
-          definitions = false;
-          body.push(
-            i < statement.length - 1
-              ? // Safe to cast as module declarations are only top level.
-                (this.wrapInStatement(this.evaluate(statement[i])) as Statement)
-              : (this.returnStatement(this.evaluate(statement[i])) as Statement)
-          );
-        } else {
-          if (definitions) {
-            body.push(
-              this.wrapInStatement(this.evaluate(statement[i])) as Statement
-            );
-          } else {
-            // The definitons block is over, and yet there is a define.
-            throw new ParserError.GenericSyntaxError(this.source, 
-              statement[i][0].line,
-              statement[i][0].col
-            );
-          }
-        }
-      }
-      return {
-        type: "VariableDeclaration",
-        loc: {
-          start: this.toSourceLocation(statement[0]).start,
-          end: body[body.length - 1].loc!.end,
-        },
-        declarations: [
-          {
-            type: "VariableDeclarator",
-            loc: {
-              start: symbol.loc!.start,
-              end: body[body.length - 1].loc!.end,
-            },
-            id: symbol,
-            init: {
-              type: "ArrowFunctionExpression",
-              loc: {
-                start: symbol.loc!.start,
-                end: body[body.length - 1].loc!.end,
-              },
-              params: params,
-              body: {
-                type: "BlockStatement",
-                loc: {
-                  start: body[0].loc!.start,
-                  end: body[body.length - 1].loc!.end,
-                },
-                body: body,
-              },
-              expression: false,
-            },
-          } as VariableDeclarator,
-        ],
-        kind: "let",
-      };
-    }
-    // It's a variable.
-    // Once again, validate statement.
-    if (statement.length > 3) {
-      throw new ParserError.GenericSyntaxError(this.source, 
-        statement[0].line,
-        statement[0].col
-      );
-    }
-    const symbol = this.evaluateToken(statement[1]);
-    // Validate symbol.
-    if (symbol.type !== "Identifier") {
-      throw new ParserError.GenericSyntaxError(this.source, 
-        statement[1].line,
-        statement[1].col
-      );
-    }
-    const value = this.evaluate(statement[2], true) as Expression;
-    return {
-      type: "VariableDeclaration",
-      loc: {
-        start: this.toSourceLocation(statement[0]).start,
-        end: value.loc!.end,
-      },
-      declarations: [
-        {
-          type: "VariableDeclarator",
-          loc: {
-            start: symbol.loc!.start,
-            end: value.loc!.end,
-          },
-          id: symbol,
-          init: value,
-        } as VariableDeclarator,
-      ],
-      kind: "let",
-    };
-  }
-
-  /**
-   * Evaluates an if statement.
-   *
-   * @param expression An if expression.
-   * @returns A conditional expression.
-   */
-  private evaluateIf(expression: any[]): ConditionalExpression {
-    if (expression.length < 3 || expression.length > 4) {
-      throw new ParserError.GenericSyntaxError(this.source, 
-        expression[0].line,
-        expression[0].col
-      );
-    }
-    // Convert JavaScript's truthy/falsy values to Scheme's true/false.
-    const test_val = this.evaluate(expression[1], true) as Expression;
-    const test = {
-      type: "CallExpression",
-      loc: test_val.loc,
-      callee: {
-        type: "Identifier",
-        loc: test_val.loc,
-        name: "$true",
-      },
-      arguments: [test_val],
-    } as Expression;
-    const consequent = this.evaluate(expression[2], true) as Expression;
-    const alternate =
-      expression.length === 4
-        ? (this.evaluate(expression[3], true) as Expression)
-        : ({
-            type: "Identifier",
-            loc: consequent.loc,
-            name: "undefined",
-          } as Identifier);
-    return {
-      type: "ConditionalExpression",
-      loc: {
-        start: test.loc!.start,
-        end: alternate.loc!.end,
-      },
-      test: test,
-      consequent: consequent,
-      alternate: alternate,
-    };
-  }
-
-  /**
-   * Evaluates a conditional expression.
-   *
-   * @param expression A conditional expression.
-   * @returns A conditional expression.
-   */
-  private evaluateCond(expression: any[]): ConditionalExpression {
-    if (expression.length < 2) {
-      throw new ParserError.GenericSyntaxError(this.source, 
-        expression[0].line,
-        expression[0].col
-      );
-    }
-    const clauses = expression.slice(1);
-    const conditions: Expression[] = [];
-    const bodies: Expression[] = [];
-    let catchAll: Expression = {
-      type: "Identifier",
-      name: "undefined",
-    } as Identifier; // the body of the else clause.
-    for (let i: number = 0; i < clauses.length; i++) {
-      const clause = clauses[i];
-      if (clause instanceof Array) {
-        // Verify that the clause is not empty.
-        if (clause.length < 1) {
-          throw new ParserError.GenericSyntaxError(this.source, 
-            expression[0].line,
-            expression[0].col
-          );
-        }
-        // Check if this is an else clause.
-        if (clause[0].type === TokenType.ELSE) {
-          if (i < clauses.length - 1) {
-            throw new ParserError.GenericSyntaxError(this.source, 
-              clause[0].line,
-              clause[0].col
-            );
-          }
-          if (clause.length < 2) {
-            throw new ParserError.GenericSyntaxError(this.source, 
-              clause[0].line,
-              clause[0].col
-            );
-          }
-          catchAll = this.evaluateBody(clause.slice(1));
-        } else {
-          const test_val: Expression = this.evaluate(
-            clause[0],
-            true
-          ) as Expression;
-          // Convert JavaScript's truthy/falsy values to Scheme's true/false.
-          const test: Expression = {
-            type: "CallExpression",
-            loc: test_val.loc,
-            callee: {
-              type: "Identifier",
-              loc: test_val.loc,
-              name: "$true",
-            },
-            arguments: [test_val],
-          } as Expression;
-          conditions.push(test);
-          bodies.push(
-            clause.length < 2 ? test_val : this.evaluateBody(clause.slice(1))
-          );
-          catchAll.loc = bodies[bodies.length - 1].loc;
-          catchAll.loc!.start = catchAll.loc!.end;
-        }
-      } else {
-        throw new ParserError.GenericSyntaxError(this.source, 
-          expression[0].line,
-          expression[0].col
-        );
-      }
-    }
-    let finalConditionalExpression: Expression = catchAll;
-    for (let i: number = conditions.length - 1; i >= 0; i--) {
-      finalConditionalExpression = {
-        type: "ConditionalExpression",
-        loc: {
-          start: conditions[i].loc!.start,
-          end: finalConditionalExpression!.loc!.end,
-        },
-        test: conditions[i],
-        consequent: bodies[i],
-        alternate: finalConditionalExpression!,
-      };
-    }
-    // There is at least one conditional expression.
-    // This cast is safe.
-    return finalConditionalExpression as ConditionalExpression;
-  }
-
-  /**
-   * Evaluates a lambda expression.
-   *
-   * @param expression A lambda expression.
-   * @returns A function expression.
-   */
-  private evaluateLambda(expression: any[]): ArrowFunctionExpression {
-    if (expression.length < 3) {
-      throw new ParserError.GenericSyntaxError(this.source, 
-        expression[0].line,
-        expression[0].col
-      );
-    }
-    if (!(expression[1] instanceof Array)) {
-      throw new ParserError.GenericSyntaxError(this.source, 
-        expression[1].line,
-        expression[1].col
-      );
-    }
-    const params: Identifier[] = expression[1].map((param: any) => {
-      if (param instanceof Array) {
-        throw new ParserError.GenericSyntaxError(this.source, 
-          expression[0].line,
-          expression[0].col
-        );
-      }
-      if (param.type !== TokenType.IDENTIFIER) {
-        throw new ParserError.GenericSyntaxError(this.source, param.line, param.col);
-      }
-      // We have evaluated that this is an identifier.
-      return this.evaluateToken(param) as Identifier;
-    });
-    const body: Statement[] = [];
-    let definitions = true;
-    for (let i = 2; i < expression.length; i++) {
-      if (
-        expression[i] instanceof Token ||
-        expression[i][0].type !== TokenType.DEFINE
-      ) {
-        // The definitions block is over.
-        definitions = false;
-        body.push(
-          i < expression.length - 1
-            ? // Safe to cast as module declarations are only top level.
-              (this.wrapInStatement(this.evaluate(expression[i])) as Statement)
-            : (this.returnStatement(this.evaluate(expression[i])) as Statement)
-        );
-      } else {
-        if (definitions) {
-          body.push(
-            this.wrapInStatement(this.evaluate(expression[i])) as Statement
-          );
-        } else {
-          // The definitons block is over, and yet there is a define.
-          throw new ParserError.GenericSyntaxError(this.source, 
-            expression[i][0].line,
-            expression[i][0].col
-          );
-        }
-      }
-    }
-    return {
-      type: "ArrowFunctionExpression",
-      loc: {
-        start: this.toSourceLocation(expression[0]).start,
-        end: body[body.length - 1].loc!.end,
-      },
-      params: params,
-      body: {
-        type: "BlockStatement",
-        loc: {
-          start: body[0].loc!.start,
-          end: body[body.length - 1].loc!.end,
-        },
-        body: body,
-      },
-      expression: false,
     };
   }
 
@@ -1063,9 +1106,9 @@ export class Parser {
    * @param expression A begin expression.
    * @returns An expression.
    */
-  private evaluateBegin(expression: any[]): CallExpression {
-    const beginBody = this.evaluateBody(expression.slice(1));
-    beginBody.loc!.start = this.toSourceLocation(expression[0]).start;
+  private evaluateBegin(expression: Group): CallExpression {
+    const beginBody = this.evaluateBody(expression.unwrap().slice(1));
+    beginBody.loc = expression.loc;
     return beginBody;
   }
 
@@ -1074,35 +1117,37 @@ export class Parser {
    * Equivalent to evaluating a JavaScript block statement,
    * except this returns a value too.
    *
-   * @param expression A body expression.
+   * @param tokens An array of expressions.
    * @returns An Immediately Invoked Function Expression (IIFE).
    */
-  private evaluateBody(expression: any[]): CallExpression {
+  private evaluateBody(tokens: (Token | Group)[]): CallExpression {
     const body: Statement[] = [];
     let definitions = true;
-    for (let i = 0; i < expression.length; i++) {
+
+    for (let i = 0; i < tokens.length; i++) {
       if (
-        expression[i] instanceof Token ||
-        expression[i][0].type !== TokenType.DEFINE
+        tokens[i] instanceof Token ||
+        (tokens[i] as Group).unwrap()[0] instanceof Group ||
+        ((tokens[i] as Group).unwrap()[0] as Token).type !== TokenType.DEFINE
       ) {
         // The definitions block is over.
         definitions = false;
         body.push(
-          i < expression.length - 1
+          i < tokens.length - 1
             ? // Safe to cast as module declarations are only top level.
-              (this.wrapInStatement(this.evaluate(expression[i])) as Statement)
-            : (this.returnStatement(this.evaluate(expression[i])) as Statement)
+              (this.wrapInStatement(this.evaluate(tokens[i])) as Statement)
+            : (this.returnStatement(this.evaluate(tokens[i])) as Statement)
         );
       } else {
         if (definitions) {
           body.push(
-            this.wrapInStatement(this.evaluate(expression[i])) as Statement
+            this.wrapInStatement(this.evaluate(tokens[i])) as Statement
           );
         } else {
           // The definitions block is over, and yet there is a define.
-          throw new ParserError.GenericSyntaxError(this.source, 
-            expression[i][0].line,
-            expression[i][0].col
+          throw new ParserError.GenericSyntaxError(
+            this.source,
+            ((tokens[i] as Group).unwrap()[0] as Token).pos
           );
         }
       }
@@ -1145,121 +1190,127 @@ export class Parser {
   }
 
   /**
-   * Evaluates a let expression.
-   * let is syntactic sugar for an invoked lambda procedure.
+   * Evaluates a delay procedure call.
    *
-   * @param expression A let expression.
-   * @returns An IIFE.
+   * @param expression A delay procedure call in Scheme.
+   * @returns A lambda function that takes no arguments and returns the delayed expression.
    */
-  private evaluateLet(expression: any[]): CallExpression {
-    if (expression.length < 3) {
-      throw new ParserError.GenericSyntaxError(this.source, 
-        expression[0].line,
-        expression[0].col
+  private evaluateDelay(expression: Group): ArrowFunctionExpression {
+    const tokens = expression.unwrap();
+    if (tokens.length !== 2) {
+      throw new ParserError.GenericSyntaxError(
+        this.source,
+        (tokens[0] as Token).pos
       );
     }
-    if (!(expression[1] instanceof Array)) {
-      throw new ParserError.GenericSyntaxError(this.source, 
-        expression[1].line,
-        expression[1].col
+    const delayed: Statement = this.returnStatement(
+      this.evaluate(tokens[1], true)
+    );
+    return {
+      type: "ArrowFunctionExpression",
+      loc: expression.loc,
+      params: [],
+      body: {
+        type: "BlockStatement",
+        loc: delayed.loc,
+        body: [delayed],
+      },
+      expression: false,
+    };
+  }
+
+  /**
+   * Evaluates an import statement.
+   * Special syntax for importing modules, using a similar syntax to JS.
+   * (import "module-name" (imported-name1 imported-name2 ...))
+   *
+   * @param expression An import statement in Scheme.
+   * @returns An import statement in estree form.
+   */
+  private evaluateImport(expression: Group): ModuleDeclaration {
+    const tokens = expression.unwrap();
+    if (tokens.length < 3) {
+      throw new ParserError.GenericSyntaxError(
+        this.source,
+        (tokens[0] as Token).pos
+      );
+    } else if (!(tokens[1] instanceof Token)) {
+      throw new ParserError.GenericSyntaxError(
+        this.source,
+        tokens[1].loc.start
+      );
+    } else if (!(tokens[2] instanceof Group)) {
+      throw new ParserError.GenericSyntaxError(
+        this.source,
+        (tokens[2] as Token).pos
       );
     }
-    const declaredVariables: Identifier[] = [];
-    const declaredValues: Expression[] = [];
-    for (let i = 0; i < expression[1].length; i++) {
-      if (!(expression[1][i] instanceof Array)) {
-        throw new ParserError.GenericSyntaxError(this.source, 
-          expression[1][i].line,
-          expression[1][i].col
+    const specifiers: ImportSpecifier[] = [];
+    const specifierTokens = tokens[2].unwrap();
+    for (let i = 0; i < specifierTokens.length; i++) {
+      if (!(specifierTokens[i] instanceof Token)) {
+        throw new ParserError.GenericSyntaxError(
+          this.source,
+          (specifierTokens[i] as Group).loc.start
         );
       }
-      if (expression[1][i].length !== 2) {
-        throw new ParserError.GenericSyntaxError(this.source, 
-          expression[1][i][0].line,
-          expression[1][i][0].col
-        );
-      }
-      if (!(expression[1][i][0] instanceof Token)) {
-        throw new ParserError.GenericSyntaxError(this.source, 
-          expression[1][i][0].line,
-          expression[1][i][0].col
-        );
-      }
-      if (expression[1][i][0].type !== TokenType.IDENTIFIER) {
-        throw new ParserError.GenericSyntaxError(this.source, 
-          expression[1][i][0].line,
-          expression[1][i][0].col
-        );
-      }
-      // Safe to cast as we have determined that the token is an identifier.
-      declaredVariables.push(
-        this.evaluateToken(expression[1][i][0]) as Identifier
-      );
-      // Safe to cast as the "true" flag guarantees an expression.
-      declaredValues.push(
-        this.evaluate(expression[1][i][1], true) as Expression
-      );
-    }
-    const body: Statement[] = [];
-    let definitions = true;
-    for (let i = 2; i < expression.length; i++) {
-      if (
-        expression[i] instanceof Token ||
-        expression[i][0].type !== TokenType.DEFINE
-      ) {
-        // The definitions block is over.
-        definitions = false;
-        body.push(
-          i < expression.length - 1
-            ? // Safe to cast as module declarations are only top level.
-              (this.wrapInStatement(this.evaluate(expression[i])) as Statement)
-            : (this.returnStatement(this.evaluate(expression[i])) as Statement)
-        );
-      } else {
-        if (definitions) {
-          body.push(
-            this.wrapInStatement(this.evaluate(expression[i])) as Statement
-          );
-        } else {
-          // The definitons block is over, and yet there is a define.
-          throw new ParserError.GenericSyntaxError(this.source, 
-            expression[i][0].line,
-            expression[i][0].col
-          );
-        }
-      }
+      specifiers.push({
+        type: "ImportSpecifier",
+        local: this.evaluate(specifierTokens[i]) as Identifier,
+        imported: this.evaluate(specifierTokens[i]) as Identifier,
+        loc: this.toSourceLocation(specifierTokens[i] as Token),
+      });
     }
     return {
-      type: "CallExpression",
-      loc: {
-        start: this.toSourceLocation(expression[0]).start,
-        end: body[body.length - 1].loc!.end,
-      },
-      callee: {
-        type: "ArrowFunctionExpression",
-        loc:
-          declaredVariables.length > 0
-            ? {
-                start: declaredVariables[0].loc!.start,
-                end: body[body.length - 1].loc!.end,
-              }
-            : {
-                start: body[0].loc!.start,
-                end: body[body.length - 1].loc!.end,
-              },
-        params: declaredVariables,
-        body: {
-          type: "BlockStatement",
-          loc: {
-            start: body[0].loc!.start,
-            end: body[body.length - 1].loc!.end,
-          },
-          body: body,
-        },
-        expression: false,
-      },
-      arguments: declaredValues,
-      optional: false,
+      type: "ImportDeclaration",
+      specifiers: specifiers,
+      source: this.evaluate(tokens[1]) as Literal,
+      loc: expression.loc,
+    };
+  }
+
+  /**
+   * Evaluates an export statement.
+   * Similar syntax to JS, wherein export "wraps" around a declaration.
+   *
+   * (export (define ...))
+   * @param expression An export statement in Scheme.
+   * @returns An export statement in estree form.
+   */
+  private evaluateExport(expression: Group): ModuleDeclaration {
+    const tokens = expression.unwrap();
+    if (tokens.length !== 2) {
+      throw new ParserError.GenericSyntaxError(
+        this.source,
+        (tokens[0] as Token).pos
+      );
+    }
+    if (!(tokens[1] instanceof Group)) {
+      throw new ParserError.GenericSyntaxError(
+        this.source,
+        (tokens[1] as Token).pos
+      );
+    }
+    const exportTokens = tokens[1].unwrap();
+    if (!(exportTokens[0] instanceof Token)) {
+      throw new ParserError.GenericSyntaxError(
+        this.source,
+        exportTokens[0].loc.start
+      );
+    }
+    if (exportTokens[0].type !== TokenType.DEFINE) {
+      throw new ParserError.GenericSyntaxError(
+        this.source,
+        (tokens[0] as Token).pos
+      );
+    }
+    const declaration = this.evaluate(tokens[1]) as VariableDeclaration;
+    return {
+      type: "ExportNamedDeclaration",
+      declaration: declaration,
+      specifiers: [],
+      source: null,
+      loc: expression.loc,
     };
   }
 
@@ -1270,16 +1321,13 @@ export class Parser {
    * @param expression An expression.
    * @returns A call expression.
    */
-  private evaluateApplication(expression: any[]): CallExpression {
-    const procedure = this.evaluate(expression[0]);
-    const args = expression.slice(1).map((arg) => this.evaluate(arg, true));
+  private evaluateApplication(expression: Group): CallExpression {
+    const tokens = expression.unwrap();
+    const procedure = this.evaluate(tokens[0]);
+    const args = tokens.slice(1).map((arg) => this.evaluate(arg, true));
     return {
       type: "CallExpression",
-      loc: {
-        start: procedure.loc!.start,
-        end:
-          args.length > 0 ? args[args.length - 1].loc!.end : procedure.loc!.end,
-      },
+      loc: expression.loc,
       callee: procedure as Expression | Identifier | Literal | CallExpression,
       arguments: args as Expression[], // safe to typecast, as we have already
       //predetermined that the arguments are expressions.
@@ -1303,9 +1351,12 @@ export class Parser {
         return {
           type: "Literal",
           value: token.literal,
-          raw: token.type === TokenType.BOOLEAN
-          ? (token.literal ? "true" : "false")
-          : token.lexeme,
+          raw:
+            token.type === TokenType.BOOLEAN
+              ? token.literal
+                ? "true"
+                : "false"
+              : token.lexeme,
           loc: this.toSourceLocation(token),
         };
       case TokenType.IDENTIFIER:
@@ -1315,9 +1366,9 @@ export class Parser {
           loc: this.toSourceLocation(token),
         };
       default:
-        throw new ParserError.UnexpectedTokenError(this.source, 
-          token.line,
-          token.col,
+        throw new ParserError.UnexpectedTokenError(
+          this.source,
+          token.pos,
           token
         );
     }
@@ -1350,26 +1401,17 @@ export class Parser {
    */
   private returnStatement(
     expression: Expression | Statement | ModuleDeclaration
-  ): ReturnStatement {
+  ): Statement {
     if (this.isExpression(expression)) {
       // Return the expression wrapped in a return statement.
-
       return {
         type: "ReturnStatement",
         argument: expression,
         loc: expression.loc,
       };
     }
-    // If the expression is not a expression, return a return statement with no argument.
-    return {
-      type: "ReturnStatement",
-      argument: {
-        type: "Identifier",
-        name: "undefined",
-        loc: expression.loc,
-      },
-      loc: expression.loc,
-    };
+    // If the expression is not a expression, just return the statement.
+    return expression as Statement;
   }
 
   /**
@@ -1391,35 +1433,30 @@ export class Parser {
    * Evaluates the proper sourceLocation for an expression.
    * @returns The sourceLocation for an expression.
    */
-  private toSourceLocation(startToken: Token): SourceLocation;
-  private toSourceLocation(startToken: Token, endToken: Token): SourceLocation;
   private toSourceLocation(
     startToken: Token,
-    endToken?: Token
+    endToken: Token = startToken
   ): SourceLocation {
     return {
-      start: {
-        line: startToken.line,
-        column: startToken.col,
-      } as Position,
-      end: {
-        line: endToken == undefined ? startToken.line : endToken.line,
-        column:
-          endToken == undefined
-            ? startToken.col + startToken.lexeme.length
-            : endToken.col + endToken.lexeme.length,
-      } as Position,
+      start: startToken.pos,
+      end: endToken.pos,
     };
   }
 
   parse(): Program {
     while (!this.isAtEnd()) {
       let currentStatement = this.grouping();
-      if (currentStatement[0].type !== TokenType.EOF) {
-        // "Unwrap" the exterior grouping
-        currentStatement = currentStatement[0];
+      // Unwrap the grouping.
+      // Top-level grouping always contains
+      // one internal item of type Token or Group.
+      // This is what we want to work on.
+      let currentGroup = currentStatement.unwrap()[0];
+      if (
+        currentGroup instanceof Group ||
+        currentGroup.type !== TokenType.EOF
+      ) {
         this.estree.body.push(
-          this.wrapInStatement(this.evaluate(currentStatement, false, true))
+          this.wrapInStatement(this.evaluate(currentGroup, false, true))
         );
       }
     }
