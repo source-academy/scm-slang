@@ -7,6 +7,7 @@
 
 import { TokenType } from "./token-type";
 import { TokenizerError } from "./error";
+import { Position } from "estree";
 
 // syntactic keywords in the scheme language
 let keywords = new Map<string, TokenType>([
@@ -31,8 +32,7 @@ export class Token {
   literal: any;
   start: number;
   end: number;
-  line: number;
-  col: number;
+  pos: Position;
 
   constructor(
     type: TokenType,
@@ -48,8 +48,10 @@ export class Token {
     this.literal = literal;
     this.start = start;
     this.end = end;
-    this.line = line;
-    this.col = col;
+    this.pos = {
+      line: line,
+      column: col,
+    };
   }
 
   public toString(): string {
