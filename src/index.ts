@@ -62,13 +62,13 @@ export function encode(identifier: string): string {
     return (
       "$scheme_" +
       b64Encode(identifier).replace(
-        /([^a-zA-Z0-9])/g,
+        /([^a-zA-Z0-9_])/g,
         (match: string) => `\$${match.charCodeAt(0)}\$`
       )
     );
   } else {
     return identifier.replace(
-      /([^a-zA-Z0-9])/g,
+      /([^a-zA-Z0-9_])/g,
       (match: string) => `\$${match.charCodeAt(0)}\$`
     );
   }
