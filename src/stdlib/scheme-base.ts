@@ -763,11 +763,12 @@ export let procedureQ = function (p: any): boolean {
   return typeof p === "function";
 };
 
-export let apply = function (proc: Function, args: any[]): any {
-  if (args[args.length - 1] instanceof Pair) {
-    let last = args.pop() as Pair;
-    args = args.concat($list_to_array(last));
+export let apply = function (proc: Function, ...args: any[]): any {  
+  if (!pairQ(args[args.length - 1])) {
+    throw new Error("Last argument to apply must be a list");
   }
+  let last = args.pop() as Pair;
+  args = args.concat($list_to_array(last));
   return proc(...args);
 };
 
