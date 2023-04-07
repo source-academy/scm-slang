@@ -793,8 +793,8 @@ export let error = function (msg: string): void {
 
 // Input and output
 
-export let display = function (x: any) {
-  function display_helper(x: any): string {
+// Display is defined in js-slang. This helps to format whatever scheme creates first.
+export let display_helper = function (x: any): string {
     let str: string = ''
     if (listQ(x)) {
       str = '('
@@ -821,8 +821,6 @@ export let display = function (x: any) {
       str = x.toString()
     }
     return str
-  }
-  console.log(display_helper(x))
 }
 
 export let newline = function (): void {
