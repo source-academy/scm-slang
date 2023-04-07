@@ -4,7 +4,8 @@ import { Program } from "estree";
 import { encode as b64Encode, decode as b64Decode } from "js-base64";
 
 export * from "./prelude-visitor";
-export * from "./error";
+export * as TokenizerError from "./tokenizer-error";
+export * as ParserError from "./parser-error";
 
 const JS_KEYWORDS: string[] = [
   "break",

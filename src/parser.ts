@@ -1,6 +1,6 @@
 import { Token } from "./tokenizer";
 import { TokenType } from "./token-type";
-import { ParserError } from "./error";
+import * as ParserError from "./parser-error";
 import {
   Program,
   Expression,

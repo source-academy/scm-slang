@@ -6,7 +6,7 @@
 // py-slang: https://github.com/source-academy/py-slang
 
 import { TokenType } from "./token-type";
-import { TokenizerError } from "./error";
+import * as TokenizerError from "./tokenizer-error";
 import { Position } from "estree";
 
 // syntactic keywords in the scheme language
