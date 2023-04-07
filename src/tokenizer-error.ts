@@ -1,4 +1,3 @@
-import { Token } from "./tokenizer";
 import { Position } from "estree";
 
 export abstract class TokenizerError extends SyntaxError {
