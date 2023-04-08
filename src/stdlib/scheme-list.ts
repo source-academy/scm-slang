@@ -1,6 +1,6 @@
 import { Pair } from './scheme-base';
 
-export let filter = function (predicate: (x: any) => boolean, list: Pair) {
+export let filter = function (predicate: (x: any) => boolean, list: Pair): Pair | null {
     if (list === null) {
         return null;
     } else if (predicate(list.car)) {
@@ -10,7 +10,7 @@ export let filter = function (predicate: (x: any) => boolean, list: Pair) {
     }
 }
 
-export let fold = function (f: Function, init: any, ...lists: Pair[]) {
+export let fold = function (f: Function, init: any, ...lists: Pair[]): any {
     if (lists.length === 0) {
         return init;
     }
@@ -24,7 +24,7 @@ export let fold = function (f: Function, init: any, ...lists: Pair[]) {
     }
 }
 
-export let fold_right = function (f: Function, init: any, ...lists: Pair[]) {
+export let fold_right = function (f: Function, init: any, ...lists: Pair[]): any {
     if (lists.length === 0) {
         return init;
     }
@@ -38,7 +38,7 @@ export let fold_right = function (f: Function, init: any, ...lists: Pair[]) {
     }
 }
 
-export let reduce = function (f: Function, rIdentity: any, list: Pair) {
+export let reduce = function (f: Function, rIdentity: any, list: Pair): any {
     if (list === null) {
         return rIdentity;
     } else {
@@ -46,7 +46,7 @@ export let reduce = function (f: Function, rIdentity: any, list: Pair) {
     }
 }
 
-export let reduce_right = function (f: Function, rIdentity: any, list: Pair) {
+export let reduce_right = function (f: Function, rIdentity: any, list: Pair): any {
     if (list === null) {
         return rIdentity;
     } else {
