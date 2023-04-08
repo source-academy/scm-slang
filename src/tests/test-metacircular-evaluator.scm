@@ -1,8 +1,15 @@
-;; SICP MCE. Thanks to Gary Liu for hosting this on his site https://scheme.garyliu.dev/playground
-;; prepend for SICP MCE
+;; prepend for SICP compliance
+;; the rest of the evaluator is copied from SICP unmodified
 (define true #t)
 (define false #f)
 (define apply-in-underlying-scheme apply)
+(define (cadr p) (car (cadr p)))
+(define (cddr p) (cdr (cdr p)))
+(define (caadr p) (car (car (cdr p))))
+(define (caddr p) (car (cdr (cdr p))))
+(define (cdadr p) (cdr (car (cdr p))))
+(define (cdddr p) (cdr (cdr (cdr p))))
+(define (cadddr p) (car (cdr (cdr (cdr p)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Evaluation rules ;;;;;;
@@ -349,11 +356,3 @@
 
 (define (evaluate-and-print program)
   (user-print (eval program the-global-environment)))
-
-(define (fib n)
-  (if (<= n 2)
-      1
-      (+ (fib (- n 1)) (fib (- n 2)))))
-  
- (fib 10)
-(user-print fib)
