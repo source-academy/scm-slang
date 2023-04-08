@@ -336,18 +336,30 @@ export let cons = function (car: any, cdr: any): Pair {
 };
 
 export let car = function (p: Pair): any {
+  if (p === null) {
+    this.error("car: null pair");
+  }
   return p.car;
 };
 
 export let cdr = function (p: Pair): any {
+  if (p === null) {
+    this.error("cdr: null pair");
+  }
   return p.cdr;
 };
 
 export let set_carB = function (p: Pair, val: any): void {
+  if (p === null) {
+    this.error("set-car!: null pair");
+  }
   p.car = val;
 };
 
 export let set_cdrB = function (p: Pair, val: any): void {
+  if (p === null) {
+    this.error("set-cdr!: null pair");
+  }
   p.cdr = val;
 };
 
