@@ -192,7 +192,7 @@ export let abs = function(x: number): number {
 };
 
 export let quotient = function(x: number, y: number): number {
-    return Math.floor(x / y);
+    return Math.trunc(x / y);
 }
 
 export let modulo = function(x: number, y: number): number {
