@@ -1,5 +1,17 @@
 import { Pair } from './scheme-base';
 
+export let dotted_listQ = function (list: Pair): boolean {
+    if (list === null) {
+        return false;
+    } else if (list.cdr === null) {
+        return false;
+    } else if (list.cdr instanceof Pair) {
+        return dotted_listQ(list.cdr);
+    } else {
+        return true;
+    }
+}
+
 export let filter = function (predicate: (x: any) => boolean, list: Pair): Pair | null {
     if (list === null) {
         return null;

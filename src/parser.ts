@@ -941,10 +941,10 @@ export class Parser {
       return this.evaluate(tokens[1], true) as Expression;
     }
     // Determines whether the quote is parsing a list or a pair.
-    var dot;
+    let dot;
     const listElements1: Expression[] = [];
-    const listElements2: Expression[] = [];
-    for (var i = 0; i < tokens.length; i++) {
+    let listTerminator: Expression | null = null;
+    for (let i = 0; i < tokens.length; i++) {
       if (
         tokens[i] instanceof Token &&
         (tokens[i] as Token).type === TokenType.DOT
@@ -959,22 +959,33 @@ export class Parser {
         }
       } else {
         if (dot !== undefined) {
-          listElements2.push(this.quote(tokens[i], quasiquote));
+          // There should only be one element after the dot.
+          if (listTerminator !== null) {
+            throw new ParserError.GenericSyntaxError(
+              this.source,
+              (tokens[i] as Token).pos
+            );
+          } else {
+            listTerminator = this.quote(tokens[i], quasiquote);
+          }
         } else {
           listElements1.push(this.quote(tokens[i], quasiquote));
         }
       }
     }
     if (dot !== undefined) {
-      if (listElements2.length !== 1) {
-        throw new ParserError.GenericSyntaxError(this.source, dot.pos);
+      if (listTerminator === null) {
+        throw new ParserError.GenericSyntaxError(
+          this.source,
+          dot.pos
+        );
       }
       if (listElements1.length < 1) {
-        return listElements2[0];
+        return listTerminator!;
       }
-      return this.pair(
-        listElements1.length < 2 ? listElements1[0] : this.list(listElements1),
-        listElements2[0]
+      return this.dottedList(
+        listElements1,
+        listTerminator!
       );
     }
     return this.list(listElements1);
@@ -1011,6 +1022,10 @@ export class Parser {
 
   /**
    * Creates a pair from two expressions.
+   * 
+   * @param car The car of the pair.
+   * @param cdr The cdr of the pair.
+   * @returns A call to cons.
    */
   private pair(car: Expression, cdr: Expression): CallExpression {
     return {
@@ -1030,6 +1045,22 @@ export class Parser {
       arguments: [car, cdr],
       optional: false,
     };
+  }
+
+  /**
+   * Creates a dotted list from a list and a final element.
+   * 
+   * @param cars The list of elements before the terminator.
+   * @param cdr The final element.
+   * @returns A dotted list.
+   */
+  private dottedList(cars: Expression[], cdr: Expression): CallExpression {
+    let acc: Expression = cdr;
+    for (let i = cars.length - 1; i >= 0; i--) {
+      acc = this.pair(cars[i], acc);
+    }
+    // Safe to cast. cars is never empty.
+    return acc as CallExpression;
   }
 
   /**

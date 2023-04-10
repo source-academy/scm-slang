@@ -806,36 +806,6 @@ export let error = function (msg: string): void {
 
 // Input and output
 
-// Display is defined in js-slang. This helps to format whatever scheme creates first.
-export let display_helper = function (x: any): string {
-    let str: string = ''
-    if (listQ(x)) {
-      str = '('
-      let p = x as Pair
-      while (p !== null) {
-        str += display_helper(p.car)
-        p = p.cdr
-        if (p !== null) {
-          str += ' '
-        }
-      }
-      str += ')'
-    } else if (vectorQ(x)) {
-      str = '#('
-      let v = x as Vector
-      for (let i = 0; i < v.vec.length; i++) {
-        str += display_helper(v.vec[i])
-        if (i !== v.vec.length - 1) {
-          str += ' '
-        }
-      }
-      str += ')'
-    } else {
-      str = x.toString()
-    }
-    return str
-}
-
 export let newline = function (): void {
   console.log()
 }
