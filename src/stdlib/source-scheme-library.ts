@@ -56,7 +56,7 @@ export function schemeToString(x: any): string {
     str += ")";
   } else if (base.procedureQ(x)) {
     str = `#<procedure (${$args(x)
-      .reduce((a, b) => `${a} ${b}`, "")
+      .reduce((a, b) => `${a} ${b.replace('...', '. ')}`, "")
       .trimStart()})>`;
   } else if (base.booleanQ(x)) {
     str = x ? "#t" : "#f";
