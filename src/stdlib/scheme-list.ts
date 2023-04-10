@@ -34,7 +34,7 @@ export let fold_right = function (f: Function, init: any, ...lists: Pair[]): any
     if (lists.some((list) => list === null)) {
         return init;
     } else {
-        return fold_right(f, f(...lists.map((list) => list.car), init), ...lists.map((list) => list.cdr));
+        return f(...lists.map((list) => list.car), fold_right(f, init, ...lists.map((list) => list.cdr)));
     }
 }
 
