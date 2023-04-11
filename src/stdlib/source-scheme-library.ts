@@ -10,12 +10,13 @@ export * from "./scheme-cxr";
 
 // Extracts the arguments from a function as a string array.
 // Taken from https://stackoverflow.com/questions/1007981/how-to-get-function-parameter-names-values-dynamically-from-javascript
+// Adapted to work on both arrow functions and default functions.
 function $args(func: any): string[] {
   return (func + "")
     .replace(/[/][/].*$/gm, "") // strip single-line comments
     .replace(/\s+/g, "") // strip white space
     .replace(/[/][*][^/*]*[*][/]/g, "") // strip multi-line comments
-    .split("){", 1)[0]
+    .split(")", 1)[0] // In case of a default/arrow function, extract the parameters
     .replace(/^[^(]*[(]/, "") // extract the parameters
     .replace(/=[^,]+/g, "") // strip any ES6 defaults
     .split(",")
@@ -25,7 +26,9 @@ function $args(func: any): string[] {
 // Display is defined in js-slang. This helps to format whatever scheme creates first.
 export function schemeToString(x: any): string {
   let str: string = "";
-  if (base.listQ(x)) {
+  if (x === undefined) {
+    str = 'undefined';
+  } else if (base.listQ(x)) {
     str = "(";
     let p = x as base.Pair;
     while (p !== null) {
