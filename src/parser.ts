@@ -62,7 +62,7 @@ export class Parser {
   private readonly chapter: number;
   private current: number = 0;
 
-  constructor(source: string, tokens: Token[], chapter: number = 100) {
+  constructor(source: string, tokens: Token[], chapter: number = Infinity) {
     this.source = source;
     this.tokens = tokens;
     this.chapter = chapter;
@@ -980,6 +980,7 @@ export class Parser {
           dot.pos
         );
       }
+      // Safe, as we have already determined that listTerminator exists
       if (listElements1.length < 1) {
         return listTerminator!;
       }
