@@ -1,6 +1,6 @@
 # scm-slang
 
-<center><img src = img/scm-slang.png width = 200></center>
+<p align="center"><img src = img/scm-slang.png width = 400></p>
 
 ## scm-slang?
 
