@@ -1,5 +1,7 @@
 # scm-slang
 
+<center><img src = img/scm-slang.png width = 200></center>
+
 ## scm-slang?
 
 `scm-slang` is an **experimental** implementation of the [Scheme](https://www.scheme.org/) programming language designed for compatibiity with the online learning environment of [Source Academy](https://sourceacademy.org/). It aims to be faithful to the original *Structure and Interpretation of Computer Programs* (SICP) book whilst maintaining compatibility with modules designed for use with [`js-slang`](https://github.com/source-academy/js-slang), a subset of JavaScript intended for use with the SICP JS book in Source Academy.
