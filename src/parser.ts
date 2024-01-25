@@ -5,9 +5,7 @@ import {
   Program,
   Expression,
   Statement,
-  ExpressionStatement,
   VariableDeclaration,
-  VariableDeclarator,
   CallExpression,
   ArrowFunctionExpression,
   Literal,
@@ -18,6 +16,22 @@ import {
   ImportSpecifier,
   ModuleDeclaration,
 } from "estree";
+import { 
+  makeArrowFunctionExpression, 
+  makeAssignmentExpression, 
+  makeBlockStatement, 
+  makeCallExpression, 
+  makeConditionalExpression, 
+  makeDeclaration, 
+  makeExportNamedDeclaration, 
+  makeExpressionStatement, 
+  makeIdentifier, 
+  makeImportDeclaration, 
+  makeImportSpecifier, 
+  makeLiteral, 
+  makeProgram,
+  makeReturnStatement 
+} from "./estree-nodes";
 
 class Group {
   group: (Token | Group)[];
@@ -30,18 +44,18 @@ class Group {
     this.group = group;
     this.loc = openparen
       ? // if openparen exists, then closeparen exists as well
-        {
-          start: openparen.pos,
-          end: closeparen!.pos,
-        }
+      {
+        start: openparen.pos,
+        end: closeparen!.pos,
+      }
       : // only go to this case if grouping() was called.
       // 2 cases:
       // 1. group contains a single Token
       // 2. group contains a single Group
       // in both cases we steal the inner group's location
       group[0] instanceof Group
-      ? group[0].loc
-      : {
+        ? group[0].loc
+        : {
           start: group[0].pos,
           end: group[0].pos,
         };
@@ -66,11 +80,7 @@ export class Parser {
     this.source = source;
     this.tokens = tokens;
     this.chapter = chapter;
-    this.estree = {
-      type: "Program",
-      body: [],
-      sourceType: "script",
-    };
+    this.estree = makeProgram();
   }
 
   private advance(): Token {
@@ -423,7 +433,7 @@ export class Parser {
 
     // This determines the allowing of constants or variables
     // in the current chapter.
-    const definitionLevel = this.chapter < 3 ? "const" : "let";
+    const definitionType = this.chapter < 3 ? "const" : "let";
 
     // Check whether this defines a variable or a function.
     if (tokens[1] instanceof Group) {
@@ -458,7 +468,7 @@ export class Parser {
           body.push(
             i < tokens.length - 1
               ? // Safe to cast as module declarations are only top level.
-                (this.wrapInStatement(this.evaluate(tokens[i])) as Statement)
+              (this.wrapInStatement(this.evaluate(tokens[i])) as Statement)
               : (this.returnStatement(this.evaluate(tokens[i])) as Statement)
           );
         } else {
@@ -475,38 +485,47 @@ export class Parser {
           }
         }
       }
-      return {
-        type: "VariableDeclaration",
-        loc: statement.loc,
-        declarations: [
-          {
-            type: "VariableDeclarator",
-            loc: {
-              start: this.toSourceLocation(tokens[0] as Token).start,
-              end: body[body.length - 1].loc!.end,
-            },
-            id: symbol,
-            init: {
-              type: "ArrowFunctionExpression",
-              loc: {
-                start: symbol.loc!.start,
-                end: body[body.length - 1].loc!.end,
-              },
-              params: params,
-              body: {
-                type: "BlockStatement",
-                loc: {
-                  start: body[0].loc!.start,
-                  end: body[body.length - 1].loc!.end,
-                },
-                body: body,
-              },
-              expression: false,
-            },
-          } as VariableDeclarator,
-        ],
-        kind: definitionLevel,
-      };
+      return makeDeclaration(
+        definitionType,
+        symbol,
+        makeArrowFunctionExpression(
+          params,
+          makeBlockStatement(body)
+        )
+      );
+
+      // return {
+      //   type: "VariableDeclaration",
+      //   loc: statement.loc,
+      //   declarations: [
+      //     {
+      //       type: "VariableDeclarator",
+      //       loc: {
+      //         start: this.toSourceLocation(tokens[0] as Token).start,
+      //         end: body[body.length - 1].loc!.end,
+      //       },
+      //       id: symbol,
+      //       init: {
+      //         type: "ArrowFunctionExpression",
+      //         loc: {
+      //           start: symbol.loc!.start,
+      //           end: body[body.length - 1].loc!.end,
+      //         },
+      //         params: params,
+      //         body: {
+      //           type: "BlockStatement",
+      //           loc: {
+      //             start: body[0].loc!.start,
+      //             end: body[body.length - 1].loc!.end,
+      //           },
+      //           body: body,
+      //         },
+      //         expression: false,
+      //       },
+      //     } as VariableDeclarator,
+      //   ],
+      //   kind: definitionLevel,
+      // };
     }
     // It's a variable.
     // Once again, validate statement.
@@ -522,22 +541,23 @@ export class Parser {
       throw new ParserError.GenericSyntaxError(this.source, tokens[1].pos);
     }
     const value = this.evaluate(tokens[2], true) as Expression;
-    return {
-      type: "VariableDeclaration",
-      loc: statement.loc,
-      declarations: [
-        {
-          type: "VariableDeclarator",
-          loc: {
-            start: this.toSourceLocation(tokens[0] as Token).start,
-            end: value.loc!.end,
-          },
-          id: symbol,
-          init: value,
-        } as VariableDeclarator,
-      ],
-      kind: definitionLevel,
-    };
+    return makeDeclaration(definitionType, symbol, value);
+    // return {
+    //   type: "VariableDeclaration",
+    //   loc: statement.loc,
+    //   declarations: [
+    //     {
+    //       type: "VariableDeclarator",
+    //       loc: {
+    //         start: this.toSourceLocation(tokens[0] as Token).start,
+    //         end: value.loc!.end,
+    //       },
+    //       id: symbol,
+    //       init: value,
+    //     } as VariableDeclarator,
+    //   ],
+    //   kind: definitionLevel,
+    // };
   }
 
   /**
@@ -557,32 +577,16 @@ export class Parser {
     }
     // Convert JavaScript's truthy/falsy values to Scheme's true/false.
     const test_val = this.evaluate(tokens[1], true) as Expression;
-    const test = {
-      type: "CallExpression",
-      loc: test_val.loc,
-      callee: {
-        type: "Identifier",
-        loc: test_val.loc,
-        name: "$true",
-      },
-      arguments: [test_val],
-    } as Expression;
+    const test = makeCallExpression(
+      makeIdentifier("$true", test_val.loc!),
+      [test_val]
+    );
     const consequent = this.evaluate(tokens[2], true) as Expression;
     const alternate =
       tokens.length === 4
         ? (this.evaluate(tokens[3], true) as Expression)
-        : ({
-            type: "Identifier",
-            loc: consequent.loc,
-            name: "undefined",
-          } as Identifier);
-    return {
-      type: "ConditionalExpression",
-      loc: expression.loc,
-      test: test,
-      consequent: consequent,
-      alternate: alternate,
-    };
+        : makeIdentifier("undefined", consequent.loc!);
+    return makeConditionalExpression(test, consequent, alternate);
   }
 
   /**
@@ -630,7 +634,7 @@ export class Parser {
         body.push(
           i < tokens.length - 1
             ? // Safe to cast as module declarations are only top level.
-              (this.wrapInStatement(this.evaluate(tokens[i])) as Statement)
+            (this.wrapInStatement(this.evaluate(tokens[i])) as Statement)
             : (this.returnStatement(this.evaluate(tokens[i])) as Statement)
         );
       } else {
@@ -647,20 +651,24 @@ export class Parser {
         }
       }
     }
-    return {
-      type: "ArrowFunctionExpression",
-      loc: expression.loc,
-      params: params,
-      body: {
-        type: "BlockStatement",
-        loc: {
-          start: body[0].loc!.start,
-          end: body[body.length - 1].loc!.end,
-        },
-        body: body,
-      },
-      expression: false,
-    };
+    return makeArrowFunctionExpression(
+      params,
+      makeBlockStatement(body)
+    );
+    // return {
+    //   type: "ArrowFunctionExpression",
+    //   loc: expression.loc,
+    //   params: params,
+    //   body: {
+    //     type: "BlockStatement",
+    //     loc: {
+    //       start: body[0].loc!.start,
+    //       end: body[body.length - 1].loc!.end,
+    //     },
+    //     body: body,
+    //   },
+    //   expression: false,
+    // };
   }
 
   /**
@@ -730,7 +738,7 @@ export class Parser {
         body.push(
           i < tokens.length - 1
             ? // Safe to cast as module declarations are only top level.
-              (this.wrapInStatement(this.evaluate(tokens[i])) as Statement)
+            (this.wrapInStatement(this.evaluate(tokens[i])) as Statement)
             : (this.returnStatement(this.evaluate(tokens[i])) as Statement)
         );
       } else {
@@ -747,35 +755,42 @@ export class Parser {
         }
       }
     }
-    return {
-      type: "CallExpression",
-      loc: expression.loc,
-      callee: {
-        type: "ArrowFunctionExpression",
-        loc:
-          declaredVariables.length > 0
-            ? {
-                start: declaredVariables[0].loc!.start,
-                end: body[body.length - 1].loc!.end,
-              }
-            : {
-                start: body[0].loc!.start,
-                end: body[body.length - 1].loc!.end,
-              },
-        params: declaredVariables,
-        body: {
-          type: "BlockStatement",
-          loc: {
-            start: body[0].loc!.start,
-            end: body[body.length - 1].loc!.end,
-          },
-          body: body,
-        },
-        expression: false,
-      },
-      arguments: declaredValues,
-      optional: false,
-    };
+    return makeCallExpression(
+      makeArrowFunctionExpression(
+        declaredVariables,
+        makeBlockStatement(body)
+      ),
+      declaredValues
+    );
+    // return {
+    //   type: "CallExpression",
+    //   loc: expression.loc,
+    //   callee: {
+    //     type: "ArrowFunctionExpression",
+    //     loc:
+    //       declaredVariables.length > 0
+    //         ? {
+    //             start: declaredVariables[0].loc!.start,
+    //             end: body[body.length - 1].loc!.end,
+    //           }
+    //         : {
+    //             start: body[0].loc!.start,
+    //             end: body[body.length - 1].loc!.end,
+    //           },
+    //     params: declaredVariables,
+    //     body: {
+    //       type: "BlockStatement",
+    //       loc: {
+    //         start: body[0].loc!.start,
+    //         end: body[body.length - 1].loc!.end,
+    //       },
+    //       body: body,
+    //     },
+    //     expression: false,
+    //   },
+    //   arguments: declaredValues,
+    //   optional: false,
+    // };
   }
 
   /**
@@ -795,10 +810,7 @@ export class Parser {
     const clauses = tokens.slice(1);
     const conditions: Expression[] = [];
     const bodies: Expression[] = [];
-    let catchAll: Expression = {
-      type: "Identifier",
-      name: "undefined",
-    } as Identifier; // the body of the else clause.
+    let catchAll: Expression = makeIdentifier("undefined", expression.loc);
     for (let i: number = 0; i < clauses.length; i++) {
       const clause = clauses[i];
       if (clause instanceof Group) {
@@ -834,16 +846,10 @@ export class Parser {
             true
           ) as Expression;
           // Convert JavaScript's truthy/falsy values to Scheme's true/false.
-          const test: Expression = {
-            type: "CallExpression",
-            loc: test_val.loc,
-            callee: {
-              type: "Identifier",
-              loc: test_val.loc,
-              name: "$true",
-            },
-            arguments: [test_val],
-          } as Expression;
+          const test = makeCallExpression(
+            makeIdentifier("$true", test_val.loc!),
+            [test_val]
+          );
           conditions.push(test);
           bodies.push(
             clause.length() < 2
@@ -859,16 +865,11 @@ export class Parser {
     }
     let finalConditionalExpression: Expression = catchAll;
     for (let i: number = conditions.length - 1; i >= 0; i--) {
-      finalConditionalExpression = {
-        type: "ConditionalExpression",
-        loc: {
-          start: conditions[i].loc!.start,
-          end: finalConditionalExpression!.loc!.end,
-        },
-        test: conditions[i],
-        consequent: bodies[i],
-        alternate: finalConditionalExpression!,
-      };
+      finalConditionalExpression = makeConditionalExpression(
+        conditions[i],
+        bodies[i],
+        finalConditionalExpression
+      );
     }
     // Wrap the last conditional expression with the expression location.
     finalConditionalExpression.loc = expression.loc;
@@ -1001,24 +1002,30 @@ export class Parser {
    */
   private symbol(token: Token): CallExpression {
     const loc = this.toSourceLocation(token);
-    return {
-      type: "CallExpression",
-      loc: loc,
-      callee: {
-        type: "Identifier",
-        loc: loc,
-        name: "string->symbol",
-      },
-      arguments: [
-        {
-          type: "Literal",
-          loc: loc,
-          value: token.lexeme,
-          raw: `"${token.lexeme}"`,
-        },
-      ],
-      optional: false,
-    };
+    return makeCallExpression(
+      makeIdentifier("string->symbol", loc),
+      [
+        makeLiteral(token.lexeme, loc),
+      ]
+    );
+    // return {
+    //   type: "CallExpression",
+    //   loc: loc,
+    //   callee: {
+    //     type: "Identifier",
+    //     loc: loc,
+    //     name: "string->symbol",
+    //   },
+    //   arguments: [
+    //     {
+    //       type: "Literal",
+    //       loc: loc,
+    //       value: token.lexeme,
+    //       raw: `"${token.lexeme}"`,
+    //     },
+    //   ],
+    //   optional: false,
+    // };
   }
 
   /**
@@ -1029,23 +1036,27 @@ export class Parser {
    * @returns A call to cons.
    */
   private pair(car: Expression, cdr: Expression): CallExpression {
-    return {
-      type: "CallExpression",
-      loc: {
-        start: car.loc!.start,
-        end: cdr.loc!.end,
-      },
-      callee: {
-        type: "Identifier",
-        loc: {
-          start: car.loc!.start,
-          end: cdr.loc!.end,
-        },
-        name: "cons",
-      },
-      arguments: [car, cdr],
-      optional: false,
-    };
+    return makeCallExpression(
+      makeIdentifier("cons", car.loc!),
+      [car, cdr]
+    );
+    // return {
+    //   type: "CallExpression",
+    //   loc: {
+    //     start: car.loc!.start,
+    //     end: cdr.loc!.end,
+    //   },
+    //   callee: {
+    //     type: "Identifier",
+    //     loc: {
+    //       start: car.loc!.start,
+    //       end: cdr.loc!.end,
+    //     },
+    //     name: "cons",
+    //   },
+    //   arguments: [car, cdr],
+    //   optional: false,
+    // };
   }
 
   /**
@@ -1068,29 +1079,39 @@ export class Parser {
    * Converts an array of Expressions into a list.
    */
   private list(expressions: Expression[]): CallExpression {
-    return {
-      type: "CallExpression",
-      loc:
-        expressions.length > 0
-          ? ({
-              start: expressions[0].loc!.start,
-              end: expressions[expressions.length - 1].loc!.end,
-            } as SourceLocation)
-          : undefined,
-      callee: {
-        type: "Identifier",
-        loc:
-          expressions.length > 0
-            ? ({
-                start: expressions[0].loc!.start,
-                end: expressions[expressions.length - 1].loc!.end,
-              } as SourceLocation)
-            : undefined,
-        name: "list",
-      },
-      arguments: expressions,
-      optional: false,
-    };
+    let loc = expressions.length > 0
+      ? ({
+        start: expressions[0].loc!.start,
+        end: expressions[expressions.length - 1].loc!.end,
+      } as SourceLocation)
+      : undefined;
+    return makeCallExpression(
+      makeIdentifier("list", loc),
+      expressions
+    );
+    // return {
+    //   type: "CallExpression",
+    //   loc:
+    //     expressions.length > 0
+    //       ? ({
+    //           start: expressions[0].loc!.start,
+    //           end: expressions[expressions.length - 1].loc!.end,
+    //         } as SourceLocation)
+    //       : undefined,
+    //   callee: {
+    //     type: "Identifier",
+    //     loc:
+    //       expressions.length > 0
+    //         ? ({
+    //             start: expressions[0].loc!.start,
+    //             end: expressions[expressions.length - 1].loc!.end,
+    //           } as SourceLocation)
+    //         : undefined,
+    //     name: "list",
+    //   },
+    //   arguments: expressions,
+    //   optional: false,
+    // };
   }
 
   /**
@@ -1121,13 +1142,17 @@ export class Parser {
     // Safe to cast as we have predetermined that it is an identifier.
     const identifier: Identifier = this.evaluateToken(tokens[1]) as Identifier;
     const newValue: Expression = this.evaluate(tokens[2]) as Expression;
-    return {
-      type: "AssignmentExpression",
-      loc: expression.loc,
-      operator: "=",
-      left: identifier,
-      right: newValue,
-    };
+    return makeAssignmentExpression(
+      identifier,
+      newValue
+    );
+    // return {
+    //   type: "AssignmentExpression",
+    //   loc: expression.loc,
+    //   operator: "=",
+    //   left: identifier,
+    //   right: newValue,
+    // };
   }
 
   /**
@@ -1166,7 +1191,7 @@ export class Parser {
         body.push(
           i < tokens.length - 1
             ? // Safe to cast as module declarations are only top level.
-              (this.wrapInStatement(this.evaluate(tokens[i])) as Statement)
+            (this.wrapInStatement(this.evaluate(tokens[i])) as Statement)
             : (this.returnStatement(this.evaluate(tokens[i])) as Statement)
         );
       } else {
@@ -1183,41 +1208,48 @@ export class Parser {
         }
       }
     }
-    return {
-      type: "CallExpression",
-      loc:
-        body[0] !== undefined
-          ? {
-              start: body[0].loc!.start,
-              end: body[body.length - 1].loc!.end,
-            }
-          : undefined,
-      callee: {
-        type: "ArrowFunctionExpression",
-        loc:
-          body[0] !== undefined
-            ? {
-                start: body[0].loc!.start,
-                end: body[body.length - 1].loc!.end,
-              }
-            : undefined,
-        params: [],
-        body: {
-          type: "BlockStatement",
-          loc:
-            body[0] !== undefined
-              ? {
-                  start: body[0].loc!.start,
-                  end: body[body.length - 1].loc!.end,
-                }
-              : undefined,
-          body: body,
-        },
-        expression: false,
-      },
-      arguments: [],
-      optional: false,
-    };
+    return makeCallExpression(
+      makeArrowFunctionExpression(
+        [],
+        makeBlockStatement(body)
+      ),
+      []
+    );
+    // return {
+    //   type: "CallExpression",
+    //   loc:
+    //     body[0] !== undefined
+    //       ? {
+    //           start: body[0].loc!.start,
+    //           end: body[body.length - 1].loc!.end,
+    //         }
+    //       : undefined,
+    //   callee: {
+    //     type: "ArrowFunctionExpression",
+    //     loc:
+    //       body[0] !== undefined
+    //         ? {
+    //             start: body[0].loc!.start,
+    //             end: body[body.length - 1].loc!.end,
+    //           }
+    //         : undefined,
+    //     params: [],
+    //     body: {
+    //       type: "BlockStatement",
+    //       loc:
+    //         body[0] !== undefined
+    //           ? {
+    //               start: body[0].loc!.start,
+    //               end: body[body.length - 1].loc!.end,
+    //             }
+    //           : undefined,
+    //       body: body,
+    //     },
+    //     expression: false,
+    //   },
+    //   arguments: [],
+    //   optional: false,
+    // };
   }
 
   /**
@@ -1237,17 +1269,21 @@ export class Parser {
     const delayed: Statement = this.returnStatement(
       this.evaluate(tokens[1], true)
     );
-    return {
-      type: "ArrowFunctionExpression",
-      loc: expression.loc,
-      params: [],
-      body: {
-        type: "BlockStatement",
-        loc: delayed.loc,
-        body: [delayed],
-      },
-      expression: false,
-    };
+    return makeArrowFunctionExpression(
+      [],
+      makeBlockStatement([delayed])
+    );
+    // return {
+    //   type: "ArrowFunctionExpression",
+    //   loc: expression.loc,
+    //   params: [],
+    //   body: {
+    //     type: "BlockStatement",
+    //     loc: delayed.loc,
+    //     body: [delayed],
+    //   },
+    //   expression: false,
+    // };
   }
 
   /**
@@ -1272,7 +1308,7 @@ export class Parser {
       );
     } else if (tokens[1].type !== TokenType.STRING) {
       throw new ParserError.GenericSyntaxError(
-        this.source, 
+        this.source,
         tokens[1].pos);
     } else if (!(tokens[2] instanceof Group)) {
       throw new ParserError.GenericSyntaxError(
@@ -1294,19 +1330,27 @@ export class Parser {
           (specifierTokens[i] as Token).pos
         );
       }
-      specifiers.push({
-        type: "ImportSpecifier",
-        local: this.evaluate(specifierTokens[i]) as Identifier,
-        imported: this.evaluate(specifierTokens[i]) as Identifier,
-        loc: this.toSourceLocation(specifierTokens[i] as Token),
-      });
+      specifiers.push(makeImportSpecifier(
+        this.evaluate(specifierTokens[i]) as Identifier,
+        this.evaluate(specifierTokens[i]) as Identifier
+      ));
+      // specifiers.push({
+      //   type: "ImportSpecifier",
+      //   local: this.evaluate(specifierTokens[i]) as Identifier,
+      //   imported: this.evaluate(specifierTokens[i]) as Identifier,
+      //   loc: this.toSourceLocation(specifierTokens[i] as Token),
+      // });
     }
-    return {
-      type: "ImportDeclaration",
-      specifiers: specifiers,
-      source: this.evaluate(tokens[1]) as Literal,
-      loc: expression.loc,
-    };
+    return makeImportDeclaration(
+      specifiers,
+      makeLiteral(tokens[1].literal, this.toSourceLocation(tokens[1]))
+    );
+    // return {
+    //   type: "ImportDeclaration",
+    //   specifiers: specifiers,
+    //   source: this.evaluate(tokens[1]) as Literal,
+    //   loc: expression.loc,
+    // };
   }
 
   /**
@@ -1345,13 +1389,16 @@ export class Parser {
       );
     }
     const declaration = this.evaluate(tokens[1]) as VariableDeclaration;
-    return {
-      type: "ExportNamedDeclaration",
-      declaration: declaration,
-      specifiers: [],
-      source: null,
-      loc: expression.loc,
-    };
+    return makeExportNamedDeclaration(
+      declaration
+    );
+    // return {
+    //   type: "ExportNamedDeclaration",
+    //   declaration: declaration,
+    //   specifiers: [],
+    //   source: null,
+    //   loc: expression.loc,
+    // };
   }
 
   /**
@@ -1365,14 +1412,19 @@ export class Parser {
     const tokens = expression.unwrap();
     const procedure = this.evaluate(tokens[0]);
     const args = tokens.slice(1).map((arg) => this.evaluate(arg, true));
-    return {
-      type: "CallExpression",
-      loc: expression.loc,
-      callee: procedure as Expression | Identifier | Literal | CallExpression,
-      arguments: args as Expression[], // safe to typecast, as we have already
+    return makeCallExpression(
+      procedure as Expression | Identifier | Literal | CallExpression,
+      args as Expression[], // safe to typecast, as we have already
       //predetermined that the arguments are expressions.
-      optional: false,
-    };
+    );
+    // return {
+    //   type: "CallExpression",
+    //   loc: expression.loc,
+    //   callee: procedure as Expression | Identifier | Literal | CallExpression,
+    //   arguments: args as Expression[], // safe to typecast, as we have already
+    //   //predetermined that the arguments are expressions.
+    //   optional: false,
+    // };
   }
 
   /**
@@ -1388,23 +1440,25 @@ export class Parser {
       case TokenType.NUMBER:
       case TokenType.BOOLEAN:
       case TokenType.STRING:
-        return {
-          type: "Literal",
-          value: token.literal,
-          raw:
-            token.type === TokenType.BOOLEAN
-              ? token.literal
-                ? "true"
-                : "false"
-              : token.lexeme,
-          loc: this.toSourceLocation(token),
-        };
+        return makeLiteral(token.literal, this.toSourceLocation(token));
+      // return {
+      //   type: "Literal",
+      //   value: token.literal,
+      //   raw:
+      //     token.type === TokenType.BOOLEAN
+      //       ? token.literal
+      //         ? "true"
+      //         : "false"
+      //       : token.lexeme,
+      //   loc: this.toSourceLocation(token),
+      // };
       case TokenType.IDENTIFIER:
-        return {
-          type: "Identifier",
-          name: token.lexeme,
-          loc: this.toSourceLocation(token),
-        };
+        return makeIdentifier(token.lexeme, this.toSourceLocation(token));
+      // return {
+      //   type: "Identifier",
+      //   name: token.lexeme,
+      //   loc: this.toSourceLocation(token),
+      // };
       default:
         throw new ParserError.UnexpectedTokenError(
           this.source,
@@ -1424,11 +1478,12 @@ export class Parser {
     expression: Expression | Statement | ModuleDeclaration
   ): Statement | ModuleDeclaration {
     if (this.isExpression(expression)) {
-      return {
-        type: "ExpressionStatement",
-        expression: expression,
-        loc: expression.loc,
-      } as ExpressionStatement;
+      return makeExpressionStatement(expression);
+      // return {
+      //   type: "ExpressionStatement",
+      //   expression: expression,
+      //   loc: expression.loc,
+      // } as ExpressionStatement;
     }
     return expression;
   }
@@ -1444,11 +1499,12 @@ export class Parser {
   ): Statement {
     if (this.isExpression(expression)) {
       // Return the expression wrapped in a return statement.
-      return {
-        type: "ReturnStatement",
-        argument: expression,
-        loc: expression.loc,
-      };
+      return makeReturnStatement(expression);
+      // return {
+      //   type: "ReturnStatement",
+      //   argument: expression,
+      //   loc: expression.loc,
+      // };
     }
     // If the expression is not a expression, just return the statement.
     return expression as Statement;
