@@ -14,6 +14,8 @@ export class Group {
   location: Location;
   constructor(
     elements: (Token | Group)[],
+    lastPos?: Position // Allows for the last position to be specified, 
+                       // important to preserve the location when truncating groups
   ) {
     this.elements = elements;
     if (!this.validateGroupIntegrity()) {
@@ -21,7 +23,7 @@ export class Group {
     }
     this.location = new Location(
       this.firstPos(),
-      this.lastPos()
+      lastPos ? lastPos : this.lastPos()
     );
   }
 
@@ -131,10 +133,11 @@ export class Group {
 
   /**
    * Get the number of elements in the group.
+   * Ignores parentheses.
    * @returns The number of elements in the group.
    */
   public length(): number {
-    return this.elements.length;
+    return this.unwrap().length;
   }
 
   /**
@@ -146,6 +149,20 @@ export class Group {
     this.location = new Location(
       token.pos, 
       this.location.end);
+  }
+
+  /**
+   * Truncate the group to exclude the first n elements.
+   * Ignores parentheses.
+   * Preserves end position.
+   * 
+   * Useful for lambda expressions and function definitions.
+   * @param n The number of elements to be truncated.
+   */
+  public truncate(n: number): Group {
+    const unwrapped = this.unwrap();
+    const truncated = unwrapped.splice(n);
+    return new Group(truncated, this.lastPos());
   }
 
   /**
