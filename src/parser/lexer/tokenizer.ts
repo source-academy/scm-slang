@@ -6,7 +6,7 @@
 // Crafting Interpreters: https://craftinginterpreters.com/
 // py-slang: https://github.com/source-academy/py-slang
 
-import { TokenType } from "./token-type";
+import { TokenType } from "../types/token-type";
 import * as TokenizerError from "./tokenizer-error";
 import { Position } from "estree";
 

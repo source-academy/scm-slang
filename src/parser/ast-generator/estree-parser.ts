@@ -1,6 +1,3 @@
-import { Token } from "./tokenizer";
-import { TokenType } from "./token-type";
-import * as ParserError from "./parser-error";
 import {
   Program,
   Expression,
@@ -16,6 +13,11 @@ import {
   ImportSpecifier,
   ModuleDeclaration,
 } from "estree";
+
+import { Token } from "../lexer/tokenizer";
+import { TokenType } from "../types/token-type";
+import * as ParserError from "../parser-error";
+
 import {
   makeArrowFunctionExpression,
   makeAssignmentExpression,
@@ -31,7 +33,7 @@ import {
   makeLiteral,
   makeProgram,
   makeReturnStatement
-} from "./estree-nodes";
+} from "../../estree-nodes";
 
 class Group {
   group: (Token | Group)[];
@@ -69,7 +71,7 @@ class Group {
   }
 }
 
-export class Parser {
+export class EstreeParser {
   private readonly source: string;
   private readonly tokens: Token[];
   private readonly estree: Program;
