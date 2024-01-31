@@ -16,21 +16,21 @@ import {
   ImportSpecifier,
   ModuleDeclaration,
 } from "estree";
-import { 
-  makeArrowFunctionExpression, 
-  makeAssignmentExpression, 
-  makeBlockStatement, 
-  makeCallExpression, 
-  makeConditionalExpression, 
-  makeDeclaration, 
-  makeExportNamedDeclaration, 
-  makeExpressionStatement, 
-  makeIdentifier, 
-  makeImportDeclaration, 
-  makeImportSpecifier, 
-  makeLiteral, 
+import {
+  makeArrowFunctionExpression,
+  makeAssignmentExpression,
+  makeBlockStatement,
+  makeCallExpression,
+  makeConditionalExpression,
+  makeDeclaration,
+  makeExportNamedDeclaration,
+  makeExpressionStatement,
+  makeIdentifier,
+  makeImportDeclaration,
+  makeImportSpecifier,
+  makeLiteral,
   makeProgram,
-  makeReturnStatement 
+  makeReturnStatement
 } from "./estree-nodes";
 
 class Group {
@@ -1030,7 +1030,7 @@ export class Parser {
 
   /**
    * Creates a pair from two expressions.
-   * 
+   *
    * @param car The car of the pair.
    * @param cdr The cdr of the pair.
    * @returns A call to cons.
@@ -1061,7 +1061,7 @@ export class Parser {
 
   /**
    * Creates a dotted list from a list and a final element.
-   * 
+   *
    * @param cars The list of elements before the terminator.
    * @param cdr The final element.
    * @returns A dotted list.
