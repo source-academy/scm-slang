@@ -8,7 +8,7 @@
  * with a transformer visitor, and perhaps later with a macro system. 
  */
 
-import { Visitor } from "./visitor";
+import { Visitor } from "../visitors/visitor";
 import { Location } from "./location";
 
 /**

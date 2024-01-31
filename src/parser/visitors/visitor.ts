@@ -3,7 +3,7 @@
  * Allows us to traverse the AST and perform operations on it.
  */
 
-import { Atomic, Extended } from './node-types';
+import { Atomic, Extended } from '../types/node-types';
 
 export interface Visitor {
     // Atomic AST
