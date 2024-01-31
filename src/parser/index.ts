@@ -1,12 +1,12 @@
-import { Program } from "estree";
 import { Tokenizer } from "./lexer/tokenizer";
-import { EstreeParser } from "./ast-generator/estree-parser";
+import { SchemeParser } from "./ast-generator/scheme-ast-parser";
+import { Expression } from "./types/node-types";
 
 export * as TokenizerError from "./lexer/tokenizer-error";
 export * as ParserError from "./parser-error";
 
-export function schemeParse(source: string, chapter?: number): Program {
+export function schemeParse(source: string, chapter?: number): Expression {
     const tokenizer = new Tokenizer(source);
-    const parser = new EstreeParser(source, tokenizer.scanTokens(), chapter);
+    const parser = new SchemeParser(source, tokenizer.scanTokens(), chapter);
     return parser.parse();
 }
