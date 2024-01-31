@@ -1,37 +1,13 @@
 /**
  * A visitor that transforms all "extended AST" nodes into "atomic AST" nodes.
+ * Except for everything inside a quote, which is left alone.
  */
 
-import { Atomic, Extended } from '../types/node-types';
+import { Expression, Atomic, Extended } from '../types/node-types';
 import { Visitor } from './visitor';
+import { Location } from '../types/location';
 
 export class Simplifier implements Visitor {
-  
-  // Currently quoting.
-  isSomeQuote: boolean;
-
-  // Currently quasi-quoting.
-  isQuasiquote: boolean;
-  
-  constructor (isSomeQuote: boolean, isQuasiquote: boolean) {
-    this.isSomeQuote = isSomeQuote;
-    this.isQuasiquote = isQuasiquote;
-  }
-
-  // Factory method for creating a new Simplifier instance.
-  static createDefault(): Simplifier {
-    return new Simplifier(false, false);
-  }
-
-  // Factory method for creating a new Quoting Simplifier instance.
-  static createQuoting(): Simplifier {
-    return new Simplifier(true, false);
-  }
-
-  // Factory method for creating a new Quasi-Quoting Simplifier instance.
-  static createQuasiQuoting(): Simplifier {
-    return new Simplifier(true, true);
-  }
 
   // Atomic AST
   visitSequence(node: Atomic.Sequence): Atomic.Sequence {
@@ -44,26 +20,32 @@ export class Simplifier implements Visitor {
   visitNumericLiteral(node: Atomic.NumericLiteral): Atomic.NumericLiteral {
     return node;
   }
+
   visitBooleanLiteral(node: Atomic.BooleanLiteral): Atomic.BooleanLiteral {
     return node;
   }
+
   visitStringLiteral(node: Atomic.StringLiteral): Atomic.StringLiteral {
     return node;
   }
+
   visitLambda(node: Atomic.Lambda): Atomic.Lambda {
     const location = node.location;
     const params = node.params;
     const newBody = node.body.accept(this);
+
     return new Atomic.Lambda(location, params, newBody);
   }
 
   visitIdentifier(node: Atomic.Identifier): Atomic.Identifier {
     return node;
   }
+
   visitDefinition(node: Atomic.Definition): Atomic.Definition {
     const location = node.location;
     const name = node.name;
     const newValue = node.value.accept(this);
+
     return new Atomic.Definition(location, name, newValue);
   }
 
@@ -71,13 +53,16 @@ export class Simplifier implements Visitor {
     const location = node.location;
     const newOperator = node.operator.accept(this);
     const newOperands = node.operands.map((operand) => operand.accept(this));
+
     return new Atomic.Application(location, newOperator, newOperands);
   }
+
   visitConditional(node: Atomic.Conditional): Atomic.Conditional {
     const location = node.location;
     const newTest = node.test.accept(this);
     const newConsequent = node.consequent.accept(this);
     const newAlternate = node.alternate.accept(this);
+
     return new Atomic.Conditional(location, newTest, newConsequent, newAlternate);
   }
 
@@ -85,11 +70,14 @@ export class Simplifier implements Visitor {
     const location = node.location;
     const newCar = node.car.accept(this);
     const newCdr = node.cdr.accept(this);
+
     return new Atomic.Pair(location, newCar, newCdr);
   }
+
   visitNil(node: Atomic.Nil): Atomic.Nil {
     return node;
   }
+
   visitSymbol(node: Atomic.Symbol): Atomic.Symbol {
     return node;
   }
@@ -98,15 +86,19 @@ export class Simplifier implements Visitor {
     const location = node.location;
     const name = node.name;
     const newValue = node.value.accept(this);
+
     return new Atomic.Reassignment(location, name, newValue);
   }
 
+  // Already in simplest form.
   visitImport(node: Atomic.Import): Atomic.Import {
     return node;
   }
+  
   visitExport(node: Atomic.Export): Atomic.Export {
     const location = node.location;
     const newDefinition = node.definition.accept(this);
+
     return new Atomic.Export(location, newDefinition);
   }
 
@@ -132,35 +124,74 @@ export class Simplifier implements Visitor {
     return new Atomic.Application(location, newLambda, newValues);
   }
 
-  visitCond(node: Extended.Cond): Atomic.Conditional {
+  visitCond(node: Extended.Cond): Expression {
     const location = node.location;
     const newPredicates = node.predicates.map((predicate) => predicate.accept(this));
     const newConsequents = node.consequents.map((consequent) => consequent.accept(this));
     const newCatchall = node.catchall ? node.catchall.accept(this) : node.catchall;
-    for (let i = 0; i < newPredicates.length; i++) {
+
+    if (newPredicates.length == 0) {
+      // Return catchall if there is no predicate
+      return new Atomic.Conditional(
+        location, 
+        new Atomic.BooleanLiteral(location, false), 
+        new Atomic.Nil(location), 
+        node.catchall ? newCatchall : new Atomic.Nil(location));
     }
 
-    throw new Error("Cond Not implemented yet");
-    // NOT IMPLEMENTED YET
-    return new Atomic.Conditional(location, newPredicates[0], newConsequents[0], newCatchall);
+    newPredicates.reverse();
+    newConsequents.reverse();
+    const lastLocation = newPredicates[0].location;
+    let newConditional = newCatchall ? newCatchall : new Atomic.Nil(lastLocation);
+
+    for (let i = 0; i < newPredicates.length; i++) {
+      const predicate = newPredicates[i];
+      const consequent = newConsequents[i];
+      const predLocation = predicate.location;
+      const consLocation = consequent.location;
+      const newLocation = new Location(
+        predLocation.start,
+        consLocation.end,
+      )
+      newConditional = new Atomic.Conditional(newLocation, predicate, consequent, newConditional);
+    }
+
+    return newConditional;
   }
 
-  visitList(node: Extended.List): Atomic.Pair {
-    throw new Error("List Not implemented yet");
-  }
-
-  visitQuote(node: Extended.Quote): Atomic.Pair | Atomic.Literal | Atomic.Symbol {
+  visitList(node: Extended.List): Atomic.Pair | Atomic.Nil {
     const location = node.location;
-    const quotingSimplifier = Simplifier.createQuoting();
-    const newExpression = node.expression.accept(quotingSimplifier);
+    const newElements = node.elements.map((element) => element.accept(this));
 
-    throw new Error("Quote Not implemented yet");
-    return newExpression;
+    if (newElements.length === 0) {
+      return new Atomic.Nil(location);
+    }
+    if (newElements.length === 1) {
+      const nilLocation = newElements[0].location;
+      return new Atomic.Pair(location, newElements[0], new Atomic.Nil(nilLocation));
+    };
+    
+    newElements.reverse();
+    const lastLocation = newElements[0].location;
+    let newPair = new Atomic.Nil(lastLocation);
+
+    for (let i = 0; i < newElements.length - 1; i++) {
+      const element = newElements[i];
+      const eleLocation = element.location;
+      newPair = new Atomic.Pair(eleLocation, element, newPair);
+    }
+
+    return newPair;
   }
 
-  visitUnquote(node: Extended.Unquote): Atomic.Pair {
-    throw new Error("Unquote Not implemented yet");
+  // Leave quotes alone.
+  visitQuote(node: Extended.Quote): Extended.Quote {
+    return node
+  }
 
+  // Leave unquotes alone.
+  visitUnquote(node: Extended.Unquote): Extended.Unquote {
+    return node;
   }
 
   visitBegin(node: Extended.Begin): Atomic.Sequence {
@@ -180,6 +211,7 @@ export class Simplifier implements Visitor {
   visitForce(node: Extended.Force): Atomic.Application {
     const location = node.location;
     const NewExpression = node.expression.accept(this);
+
     return new Atomic.Application(location, NewExpression, []);
   }
 }
