@@ -1,10 +1,10 @@
-import { Tokenizer, Parser } from "./parser";
 import { Program } from "estree";
 import { encode as b64Encode, decode as b64Decode } from "js-base64";
 
-export * from "./prelude-visitor";
-export * as TokenizerError from "./parser/tokenizer-error";
-export * as ParserError from "./parser/parser-error";
+export * from "./stdlib/prelude-visitor";
+export { TokenizerError } from "./parser";
+export { ParserError } from "./parser";
+export { schemeParse } from "./parser";
 
 const JS_KEYWORDS: string[] = [
     "break",
@@ -95,10 +95,4 @@ export function decode(identifier: string): string {
             String.fromCharCode(parseInt(code))
                                  );
     }
-}
-
-export function schemeParse(source: string, chapter?: number): Program {
-    const tokenizer = new Tokenizer(source);
-    const parser = new Parser(source, tokenizer.scanTokens(), chapter);
-    return parser.parse();
 }
