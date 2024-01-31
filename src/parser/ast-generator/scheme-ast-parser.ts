@@ -160,7 +160,7 @@ export class SchemeParser {
   }
 
   private parseGroup(group: Group): Expression {
-        // No need to check for empty groups because they are not valid
+    // No need to check for empty groups because they are not valid
     if (!group.isParenthesized() && group.length() === 1) {
       // Literal or Identifier
       // Form: <literal> 
@@ -267,7 +267,7 @@ export class SchemeParser {
           case TokenType.EXPORT:
             this.validateChapter(firstElement, 1);
             return this.parseExport(group);
-          
+
           default:
             // It's a procedure call
             return this.parseApplication(group);
@@ -447,7 +447,7 @@ export class SchemeParser {
     const convertedConsequent = this.parseExpression(consequent);
 
     // Alternate is treated as a single expression
-    
+
     const convertedAlternate = alternate ? this.parseExpression(alternate) : new Atomic.Nil(group.location);
 
     return new Atomic.Conditional(
@@ -526,7 +526,7 @@ export class SchemeParser {
       // Verify identifier is a token and an identifier
       if (!(identifier instanceof Token)) {
         throw new ParserError.UnexpectedTokenError(this.source, identifier.firstToken().pos, identifier.firstToken());
-      } 
+      }
       if (identifier.type !== TokenType.IDENTIFIER) {
         throw new ParserError.UnexpectedTokenError(this.source, identifier.pos, identifier);
       }
@@ -561,7 +561,7 @@ export class SchemeParser {
     const clauses = elements.splice(1);
     // safe to cast because of the check above
     const lastClause = <Token | Group>clauses.pop();
-    
+
     // Clauses are treated as a group of groups of expressions
     // Form: (<expr> <sequence>)
     const convertedClauses: Expression[] = [];
@@ -594,40 +594,40 @@ export class SchemeParser {
     }
 
     // Check last clause
-      // Verify lastClause is a group with size 2
-      if (!(lastClause instanceof Group)) {
-        throw new ParserError.UnexpectedTokenError(this.source, lastClause.pos, lastClause);
-      }
-      if (lastClause.length() !== 2) {
-        throw new ParserError.UnexpectedTokenError(this.source, lastClause.firstToken().pos, lastClause.firstToken());
-      }
-      const test = lastClause.first();
-      const consequent = lastClause.truncate(1);
-      let isElse = false;
+    // Verify lastClause is a group with size 2
+    if (!(lastClause instanceof Group)) {
+      throw new ParserError.UnexpectedTokenError(this.source, lastClause.pos, lastClause);
+    }
+    if (lastClause.length() !== 2) {
+      throw new ParserError.UnexpectedTokenError(this.source, lastClause.firstToken().pos, lastClause.firstToken());
+    }
+    const test = lastClause.first();
+    const consequent = lastClause.truncate(1);
+    let isElse = false;
 
-      // verify that test is an else token
-      if ((test instanceof Token) && test.type === TokenType.ELSE) {
-        isElse = true;
-      }
+    // verify that test is an else token
+    if ((test instanceof Token) && test.type === TokenType.ELSE) {
+      isElse = true;
+    }
 
-      // Consequent is treated as a group of expressions
-      const lastConsequent = this.parseAsSequence(consequent);
+    // Consequent is treated as a group of expressions
+    const lastConsequent = this.parseAsSequence(consequent);
 
-      if (isElse) {
-        return new Extended.Cond(
-          group.location,
-          convertedClauses,
-          convertedConsequents,
-          lastConsequent
-        );
-      }
+    if (isElse) {
+      return new Extended.Cond(
+        group.location,
+        convertedClauses,
+        convertedConsequents,
+        lastConsequent
+      );
+    }
 
-      // If the last clause is not an else clause, we treat it as a normal cond clause instead
-      const lastTest = this.parseExpression(test);
+    // If the last clause is not an else clause, we treat it as a normal cond clause instead
+    const lastTest = this.parseExpression(test);
 
-      // Test
-      convertedClauses.push(lastTest);
-      convertedConsequents.push(lastConsequent);
+    // Test
+    convertedClauses.push(lastTest);
+    convertedConsequents.push(lastConsequent);
 
     return new Extended.Cond(
       group.location,
@@ -690,36 +690,36 @@ export class SchemeParser {
 
   // _____________________CHAPTER 3_____________________
 
-/**
- * Parse a reassignment expression.
- * @param group
- * @returns
-  */
- private parseSet(group: Group): Atomic.Reassignment {
-  // Form: (set! <identifier> <expr>)
-  // ensure that the group has 3 elements
-  if (group.length() !== 3) {
-    throw new ParserError.UnexpectedTokenError(this.source, group.firstToken().pos, group.firstToken());
-  }
-  const elements = group.unwrap();
-  const identifier = elements[1];
-  const expr = elements[2];
+  /**
+   * Parse a reassignment expression.
+   * @param group
+   * @returns
+    */
+  private parseSet(group: Group): Atomic.Reassignment {
+    // Form: (set! <identifier> <expr>)
+    // ensure that the group has 3 elements
+    if (group.length() !== 3) {
+      throw new ParserError.UnexpectedTokenError(this.source, group.firstToken().pos, group.firstToken());
+    }
+    const elements = group.unwrap();
+    const identifier = elements[1];
+    const expr = elements[2];
 
-  // Identifier is treated as a single identifier
-  if (!(identifier instanceof Token)) {
-    throw new ParserError.UnexpectedTokenError(this.source, identifier.firstToken().pos, identifier.firstToken());
+    // Identifier is treated as a single identifier
+    if (!(identifier instanceof Token)) {
+      throw new ParserError.UnexpectedTokenError(this.source, identifier.firstToken().pos, identifier.firstToken());
+    }
+    if (identifier.type !== TokenType.IDENTIFIER) {
+      throw new ParserError.UnexpectedTokenError(this.source, identifier.pos, identifier);
+    }
+    const convertedIdentifier = new Atomic.Identifier(this.toLocation(identifier), identifier.lexeme);
+    const convertedExpr = this.parseExpression(expr);
+    return new Atomic.Reassignment(
+      group.location,
+      convertedIdentifier,
+      convertedExpr
+    );
   }
-  if (identifier.type !== TokenType.IDENTIFIER) {
-    throw new ParserError.UnexpectedTokenError(this.source, identifier.pos, identifier);
-  }
-  const convertedIdentifier = new Atomic.Identifier(this.toLocation(identifier), identifier.lexeme);
-  const convertedExpr = this.parseExpression(expr);
-  return new Atomic.Reassignment(
-    group.location,
-    convertedIdentifier,
-    convertedExpr
-  );
-}
 
 
   /**
