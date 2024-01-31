@@ -14,7 +14,7 @@ import {
   ModuleDeclaration,
 } from "estree";
 
-import { Token } from "../lexer/tokenizer";
+import { Token } from "../types/token";
 import { TokenType } from "../types/token-type";
 import * as ParserError from "../parser-error";
 

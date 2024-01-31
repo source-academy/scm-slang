@@ -1,4 +1,4 @@
-import { Token } from "./lexer/tokenizer";
+import { Token } from "./types/token";
 import { Position } from "estree";
 
 function extractLine(source: string, pos: Position): string {

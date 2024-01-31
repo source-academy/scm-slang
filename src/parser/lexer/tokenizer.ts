@@ -6,9 +6,10 @@
 // Crafting Interpreters: https://craftinginterpreters.com/
 // py-slang: https://github.com/source-academy/py-slang
 
+import { Token } from "../types/token";
 import { TokenType } from "../types/token-type";
 import * as TokenizerError from "./tokenizer-error";
-import { Position } from "estree";
+import { Position } from "../types/location";
 
 // syntactic keywords in the scheme language
 let keywords = new Map<string, TokenType>([
@@ -26,39 +27,6 @@ let keywords = new Map<string, TokenType>([
     ["define", TokenType.DEFINE],
     ["lambda", TokenType.LAMBDA],
 ]);
-
-export class Token {
-    type: TokenType;
-    lexeme: string;
-    literal: any;
-    start: number;
-    end: number;
-    pos: Position;
-
-    constructor(
-        type: TokenType,
-        lexeme: any,
-        literal: any,
-        start: number,
-        end: number,
-        line: number,
-        col: number
-    ) {
-        this.type = type;
-        this.lexeme = lexeme;
-        this.literal = literal;
-        this.start = start;
-        this.end = end;
-        this.pos = {
-            line: line,
-            column: col,
-        };
-    }
-
-    public toString(): string {
-        return `${this.lexeme}`;
-    }
-}
 
 export class Tokenizer {
     private readonly source: string;

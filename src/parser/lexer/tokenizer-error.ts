@@ -1,4 +1,4 @@
-import { Position } from "estree";
+import { Position } from "../types/location";
 
 export abstract class TokenizerError extends SyntaxError {
   // This base error shouldn't be used directly.
