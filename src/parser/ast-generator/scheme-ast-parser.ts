@@ -149,11 +149,11 @@ export class SchemeParser {
       case TokenType.IDENTIFIER:
         return new Atomic.Identifier(this.toLocation(token), token.lexeme);
       case TokenType.NUMBER:
-        return new Atomic.NumericLiteral(this.toLocation(token), token.literal);
+        return new Atomic.NumericLiteral(this.toLocation(token), token.literal as number);
       case TokenType.BOOLEAN:
-        return new Atomic.BooleanLiteral(this.toLocation(token), token.literal);
+        return new Atomic.BooleanLiteral(this.toLocation(token), token.literal as boolean);
       case TokenType.STRING:
-        return new Atomic.StringLiteral(this.toLocation(token), token.literal);
+        return new Atomic.StringLiteral(this.toLocation(token), token.literal as string);
       default:
         throw new ParserError.UnexpectedTokenError(this.source, token.pos, token);
     }
@@ -167,23 +167,11 @@ export class SchemeParser {
       //     | <identifier>
       const firstElement = group.first();
       if (firstElement instanceof Token) {
-        switch (firstElement.type) {
-          case TokenType.IDENTIFIER:
-            return new Atomic.Identifier(group.location, firstElement.lexeme);
-          case TokenType.NUMBER:
-            return new Atomic.NumericLiteral(group.location, firstElement.literal);
-          case TokenType.BOOLEAN:
-            return new Atomic.BooleanLiteral(group.location, firstElement.literal);
-          case TokenType.STRING:
-            return new Atomic.StringLiteral(group.location, firstElement.literal);
-          default:
-            throw new ParserError.UnexpectedTokenError(this.source, firstElement.pos, firstElement);
-        }
+        return this.parseToken(firstElement);
       } else {
         // Form: <group>
-        // invalid
-        const firstInvalid = firstElement.firstToken();
-        throw new ParserError.UnexpectedTokenError(this.source, firstInvalid.pos, firstInvalid);
+        // Evaluate the inner grouping
+        return this.parseExpression(firstElement);
       }
     } else if (!group.isParenthesized() && group.length() === 2) {
       // A product of admitting converted tokens to the start of groups
@@ -362,12 +350,14 @@ export class SchemeParser {
     const identifier = elements[1];
     const expr = group.truncate(2);
 
-    let convertedIdentifier;
-    let convertedFormals;
+    let convertedIdentifier: Atomic.Identifier;
+    let convertedFormals: Atomic.Identifier[] = [];
     let isFunctionDefinition = false;
 
     // Identifier may be a token or a group of identifiers
     if (!(identifier instanceof Token)) {
+
+      // its a function definition
       isFunctionDefinition = true;
       const identifierElements = identifier.unwrap();
       const function_name = identifierElements[0];
@@ -380,10 +370,11 @@ export class SchemeParser {
       if (function_name.type !== TokenType.IDENTIFIER) {
         throw new ParserError.UnexpectedTokenError(this.source, function_name.pos, function_name);
       }
+
+      // convert the first element to an identifier
       convertedIdentifier = new Atomic.Identifier(this.toLocation(function_name), function_name.lexeme);
 
       // verify that the rest of the elements are identifiers
-      convertedFormals = [];
       for (const formalsElement of formals) {
         if (!(formalsElement instanceof Token)) {
           throw new ParserError.UnexpectedTokenError(this.source, formalsElement.firstToken().pos, formalsElement.firstToken());
@@ -397,7 +388,9 @@ export class SchemeParser {
     } else if (identifier.type !== TokenType.IDENTIFIER) {
       throw new ParserError.UnexpectedTokenError(this.source, identifier.pos, identifier);
     } else {
+      // its a normal definition
       convertedIdentifier = new Atomic.Identifier(this.toLocation(identifier), identifier.lexeme);
+      isFunctionDefinition = false;
     }
 
     if (isFunctionDefinition) {
@@ -857,15 +850,26 @@ export class SchemeParser {
    */
   parse(): Atomic.Sequence {
     // collect all top-level elements
-    const topElements: Group[] = [];
+    const topElements: Expression[] = [];
     while (!this.isAtEnd()) {
-      topElements.push(this.grouping());
+      const currentGroup = this.grouping();
+      // top level definitions are always wrapped up in
+      // a second group
+      // so unwrap them
+      const currentElement = currentGroup.unwrap()[0];
+      if (currentElement instanceof Token && currentElement.type === TokenType.EOF) {
+        break;
+      }
+      const convertedElement = this.parseExpression(currentElement);
+      console.log(currentElement);
+      topElements.push(convertedElement);
     }
-
-    // wrap all top-level elements in a group
-    const outerGroup = new Group(topElements);
-
-    // parse the top-level group
-    return this.parseAsSequence(outerGroup);
+    return new Atomic.Sequence(
+      new Location(
+        new Position(0, 0),
+        this.previous().endPos
+      ),
+      topElements
+    );
   }
 }

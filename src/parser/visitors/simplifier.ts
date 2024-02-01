@@ -9,6 +9,11 @@ import { Location } from '../types/location';
 
 export class Simplifier implements Visitor {
 
+  // Factory method for creating a new Simplifier instance.
+  public static create(): Simplifier {
+    return new Simplifier();
+  }
+
   // Atomic AST
   visitSequence(node: Atomic.Sequence): Atomic.Sequence {
     const location = node.location;
