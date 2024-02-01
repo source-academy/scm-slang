@@ -1,6 +1,6 @@
 /* Library for building ESTree nodes. */
 
-import { 
+import {
   Program,
   Expression,
   Statement,
@@ -33,7 +33,7 @@ export function makeProgram(body: Statement[] = []): Program {
 export function makeDeclaration(
   kind: "var" | "let" | "const",
   id: Identifier,
-  init: Expression
+  init: Expression,
 ): VariableDeclaration {
   return {
     type: "VariableDeclaration",
@@ -47,7 +47,7 @@ export function makeDeclaration(
     ],
     loc: id.loc,
   };
-} 
+}
 
 export function makeIdentifier(name: string, loc?: SourceLocation): Identifier {
   return {
@@ -57,7 +57,10 @@ export function makeIdentifier(name: string, loc?: SourceLocation): Identifier {
   };
 }
 
-export function makeLiteral(value: string | number | boolean | null, loc?: SourceLocation): Literal {
+export function makeLiteral(
+  value: string | number | boolean | null,
+  loc?: SourceLocation,
+): Literal {
   return {
     type: "Literal",
     value,
@@ -68,7 +71,7 @@ export function makeLiteral(value: string | number | boolean | null, loc?: Sourc
 
 export function makeArrowFunctionExpression(
   params: Identifier[],
-  body: Expression | BlockStatement
+  body: Expression | BlockStatement,
 ): ArrowFunctionExpression {
   return {
     type: "ArrowFunctionExpression",
@@ -93,7 +96,7 @@ export function makeBlockStatement(body: Statement[]): BlockStatement {
 
 export function makeCallExpression(
   callee: Expression,
-  args: Expression[]
+  args: Expression[],
 ): CallExpression {
   return {
     type: "CallExpression",
@@ -110,7 +113,7 @@ export function makeCallExpression(
 export function makeConditionalExpression(
   test: Expression,
   consequent: Expression,
-  alternate: Expression
+  alternate: Expression,
 ): ConditionalExpression {
   return {
     type: "ConditionalExpression",
@@ -126,7 +129,7 @@ export function makeConditionalExpression(
 
 export function makeAssignmentExpression(
   left: Identifier,
-  right: Expression
+  right: Expression,
 ): AssignmentExpression {
   return {
     type: "AssignmentExpression",
@@ -141,7 +144,7 @@ export function makeAssignmentExpression(
 }
 
 export function makeExpressionStatement(
-  expression: Expression
+  expression: Expression,
 ): ExpressionStatement {
   return {
     type: "ExpressionStatement",
@@ -150,9 +153,7 @@ export function makeExpressionStatement(
   };
 }
 
-export function makeReturnStatement(
-  argument: Expression
-): Statement {
+export function makeReturnStatement(argument: Expression): Statement {
   return {
     type: "ReturnStatement",
     argument,
@@ -162,7 +163,7 @@ export function makeReturnStatement(
 
 export function makeImportSpecifier(
   imported: Identifier,
-  local: Identifier
+  local: Identifier,
 ): ImportSpecifier {
   return {
     type: "ImportSpecifier",
@@ -174,7 +175,7 @@ export function makeImportSpecifier(
 
 export function makeImportDeclaration(
   specifiers: ImportSpecifier[],
-  source: Literal
+  source: Literal,
 ): ModuleDeclaration {
   return {
     type: "ImportDeclaration",
@@ -188,7 +189,7 @@ export function makeImportDeclaration(
 }
 
 export function makeExportNamedDeclaration(
-  declaration: VariableDeclaration
+  declaration: VariableDeclaration,
 ): ModuleDeclaration {
   return {
     type: "ExportNamedDeclaration",

@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import { schemeParse } from ".."; 
+import { schemeParse } from "..";
 import { generate } from "astring";
 /*
 const acorn = require("acorn");

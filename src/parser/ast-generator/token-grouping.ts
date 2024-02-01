@@ -9,34 +9,32 @@ import { TokenType } from "../types/token-type";
 import { Location, Position } from "../types/location";
 
 export class Group {
-
   elements: (Token | Group)[];
   location: Location;
   constructor(
     elements: (Token | Group)[],
-    lastPos?: Position // Allows for the last position to be specified, 
-                       // important to preserve the location when truncating groups
+    lastPos?: Position, // Allows for the last position to be specified,
+    // important to preserve the location when truncating groups
   ) {
     this.elements = elements;
     if (!this.validateGroupIntegrity()) {
-
     }
     this.location = new Location(
       this.firstPos(),
-      lastPos ? lastPos : this.lastPos()
+      lastPos ? lastPos : this.lastPos(),
     );
   }
 
   // helper function to check if the parentheses match.
   matchingParentheses(lParen: Token, rParen: Token) {
-      return (
-        (lParen.type === TokenType.LEFT_PAREN &&
-          rParen.type === TokenType.RIGHT_PAREN) ||
-        (lParen.type === TokenType.LEFT_BRACKET &&
-          rParen.type === TokenType.RIGHT_BRACKET)
-      );
-    }
-  
+    return (
+      (lParen.type === TokenType.LEFT_PAREN &&
+        rParen.type === TokenType.RIGHT_PAREN) ||
+      (lParen.type === TokenType.LEFT_BRACKET &&
+        rParen.type === TokenType.RIGHT_BRACKET)
+    );
+  }
+
   // Check for the case of invalid parentheses.
   validateGroupIntegrity(): boolean {
     // if the group is empty, it is not valid.
@@ -51,7 +49,12 @@ export class Group {
     // if so, the group is not bounded by parentheses.
     if (!(firstElement instanceof Token)) {
       return true;
-    } else if (!(firstElement.type === TokenType.LEFT_PAREN || firstElement.type === TokenType.LEFT_BRACKET)) {
+    } else if (
+      !(
+        firstElement.type === TokenType.LEFT_PAREN ||
+        firstElement.type === TokenType.LEFT_BRACKET
+      )
+    ) {
       return true;
     } else {
       // we have confirmed that the first element is a parenthesis.
@@ -85,12 +88,12 @@ export class Group {
   firstPos(): Position {
     return this.firstToken().pos;
   }
-  
+
   // Get the last element of the group.
   last(): Token | Group {
     return this.elements[this.elements.length - 1];
   }
-  
+
   // Get the ending position of the last element of the group.
   lastPos(): Position {
     const lastElement = this.last();
@@ -121,12 +124,16 @@ export class Group {
   public unwrap(): (Token | Group)[] {
     const firstElement = this.first();
     const lastElement = this.last();
-    if ((firstElement instanceof Token && lastElement instanceof Token) && 
-    ((firstElement.type === TokenType.LEFT_PAREN && lastElement.type === TokenType.RIGHT_PAREN) ||
-    (firstElement.type === TokenType.LEFT_BRACKET && lastElement.type === TokenType.RIGHT_BRACKET))) {
+    if (
+      firstElement instanceof Token &&
+      lastElement instanceof Token &&
+      ((firstElement.type === TokenType.LEFT_PAREN &&
+        lastElement.type === TokenType.RIGHT_PAREN) ||
+        (firstElement.type === TokenType.LEFT_BRACKET &&
+          lastElement.type === TokenType.RIGHT_BRACKET))
+    ) {
       return this.elements.slice(1, this.elements.length - 1);
-    } else { 
-      
+    } else {
     }
     return this.elements;
   }
@@ -146,16 +153,14 @@ export class Group {
    */
   public admit(token: Token): void {
     this.elements.unshift(token);
-    this.location = new Location(
-      token.pos, 
-      this.location.end);
+    this.location = new Location(token.pos, this.location.end);
   }
 
   /**
    * Truncate the group to exclude the first n elements.
    * Ignores parentheses.
    * Preserves end position.
-   * 
+   *
    * Useful for lambda expressions and function definitions.
    * @param n The number of elements to be truncated.
    */

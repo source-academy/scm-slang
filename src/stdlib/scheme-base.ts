@@ -80,7 +80,9 @@ export let E = function (...args: number[]): boolean {
   let acc: boolean = true;
   for (let i: number = 0; i < args.length - 1; i++) {
     if (!numberQ(args[i])) {
-      throw new Error("procedure =: expected number, got " + args[i].toString());
+      throw new Error(
+        "procedure =: expected number, got " + args[i].toString(),
+      );
     }
     acc = acc && args[i] === args[i + 1];
   }
@@ -90,8 +92,10 @@ export let E = function (...args: number[]): boolean {
 export let L = function (...args: number[]): boolean {
   let acc = true;
   for (let i = 0; i < args.length - 1; i++) {
-        if (!numberQ(args[i])) {
-      throw new Error("procedure <: expected number, got " + args[i].toString());
+    if (!numberQ(args[i])) {
+      throw new Error(
+        "procedure <: expected number, got " + args[i].toString(),
+      );
     }
     acc = acc && args[i] < args[i + 1];
   }
@@ -101,8 +105,10 @@ export let L = function (...args: number[]): boolean {
 export let G = function (...args: number[]): boolean {
   let acc = true;
   for (let i = 0; i < args.length - 1; i++) {
-        if (!numberQ(args[i])) {
-      throw new Error("procedure >: expected number, got " + args[i].toString());
+    if (!numberQ(args[i])) {
+      throw new Error(
+        "procedure >: expected number, got " + args[i].toString(),
+      );
     }
     acc = acc && args[i] > args[i + 1];
   }
@@ -112,8 +118,10 @@ export let G = function (...args: number[]): boolean {
 export let LE = function (...args: number[]): boolean {
   let acc = true;
   for (let i = 0; i < args.length - 1; i++) {
-        if (!numberQ(args[i])) {
-      throw new Error("procedure <=: expected number, got " + args[i].toString());
+    if (!numberQ(args[i])) {
+      throw new Error(
+        "procedure <=: expected number, got " + args[i].toString(),
+      );
     }
     acc = acc && args[i] <= args[i + 1];
   }
@@ -123,8 +131,10 @@ export let LE = function (...args: number[]): boolean {
 export let GE = function (...args: number[]): boolean {
   let acc = true;
   for (let i = 0; i < args.length - 1; i++) {
-        if (!numberQ(args[i])) {
-      throw new Error("procedure >=: expected number, got " + args[i].toString());
+    if (!numberQ(args[i])) {
+      throw new Error(
+        "procedure >=: expected number, got " + args[i].toString(),
+      );
     }
     acc = acc && args[i] >= args[i + 1];
   }
@@ -144,16 +154,16 @@ export let negativeQ = function (n: number): boolean {
 };
 
 export let oddQ = function (n: number): boolean {
-      if (!numberQ(n)) {
-      throw new Error("procedure odd?: expected number, got " + n.toString());
-    }
+  if (!numberQ(n)) {
+    throw new Error("procedure odd?: expected number, got " + n.toString());
+  }
   return n % 2 !== 0;
 };
 
 export let evenQ = function (n: number): boolean {
-        if (!numberQ(n)) {
-      throw new Error("procedure even?: expected number, got " + n.toString());
-    }
+  if (!numberQ(n)) {
+    throw new Error("procedure even?: expected number, got " + n.toString());
+  }
   return n % 2 === 0;
 };
 
@@ -187,88 +197,88 @@ export let divide = function (...args: number[]): number {
   return args.slice(1).reduce((a, b) => a / b, args[0]);
 };
 
-export let abs = function(x: number): number {
-    return Math.abs(x);
+export let abs = function (x: number): number {
+  return Math.abs(x);
 };
 
-export let quotient = function(x: number, y: number): number {
-    return Math.trunc(x / y);
-}
+export let quotient = function (x: number, y: number): number {
+  return Math.trunc(x / y);
+};
 
-export let modulo = function(x: number, y: number): number {
-    return x % y;
-}
+export let modulo = function (x: number, y: number): number {
+  return x % y;
+};
 
-export let remainder = function(x: number, y: number): number {
-    return x % y;
-}
+export let remainder = function (x: number, y: number): number {
+  return x % y;
+};
 
-export let gcd = function(...args: number[]): number {
-    return args.reduce((a, b) => {
-        if (a === 0) {
-            return abs(b);
-        }
-        return gcd(abs(b % a), abs(a));
-    }, 0);
-}
+export let gcd = function (...args: number[]): number {
+  return args.reduce((a, b) => {
+    if (a === 0) {
+      return abs(b);
+    }
+    return gcd(abs(b % a), abs(a));
+  }, 0);
+};
 
-export let lcm = function(...args: number[]): number {
-    return args.reduce((a, b) => {
-        return abs(a * b) / gcd(a, b);
-    }, 1);
-}
+export let lcm = function (...args: number[]): number {
+  return args.reduce((a, b) => {
+    return abs(a * b) / gcd(a, b);
+  }, 1);
+};
 
-export let floor = function(x: number): number {
-    return Math.floor(x);
-}
+export let floor = function (x: number): number {
+  return Math.floor(x);
+};
 
-export let ceiling = function(x: number): number {
-    return Math.ceil(x);
-}
+export let ceiling = function (x: number): number {
+  return Math.ceil(x);
+};
 
-export let truncate = function(x: number): number {
-    return Math.trunc(x);
-}
+export let truncate = function (x: number): number {
+  return Math.trunc(x);
+};
 
-export let round = function(x: number): number {
-    return Math.round(x);
-}
+export let round = function (x: number): number {
+  return Math.round(x);
+};
 
-export let rationalize = function(x: number, y: number): number {
-    return x / y;
-}
+export let rationalize = function (x: number, y: number): number {
+  return x / y;
+};
 
-export let square = function(x: number): number {
-    return x * x;
-}
+export let square = function (x: number): number {
+  return x * x;
+};
 
-export let exact_integer_sqrt = function(x: number): number {
-    return Math.sqrt(x);
-}
+export let exact_integer_sqrt = function (x: number): number {
+  return Math.sqrt(x);
+};
 
-export let expt = function(x: number, y: number): number {
-    return Math.pow(x, y);
-}
+export let expt = function (x: number, y: number): number {
+  return Math.pow(x, y);
+};
 
-export let inexact = function(x: number): number {
-    return x;
-}
+export let inexact = function (x: number): number {
+  return x;
+};
 
-export let exact = function(x: number): number {
-    return x;
-}
+export let exact = function (x: number): number {
+  return x;
+};
 
-export let number_Gstring = function(x: number): string {
-    return x.toString();
-}
+export let number_Gstring = function (x: number): string {
+  return x.toString();
+};
 
-export let string_Gnumber = function(x: string): number {
-    return Number(x);
-}
+export let string_Gnumber = function (x: string): number {
+  return Number(x);
+};
 
 // Booleans
 
-// Important value for the interpreter: 
+// Important value for the interpreter:
 // As truthy and falsy values in Scheme are different
 // from JavaScript, this will convert the value to Scheme's truthy value.
 export const $true = function (b: any): boolean {
@@ -291,15 +301,15 @@ export let not = function (b: any): boolean {
     return true;
   }
   return false;
-}
+};
 
 export let booleanQ = function (b: any): boolean {
   return b === true || b === false;
-}
+};
 
 export let booleanEQ = function (b1: boolean, b2: boolean): boolean {
   return b1 === b2;
-}
+};
 
 // Pairs
 
@@ -423,7 +433,7 @@ export let append = function (...args: (Pair | null)[]): Pair | null {
     } else {
       return cons(
         car(args[0] as Pair),
-        append(cdr(args[0] as Pair), ...args.slice(1))
+        append(cdr(args[0] as Pair), ...args.slice(1)),
       );
     }
   }
@@ -476,7 +486,7 @@ export let memv = function (item: any, p: Pair | null): Pair | null | boolean {
 
 export let member = function (
   item: any,
-  p: Pair | null
+  p: Pair | null,
 ): Pair | null | boolean {
   if (p === null) {
     return false;
@@ -612,10 +622,10 @@ export let stringGEQ = function (s1: string, s2: string): boolean {
 export let substring = function (
   s: string,
   start: number,
-  end: number = s.length
+  end: number = s.length,
 ): string {
   return s.slice(start, end);
-}
+};
 
 export let string_append = function (...args: string[]): string {
   return args.join("");
@@ -775,7 +785,7 @@ export let procedureQ = function (p: any): boolean {
   return typeof p === "function";
 };
 
-export let apply = function (proc: Function, ...args: any[]): any {  
+export let apply = function (proc: Function, ...args: any[]): any {
   if (!pairQ(args[args.length - 1])) {
     throw new Error("Last argument to apply must be a list");
   }
@@ -784,7 +794,10 @@ export let apply = function (proc: Function, ...args: any[]): any {
   return proc(...args);
 };
 
-export let map = function (proc: Function, ...args: (Pair | null)[]): Pair | null {
+export let map = function (
+  proc: Function,
+  ...args: (Pair | null)[]
+): Pair | null {
   const arg: any[] = [];
   for (let j = 0; j < args.length; j++) {
     if (args[j] === null) {
@@ -807,5 +820,5 @@ export let error = function (msg: string): void {
 // Input and output
 
 export let newline = function (): void {
-  console.log()
-}
+  console.log();
+};

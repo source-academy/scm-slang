@@ -3,12 +3,11 @@
  * Except for everything inside a quote, which is left alone.
  */
 
-import { Expression, Atomic, Extended } from '../types/node-types';
-import { Visitor } from './visitor';
-import { Location } from '../types/location';
+import { Expression, Atomic, Extended } from "../types/node-types";
+import { Visitor } from "./visitor";
+import { Location } from "../types/location";
 
 export class Simplifier implements Visitor {
-
   // Factory method for creating a new Simplifier instance.
   public static create(): Simplifier {
     return new Simplifier();
@@ -17,8 +16,9 @@ export class Simplifier implements Visitor {
   // Atomic AST
   visitSequence(node: Atomic.Sequence): Atomic.Sequence {
     const location = node.location;
-    const newExpressions = node.expressions
-      .map((expression) => expression.accept(this));
+    const newExpressions = node.expressions.map((expression) =>
+      expression.accept(this),
+    );
     return new Atomic.Sequence(location, newExpressions);
   }
 
@@ -68,7 +68,12 @@ export class Simplifier implements Visitor {
     const newConsequent = node.consequent.accept(this);
     const newAlternate = node.alternate.accept(this);
 
-    return new Atomic.Conditional(location, newTest, newConsequent, newAlternate);
+    return new Atomic.Conditional(
+      location,
+      newTest,
+      newConsequent,
+      newAlternate,
+    );
   }
 
   visitPair(node: Atomic.Pair): Atomic.Pair {
@@ -99,7 +104,7 @@ export class Simplifier implements Visitor {
   visitImport(node: Atomic.Import): Atomic.Import {
     return node;
   }
-  
+
   visitExport(node: Atomic.Export): Atomic.Export {
     const location = node.location;
     const newDefinition = node.definition.accept(this);
@@ -108,7 +113,9 @@ export class Simplifier implements Visitor {
   }
 
   // Extended AST
-  visitFunctionDefinition(node: Extended.FunctionDefinition): Atomic.Definition {
+  visitFunctionDefinition(
+    node: Extended.FunctionDefinition,
+  ): Atomic.Definition {
     const location = node.location;
     const name = node.name;
     const params = node.params;
@@ -116,7 +123,6 @@ export class Simplifier implements Visitor {
 
     const newLambda = new Atomic.Lambda(location, params, newBody);
     return new Atomic.Definition(location, name, newLambda);
-
   }
 
   visitLet(node: Extended.Let): Atomic.Application {
@@ -131,34 +137,45 @@ export class Simplifier implements Visitor {
 
   visitCond(node: Extended.Cond): Expression {
     const location = node.location;
-    const newPredicates = node.predicates.map((predicate) => predicate.accept(this));
-    const newConsequents = node.consequents.map((consequent) => consequent.accept(this));
-    const newCatchall = node.catchall ? node.catchall.accept(this) : node.catchall;
+    const newPredicates = node.predicates.map((predicate) =>
+      predicate.accept(this),
+    );
+    const newConsequents = node.consequents.map((consequent) =>
+      consequent.accept(this),
+    );
+    const newCatchall = node.catchall
+      ? node.catchall.accept(this)
+      : node.catchall;
 
     if (newPredicates.length == 0) {
       // Return catchall if there is no predicate
       return new Atomic.Conditional(
-        location, 
-        new Atomic.BooleanLiteral(location, false), 
-        new Atomic.Nil(location), 
-        node.catchall ? newCatchall : new Atomic.Nil(location));
+        location,
+        new Atomic.BooleanLiteral(location, false),
+        new Atomic.Nil(location),
+        node.catchall ? newCatchall : new Atomic.Nil(location),
+      );
     }
 
     newPredicates.reverse();
     newConsequents.reverse();
     const lastLocation = newPredicates[0].location;
-    let newConditional = newCatchall ? newCatchall : new Atomic.Nil(lastLocation);
+    let newConditional = newCatchall
+      ? newCatchall
+      : new Atomic.Nil(lastLocation);
 
     for (let i = 0; i < newPredicates.length; i++) {
       const predicate = newPredicates[i];
       const consequent = newConsequents[i];
       const predLocation = predicate.location;
       const consLocation = consequent.location;
-      const newLocation = new Location(
-        predLocation.start,
-        consLocation.end,
-      )
-      newConditional = new Atomic.Conditional(newLocation, predicate, consequent, newConditional);
+      const newLocation = new Location(predLocation.start, consLocation.end);
+      newConditional = new Atomic.Conditional(
+        newLocation,
+        predicate,
+        consequent,
+        newConditional,
+      );
     }
 
     return newConditional;
@@ -173,9 +190,13 @@ export class Simplifier implements Visitor {
     }
     if (newElements.length === 1) {
       const nilLocation = newElements[0].location;
-      return new Atomic.Pair(location, newElements[0], new Atomic.Nil(nilLocation));
-    };
-    
+      return new Atomic.Pair(
+        location,
+        newElements[0],
+        new Atomic.Nil(nilLocation),
+      );
+    }
+
     newElements.reverse();
     const lastLocation = newElements[0].location;
     let newPair = new Atomic.Nil(lastLocation);
@@ -191,7 +212,7 @@ export class Simplifier implements Visitor {
 
   // Leave quotes alone.
   visitQuote(node: Extended.Quote): Extended.Quote {
-    return node
+    return node;
   }
 
   // Leave unquotes alone.
@@ -201,8 +222,10 @@ export class Simplifier implements Visitor {
 
   visitBegin(node: Extended.Begin): Atomic.Sequence {
     const location = node.location;
-    const newExpressions = node.expressions.map((expression) => expression.accept(this));
-    
+    const newExpressions = node.expressions.map((expression) =>
+      expression.accept(this),
+    );
+
     return new Atomic.Sequence(location, newExpressions);
   }
 

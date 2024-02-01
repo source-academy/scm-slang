@@ -27,7 +27,7 @@ function $args(func: any): string[] {
 export function schemeToString(x: any): string {
   let str: string = "";
   if (x === undefined) {
-    str = 'undefined';
+    str = "undefined";
   } else if (base.listQ(x)) {
     str = "(";
     let p = x as base.Pair;
@@ -59,7 +59,7 @@ export function schemeToString(x: any): string {
     str += ")";
   } else if (base.procedureQ(x)) {
     str = `#<procedure (${$args(x)
-      .reduce((a, b) => `${a} ${b.replace('...', '. ')}`, "")
+      .reduce((a, b) => `${a} ${b.replace("...", ". ")}`, "")
       .trimStart()})>`;
   } else if (base.booleanQ(x)) {
     str = x ? "#t" : "#f";
@@ -67,4 +67,4 @@ export function schemeToString(x: any): string {
     str = x.toString();
   }
   return str;
-};
+}

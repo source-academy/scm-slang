@@ -1,6 +1,6 @@
 import { readFileSync } from "fs";
 import { Tokenizer } from "../tokenizer";
-import { Parser } from "../parser"; 
+import { Parser } from "../parser";
 const escodegen = require("escodegen");
 /*
 const acorn = require("acorn");

@@ -32,7 +32,7 @@ import {
   makeImportSpecifier,
   makeLiteral,
   makeProgram,
-  makeReturnStatement
+  makeReturnStatement,
 } from "../../estree-nodes";
 
 class Group {
@@ -41,26 +41,26 @@ class Group {
   constructor(
     group: (Token | Group)[],
     openparen: Token | undefined,
-    closeparen: Token | undefined = openparen
+    closeparen: Token | undefined = openparen,
   ) {
     this.group = group;
     this.loc = openparen
       ? // if openparen exists, then closeparen exists as well
-      {
-        start: openparen.pos,
-        end: closeparen!.pos,
-      }
+        {
+          start: openparen.pos,
+          end: closeparen!.pos,
+        }
       : // only go to this case if grouping() was called.
-      // 2 cases:
-      // 1. group contains a single Token
-      // 2. group contains a single Group
-      // in both cases we steal the inner group's location
-      group[0] instanceof Group
+        // 2 cases:
+        // 1. group contains a single Token
+        // 2. group contains a single Group
+        // in both cases we steal the inner group's location
+        group[0] instanceof Group
         ? group[0].loc
         : {
-          start: group[0].pos,
-          end: group[0].pos,
-        };
+            start: group[0].pos,
+            end: group[0].pos,
+          };
   }
   public unwrap(): (Token | Group)[] {
     return this.group;
@@ -104,7 +104,7 @@ export class EstreeParser {
         this.source,
         c.pos,
         c,
-        this.chapter
+        this.chapter,
       );
     }
   }
@@ -221,7 +221,7 @@ export class EstreeParser {
           token.start,
           token.end,
           token.pos.line,
-          token.pos.column
+          token.pos.column,
         );
       case TokenType.BACKTICK:
         return new Token(
@@ -231,7 +231,7 @@ export class EstreeParser {
           token.start,
           token.end,
           token.pos.line,
-          token.pos.column
+          token.pos.column,
         );
       case TokenType.HASH:
         return new Token(
@@ -241,7 +241,7 @@ export class EstreeParser {
           token.start,
           token.end,
           token.pos.line,
-          token.pos.column
+          token.pos.column,
         );
       case TokenType.COMMA:
         return new Token(
@@ -251,7 +251,7 @@ export class EstreeParser {
           token.start,
           token.end,
           token.pos.line,
-          token.pos.column
+          token.pos.column,
         );
       case TokenType.COMMA_AT:
         return new Token(
@@ -261,7 +261,7 @@ export class EstreeParser {
           token.start,
           token.end,
           token.pos.line,
-          token.pos.column
+          token.pos.column,
         );
       default:
         return token;
@@ -277,21 +277,21 @@ export class EstreeParser {
    * @returns An evaluated expression.
    */
   private evaluate(
-    expression: Token | Group
-  ): Statement | Expression | ModuleDeclaration;
-  private evaluate(
     expression: Token | Group,
-    onlyExpressions: boolean
   ): Statement | Expression | ModuleDeclaration;
   private evaluate(
     expression: Token | Group,
     onlyExpressions: boolean,
-    topLevel: boolean
+  ): Statement | Expression | ModuleDeclaration;
+  private evaluate(
+    expression: Token | Group,
+    onlyExpressions: boolean,
+    topLevel: boolean,
   ): Statement | Expression | ModuleDeclaration;
   private evaluate(
     expression: Token | Group,
     onlyExpressions = false,
-    topLevel = false
+    topLevel = false,
   ): Statement | Expression | ModuleDeclaration {
     if (expression instanceof Token) {
       return this.evaluateToken(expression);
@@ -313,7 +313,7 @@ export class EstreeParser {
             throw new ParserError.UnexpectedTokenError(
               this.source,
               firstToken.pos,
-              firstToken
+              firstToken,
             );
           }
           return this.evaluateDefine(expression);
@@ -330,7 +330,7 @@ export class EstreeParser {
           throw new ParserError.UnexpectedTokenError(
             this.source,
             firstToken.pos,
-            firstToken
+            firstToken,
           );
 
         // Scheme 2
@@ -343,7 +343,7 @@ export class EstreeParser {
           throw new ParserError.UnexpectedTokenError(
             this.source,
             firstToken.pos,
-            firstToken
+            firstToken,
           );
 
         // Scheme 3
@@ -363,14 +363,14 @@ export class EstreeParser {
             throw new ParserError.UnexpectedTokenError(
               this.source,
               firstToken.pos,
-              firstToken
+              firstToken,
             );
           }
           if (!topLevel) {
             throw new ParserError.UnexpectedTokenError(
               this.source,
               firstToken.pos,
-              firstToken
+              firstToken,
             );
           }
           return this.evaluateImport(expression);
@@ -379,14 +379,14 @@ export class EstreeParser {
             throw new ParserError.UnexpectedTokenError(
               this.source,
               firstToken.pos,
-              firstToken
+              firstToken,
             );
           }
           if (!topLevel) {
             throw new ParserError.UnexpectedTokenError(
               this.source,
               firstToken.pos,
-              firstToken
+              firstToken,
             );
           }
           return this.evaluateExport(expression);
@@ -395,7 +395,7 @@ export class EstreeParser {
           throw new ParserError.UnexpectedTokenError(
             this.source,
             firstToken.pos,
-            firstToken
+            firstToken,
           );
 
         // Outside SICP
@@ -404,7 +404,7 @@ export class EstreeParser {
           throw new ParserError.UnsupportedTokenError(
             this.source,
             firstToken.pos,
-            firstToken
+            firstToken,
           );
         default:
           // First token is not a special form.
@@ -429,7 +429,7 @@ export class EstreeParser {
     if (tokens.length < 3) {
       throw new ParserError.GenericSyntaxError(
         this.source,
-        (tokens[0] as Token).pos
+        (tokens[0] as Token).pos,
       );
     }
 
@@ -445,7 +445,7 @@ export class EstreeParser {
           // Error.
           throw new ParserError.GenericSyntaxError(
             this.source,
-            token.loc.start
+            token.loc.start,
           );
         }
         if (token.type !== TokenType.IDENTIFIER) {
@@ -470,19 +470,19 @@ export class EstreeParser {
           body.push(
             i < tokens.length - 1
               ? // Safe to cast as module declarations are only top level.
-              (this.wrapInStatement(this.evaluate(tokens[i])) as Statement)
-              : (this.returnStatement(this.evaluate(tokens[i])) as Statement)
+                (this.wrapInStatement(this.evaluate(tokens[i])) as Statement)
+              : (this.returnStatement(this.evaluate(tokens[i])) as Statement),
           );
         } else {
           if (definitions) {
             body.push(
-              this.wrapInStatement(this.evaluate(tokens[i])) as Statement
+              this.wrapInStatement(this.evaluate(tokens[i])) as Statement,
             );
           } else {
             // The definitons block is over, and yet there is a define.
             throw new ParserError.GenericSyntaxError(
               this.source,
-              ((tokens[i] as Group).unwrap()[0] as Token).pos
+              ((tokens[i] as Group).unwrap()[0] as Token).pos,
             );
           }
         }
@@ -490,10 +490,7 @@ export class EstreeParser {
       return makeDeclaration(
         definitionType,
         symbol,
-        makeArrowFunctionExpression(
-          params,
-          makeBlockStatement(body)
-        )
+        makeArrowFunctionExpression(params, makeBlockStatement(body)),
       );
 
       // return {
@@ -534,7 +531,7 @@ export class EstreeParser {
     if (tokens.length > 3) {
       throw new ParserError.GenericSyntaxError(
         this.source,
-        (tokens[0] as Token).pos
+        (tokens[0] as Token).pos,
       );
     }
     const symbol = this.evaluateToken(tokens[1]);
@@ -574,15 +571,14 @@ export class EstreeParser {
     if (tokens.length < 3 || tokens.length > 4) {
       throw new ParserError.GenericSyntaxError(
         this.source,
-        (tokens[0] as Token).pos
+        (tokens[0] as Token).pos,
       );
     }
     // Convert JavaScript's truthy/falsy values to Scheme's true/false.
     const test_val = this.evaluate(tokens[1], true) as Expression;
-    const test = makeCallExpression(
-      makeIdentifier("$true", test_val.loc!),
-      [test_val]
-    );
+    const test = makeCallExpression(makeIdentifier("$true", test_val.loc!), [
+      test_val,
+    ]);
     const consequent = this.evaluate(tokens[2], true) as Expression;
     const alternate =
       tokens.length === 4
@@ -602,7 +598,7 @@ export class EstreeParser {
     if (tokens.length < 3) {
       throw new ParserError.GenericSyntaxError(
         this.source,
-        (tokens[0] as Token).pos
+        (tokens[0] as Token).pos,
       );
     }
     if (!(tokens[1] instanceof Group)) {
@@ -614,7 +610,7 @@ export class EstreeParser {
         if (param instanceof Group) {
           throw new ParserError.GenericSyntaxError(
             this.source,
-            param.loc.start
+            param.loc.start,
           );
         }
         if (param.type !== TokenType.IDENTIFIER) {
@@ -636,27 +632,24 @@ export class EstreeParser {
         body.push(
           i < tokens.length - 1
             ? // Safe to cast as module declarations are only top level.
-            (this.wrapInStatement(this.evaluate(tokens[i])) as Statement)
-            : (this.returnStatement(this.evaluate(tokens[i])) as Statement)
+              (this.wrapInStatement(this.evaluate(tokens[i])) as Statement)
+            : (this.returnStatement(this.evaluate(tokens[i])) as Statement),
         );
       } else {
         if (definitions) {
           body.push(
-            this.wrapInStatement(this.evaluate(tokens[i])) as Statement
+            this.wrapInStatement(this.evaluate(tokens[i])) as Statement,
           );
         } else {
           // The definitons block is over, and yet there is a define.
           throw new ParserError.GenericSyntaxError(
             this.source,
-            ((tokens[i] as Group).unwrap()[0] as Token).pos
+            ((tokens[i] as Group).unwrap()[0] as Token).pos,
           );
         }
       }
     }
-    return makeArrowFunctionExpression(
-      params,
-      makeBlockStatement(body)
-    );
+    return makeArrowFunctionExpression(params, makeBlockStatement(body));
     // return {
     //   type: "ArrowFunctionExpression",
     //   loc: expression.loc,
@@ -685,7 +678,7 @@ export class EstreeParser {
     if (tokens.length < 3) {
       throw new ParserError.GenericSyntaxError(
         this.source,
-        (tokens[0] as Token).pos
+        (tokens[0] as Token).pos,
       );
     }
     if (!(tokens[1] instanceof Group)) {
@@ -699,27 +692,27 @@ export class EstreeParser {
       if (!(declarations[i] instanceof Group)) {
         throw new ParserError.GenericSyntaxError(
           this.source,
-          (declarations[i] as Token).pos
+          (declarations[i] as Token).pos,
         );
       }
       // Make sure that the declaration is of the form (x y).
       if ((declarations[i] as Group).length() !== 2) {
         throw new ParserError.GenericSyntaxError(
           this.source,
-          (declarations[i] as Group).loc.start
+          (declarations[i] as Group).loc.start,
         );
       }
       const declaration = (declarations[i] as Group).unwrap();
       if (!(declaration[0] instanceof Token)) {
         throw new ParserError.GenericSyntaxError(
           this.source,
-          declaration[0].loc.start
+          declaration[0].loc.start,
         );
       }
       if (declaration[0].type !== TokenType.IDENTIFIER) {
         throw new ParserError.GenericSyntaxError(
           this.source,
-          declaration[0].pos
+          declaration[0].pos,
         );
       }
       // Safe to cast as we have determined that the token is an identifier.
@@ -740,29 +733,26 @@ export class EstreeParser {
         body.push(
           i < tokens.length - 1
             ? // Safe to cast as module declarations are only top level.
-            (this.wrapInStatement(this.evaluate(tokens[i])) as Statement)
-            : (this.returnStatement(this.evaluate(tokens[i])) as Statement)
+              (this.wrapInStatement(this.evaluate(tokens[i])) as Statement)
+            : (this.returnStatement(this.evaluate(tokens[i])) as Statement),
         );
       } else {
         if (definitions) {
           body.push(
-            this.wrapInStatement(this.evaluate(tokens[i])) as Statement
+            this.wrapInStatement(this.evaluate(tokens[i])) as Statement,
           );
         } else {
           // The definitons block is over, and yet there is a define.
           throw new ParserError.GenericSyntaxError(
             this.source,
-            ((tokens[i] as Group).unwrap()[0] as Token).pos
+            ((tokens[i] as Group).unwrap()[0] as Token).pos,
           );
         }
       }
     }
     return makeCallExpression(
-      makeArrowFunctionExpression(
-        declaredVariables,
-        makeBlockStatement(body)
-      ),
-      declaredValues
+      makeArrowFunctionExpression(declaredVariables, makeBlockStatement(body)),
+      declaredValues,
     );
     // return {
     //   type: "CallExpression",
@@ -806,7 +796,7 @@ export class EstreeParser {
     if (tokens.length < 2) {
       throw new ParserError.GenericSyntaxError(
         this.source,
-        (tokens[0] as Token).pos
+        (tokens[0] as Token).pos,
       );
     }
     const clauses = tokens.slice(1);
@@ -820,7 +810,7 @@ export class EstreeParser {
         if (clause.length() < 1) {
           throw new ParserError.GenericSyntaxError(
             this.source,
-            clause.loc.start
+            clause.loc.start,
           );
         }
         // Check if this is an else clause.
@@ -832,31 +822,31 @@ export class EstreeParser {
           if (i < clauses.length - 1) {
             throw new ParserError.GenericSyntaxError(
               this.source,
-              clauseTokens[0].pos
+              clauseTokens[0].pos,
             );
           }
           if (clause.length() < 2) {
             throw new ParserError.GenericSyntaxError(
               this.source,
-              clauseTokens[0].pos
+              clauseTokens[0].pos,
             );
           }
           catchAll = this.evaluateBody(clauseTokens.slice(1));
         } else {
           const test_val: Expression = this.evaluate(
             clauseTokens[0],
-            true
+            true,
           ) as Expression;
           // Convert JavaScript's truthy/falsy values to Scheme's true/false.
           const test = makeCallExpression(
             makeIdentifier("$true", test_val.loc!),
-            [test_val]
+            [test_val],
           );
           conditions.push(test);
           bodies.push(
             clause.length() < 2
               ? test_val
-              : this.evaluateBody(clauseTokens.slice(1))
+              : this.evaluateBody(clauseTokens.slice(1)),
           );
           catchAll.loc = bodies[bodies.length - 1].loc;
           catchAll.loc!.start = catchAll.loc!.end;
@@ -870,7 +860,7 @@ export class EstreeParser {
       finalConditionalExpression = makeConditionalExpression(
         conditions[i],
         bodies[i],
-        finalConditionalExpression
+        finalConditionalExpression,
       );
     }
     // Wrap the last conditional expression with the expression location.
@@ -893,7 +883,7 @@ export class EstreeParser {
     if (tokens.length !== 2) {
       throw new ParserError.GenericSyntaxError(
         this.source,
-        (tokens[0] as Token).pos
+        (tokens[0] as Token).pos,
       );
     }
     if (quasiquote === undefined) {
@@ -955,7 +945,7 @@ export class EstreeParser {
         if (dot !== undefined) {
           throw new ParserError.GenericSyntaxError(
             this.source,
-            (tokens[i] as Token).pos
+            (tokens[i] as Token).pos,
           );
         } else {
           dot = tokens[i] as Token;
@@ -966,7 +956,7 @@ export class EstreeParser {
           if (listTerminator !== null) {
             throw new ParserError.GenericSyntaxError(
               this.source,
-              (tokens[i] as Token).pos
+              (tokens[i] as Token).pos,
             );
           } else {
             listTerminator = this.quote(tokens[i], quasiquote);
@@ -978,19 +968,13 @@ export class EstreeParser {
     }
     if (dot !== undefined) {
       if (listTerminator === null) {
-        throw new ParserError.GenericSyntaxError(
-          this.source,
-          dot.pos
-        );
+        throw new ParserError.GenericSyntaxError(this.source, dot.pos);
       }
       // Safe, as we have already determined that listTerminator exists
       if (listElements1.length < 1) {
         return listTerminator!;
       }
-      return this.dottedList(
-        listElements1,
-        listTerminator!
-      );
+      return this.dottedList(listElements1, listTerminator!);
     }
     return this.list(listElements1);
   }
@@ -1004,12 +988,9 @@ export class EstreeParser {
    */
   private symbol(token: Token): CallExpression {
     const loc = this.toSourceLocation(token);
-    return makeCallExpression(
-      makeIdentifier("string->symbol", loc),
-      [
-        makeLiteral(token.lexeme, loc),
-      ]
-    );
+    return makeCallExpression(makeIdentifier("string->symbol", loc), [
+      makeLiteral(token.lexeme, loc),
+    ]);
     // return {
     //   type: "CallExpression",
     //   loc: loc,
@@ -1038,10 +1019,7 @@ export class EstreeParser {
    * @returns A call to cons.
    */
   private pair(car: Expression, cdr: Expression): CallExpression {
-    return makeCallExpression(
-      makeIdentifier("cons", car.loc!),
-      [car, cdr]
-    );
+    return makeCallExpression(makeIdentifier("cons", car.loc!), [car, cdr]);
     // return {
     //   type: "CallExpression",
     //   loc: {
@@ -1081,16 +1059,14 @@ export class EstreeParser {
    * Converts an array of Expressions into a list.
    */
   private list(expressions: Expression[]): CallExpression {
-    let loc = expressions.length > 0
-      ? ({
-        start: expressions[0].loc!.start,
-        end: expressions[expressions.length - 1].loc!.end,
-      } as SourceLocation)
-      : undefined;
-    return makeCallExpression(
-      makeIdentifier("list", loc),
-      expressions
-    );
+    let loc =
+      expressions.length > 0
+        ? ({
+            start: expressions[0].loc!.start,
+            end: expressions[expressions.length - 1].loc!.end,
+          } as SourceLocation)
+        : undefined;
+    return makeCallExpression(makeIdentifier("list", loc), expressions);
     // return {
     //   type: "CallExpression",
     //   loc:
@@ -1130,13 +1106,13 @@ export class EstreeParser {
     if (tokens.length !== 3) {
       throw new ParserError.GenericSyntaxError(
         this.source,
-        (tokens[0] as Token).pos
+        (tokens[0] as Token).pos,
       );
     }
     if (!(tokens[1] instanceof Token)) {
       throw new ParserError.GenericSyntaxError(
         this.source,
-        tokens[1].loc.start
+        tokens[1].loc.start,
       );
     } else if (tokens[1].type !== TokenType.IDENTIFIER) {
       throw new ParserError.GenericSyntaxError(this.source, tokens[1].pos);
@@ -1144,10 +1120,7 @@ export class EstreeParser {
     // Safe to cast as we have predetermined that it is an identifier.
     const identifier: Identifier = this.evaluateToken(tokens[1]) as Identifier;
     const newValue: Expression = this.evaluate(tokens[2]) as Expression;
-    return makeAssignmentExpression(
-      identifier,
-      newValue
-    );
+    return makeAssignmentExpression(identifier, newValue);
     // return {
     //   type: "AssignmentExpression",
     //   loc: expression.loc,
@@ -1193,29 +1166,26 @@ export class EstreeParser {
         body.push(
           i < tokens.length - 1
             ? // Safe to cast as module declarations are only top level.
-            (this.wrapInStatement(this.evaluate(tokens[i])) as Statement)
-            : (this.returnStatement(this.evaluate(tokens[i])) as Statement)
+              (this.wrapInStatement(this.evaluate(tokens[i])) as Statement)
+            : (this.returnStatement(this.evaluate(tokens[i])) as Statement),
         );
       } else {
         if (definitions) {
           body.push(
-            this.wrapInStatement(this.evaluate(tokens[i])) as Statement
+            this.wrapInStatement(this.evaluate(tokens[i])) as Statement,
           );
         } else {
           // The definitions block is over, and yet there is a define.
           throw new ParserError.GenericSyntaxError(
             this.source,
-            ((tokens[i] as Group).unwrap()[0] as Token).pos
+            ((tokens[i] as Group).unwrap()[0] as Token).pos,
           );
         }
       }
     }
     return makeCallExpression(
-      makeArrowFunctionExpression(
-        [],
-        makeBlockStatement(body)
-      ),
-      []
+      makeArrowFunctionExpression([], makeBlockStatement(body)),
+      [],
     );
     // return {
     //   type: "CallExpression",
@@ -1265,16 +1235,13 @@ export class EstreeParser {
     if (tokens.length !== 2) {
       throw new ParserError.GenericSyntaxError(
         this.source,
-        (tokens[0] as Token).pos
+        (tokens[0] as Token).pos,
       );
     }
     const delayed: Statement = this.returnStatement(
-      this.evaluate(tokens[1], true)
+      this.evaluate(tokens[1], true),
     );
-    return makeArrowFunctionExpression(
-      [],
-      makeBlockStatement([delayed])
-    );
+    return makeArrowFunctionExpression([], makeBlockStatement([delayed]));
     // return {
     //   type: "ArrowFunctionExpression",
     //   loc: expression.loc,
@@ -1301,21 +1268,19 @@ export class EstreeParser {
     if (tokens.length < 3) {
       throw new ParserError.GenericSyntaxError(
         this.source,
-        (tokens[0] as Token).pos
+        (tokens[0] as Token).pos,
       );
     } else if (!(tokens[1] instanceof Token)) {
       throw new ParserError.GenericSyntaxError(
         this.source,
-        tokens[1].loc.start
+        tokens[1].loc.start,
       );
     } else if (tokens[1].type !== TokenType.STRING) {
-      throw new ParserError.GenericSyntaxError(
-        this.source,
-        tokens[1].pos);
+      throw new ParserError.GenericSyntaxError(this.source, tokens[1].pos);
     } else if (!(tokens[2] instanceof Group)) {
       throw new ParserError.GenericSyntaxError(
         this.source,
-        (tokens[2] as Token).pos
+        (tokens[2] as Token).pos,
       );
     }
     const specifiers: ImportSpecifier[] = [];
@@ -1324,18 +1289,20 @@ export class EstreeParser {
       if (!(specifierTokens[i] instanceof Token)) {
         throw new ParserError.GenericSyntaxError(
           this.source,
-          (specifierTokens[i] as Group).loc.start
+          (specifierTokens[i] as Group).loc.start,
         );
       } else if ((specifierTokens[i] as Token).type !== TokenType.IDENTIFIER) {
         throw new ParserError.GenericSyntaxError(
           this.source,
-          (specifierTokens[i] as Token).pos
+          (specifierTokens[i] as Token).pos,
         );
       }
-      specifiers.push(makeImportSpecifier(
-        this.evaluate(specifierTokens[i]) as Identifier,
-        this.evaluate(specifierTokens[i]) as Identifier
-      ));
+      specifiers.push(
+        makeImportSpecifier(
+          this.evaluate(specifierTokens[i]) as Identifier,
+          this.evaluate(specifierTokens[i]) as Identifier,
+        ),
+      );
       // specifiers.push({
       //   type: "ImportSpecifier",
       //   local: this.evaluate(specifierTokens[i]) as Identifier,
@@ -1345,7 +1312,7 @@ export class EstreeParser {
     }
     return makeImportDeclaration(
       specifiers,
-      makeLiteral(tokens[1].literal, this.toSourceLocation(tokens[1]))
+      makeLiteral(tokens[1].literal, this.toSourceLocation(tokens[1])),
     );
     // return {
     //   type: "ImportDeclaration",
@@ -1368,32 +1335,30 @@ export class EstreeParser {
     if (tokens.length !== 2) {
       throw new ParserError.GenericSyntaxError(
         this.source,
-        (tokens[0] as Token).pos
+        (tokens[0] as Token).pos,
       );
     }
     if (!(tokens[1] instanceof Group)) {
       throw new ParserError.GenericSyntaxError(
         this.source,
-        (tokens[1] as Token).pos
+        (tokens[1] as Token).pos,
       );
     }
     const exportTokens = tokens[1].unwrap();
     if (!(exportTokens[0] instanceof Token)) {
       throw new ParserError.GenericSyntaxError(
         this.source,
-        exportTokens[0].loc.start
+        exportTokens[0].loc.start,
       );
     }
     if (exportTokens[0].type !== TokenType.DEFINE) {
       throw new ParserError.GenericSyntaxError(
         this.source,
-        (tokens[0] as Token).pos
+        (tokens[0] as Token).pos,
       );
     }
     const declaration = this.evaluate(tokens[1]) as VariableDeclaration;
-    return makeExportNamedDeclaration(
-      declaration
-    );
+    return makeExportNamedDeclaration(declaration);
     // return {
     //   type: "ExportNamedDeclaration",
     //   declaration: declaration,
@@ -1465,7 +1430,7 @@ export class EstreeParser {
         throw new ParserError.UnexpectedTokenError(
           this.source,
           token.pos,
-          token
+          token,
         );
     }
   }
@@ -1477,7 +1442,7 @@ export class EstreeParser {
    * @returns A statement.
    */
   private wrapInStatement(
-    expression: Expression | Statement | ModuleDeclaration
+    expression: Expression | Statement | ModuleDeclaration,
   ): Statement | ModuleDeclaration {
     if (this.isExpression(expression)) {
       return makeExpressionStatement(expression);
@@ -1497,7 +1462,7 @@ export class EstreeParser {
    * @returns A statement.
    */
   private returnStatement(
-    expression: Expression | Statement | ModuleDeclaration
+    expression: Expression | Statement | ModuleDeclaration,
   ): Statement {
     if (this.isExpression(expression)) {
       // Return the expression wrapped in a return statement.
@@ -1519,7 +1484,7 @@ export class EstreeParser {
    * @returns True if the node is an expression.
    */
   private isExpression(
-    maybeStatement: Expression | Statement | ModuleDeclaration
+    maybeStatement: Expression | Statement | ModuleDeclaration,
   ): maybeStatement is Expression {
     return (
       !maybeStatement.type.includes("Statement") &&
@@ -1533,7 +1498,7 @@ export class EstreeParser {
    */
   private toSourceLocation(
     startToken: Token,
-    endToken: Token = startToken
+    endToken: Token = startToken,
   ): SourceLocation {
     return {
       start: startToken.pos,
@@ -1554,7 +1519,7 @@ export class EstreeParser {
         currentGroup.type !== TokenType.EOF
       ) {
         this.estree.body.push(
-          this.wrapInStatement(this.evaluate(currentGroup, false, true))
+          this.wrapInStatement(this.evaluate(currentGroup, false, true)),
         );
       }
     }

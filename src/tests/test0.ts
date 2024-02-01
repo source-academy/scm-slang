@@ -1,6 +1,7 @@
 import { Tokenizer } from "../tokenizer";
 
-const str = "this should #|    #|    #| #| |  | | | | | | | # | # | #  |# be evaluated"
+const str =
+  "this should #|    #|    #| #| |  | | | | | | | # | # | #  |# be evaluated";
 
 const tz = new Tokenizer(str);
 

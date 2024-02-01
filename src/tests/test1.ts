@@ -1,6 +1,6 @@
 import { Tokenizer } from "../tokenizer";
 import { readFileSync } from "fs";
-import { Parser } from "../parser"; 
+import { Parser } from "../parser";
 import { generate } from "astring";
 
 const str = readFileSync("./src/tests/test-metacircular-evaluator.scm", "utf8");
