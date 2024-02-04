@@ -3,8 +3,11 @@
  * Quotes are a part of scheme syntax that allow for the creation of lists.
  */
 
+// TODO: Wait, this is so dumb... I'm just going to use the parser to do this.
+// TODO: Refactor the parser to handle this.
+
 import { Expression, Atomic, Extended } from "../types/node-types";
-import { Visitor } from "./visitor"
+import { Visitor } from "./visitor";
 
 enum QuoteMode {
   Quote,
@@ -13,7 +16,6 @@ enum QuoteMode {
 }
 
 export class Quoter implements Visitor {
-
   // Current mode of the quoter.
   private quoteMode: QuoteMode;
 
@@ -98,7 +100,9 @@ export class Quoter implements Visitor {
     }
   }
 
-  visitApplication(node: Atomic.Application): Atomic.Application | Extended.List {
+  visitApplication(
+    node: Atomic.Application,
+  ): Atomic.Application | Extended.List {
     switch (this.quoteMode) {
       case QuoteMode.None:
         return node;
@@ -106,12 +110,16 @@ export class Quoter implements Visitor {
         // If we are in a quote mode, we need to return a list.
         const location = node.location;
         const newOperator = node.operator.accept(this);
-        const newOperands = node.operands.map((operand) => operand.accept(this));
+        const newOperands = node.operands.map((operand) =>
+          operand.accept(this),
+        );
         return new Extended.List(location, [newOperator, ...newOperands]);
     }
   }
 
-  visitConditional(node: Atomic.Conditional): Atomic.Conditional | Extended.List {
+  visitConditional(
+    node: Atomic.Conditional,
+  ): Atomic.Conditional | Extended.List {
     switch (this.quoteMode) {
       case QuoteMode.None:
         return node;
@@ -151,7 +159,9 @@ export class Quoter implements Visitor {
     return node;
   }
 
-  visitReassignment(node: Atomic.Reassignment): Atomic.Reassignment | Extended.List {
+  visitReassignment(
+    node: Atomic.Reassignment,
+  ): Atomic.Reassignment | Extended.List {
     switch (this.quoteMode) {
       case QuoteMode.None:
         return node;
@@ -176,10 +186,13 @@ export class Quoter implements Visitor {
         // If we are in a quote mode, we need to return a list.
         const location = node.location;
         const newSource = node.source;
-        const newIdentifiers: Expression[] = node.identifiers.map((identifier) => identifier.accept(this));
-        const newLocation = newIdentifiers.length > 0 
-        ? newIdentifiers[0].location.merge(newIdentifiers[-1].location) 
-        : newSource.location;
+        const newIdentifiers: Expression[] = node.identifiers.map(
+          (identifier) => identifier.accept(this),
+        );
+        const newLocation =
+          newIdentifiers.length > 0
+            ? newIdentifiers[0].location.merge(newIdentifiers[-1].location)
+            : newSource.location;
 
         const identifierList = new Extended.List(newLocation, newIdentifiers);
 
@@ -207,7 +220,9 @@ export class Quoter implements Visitor {
   }
 
   // Extended AST
-  visitFunctionDefinition(node: Extended.FunctionDefinition): Extended.FunctionDefinition | Extended.List {
+  visitFunctionDefinition(
+    node: Extended.FunctionDefinition,
+  ): Extended.FunctionDefinition | Extended.List {
     switch (this.quoteMode) {
       case QuoteMode.None:
         return node;
@@ -217,12 +232,13 @@ export class Quoter implements Visitor {
         const name = node.name.accept(this);
         const params = node.params.map((param) => param.accept(this));
         const newBody = node.body.accept(this);
-        
+
         // Paramslist contains name and params
         params.unshift(name);
-        const paramsLocation = params.length > 0 
-        ? params[0].location.merge(params[-1].location)
-        : name.location;
+        const paramsLocation =
+          params.length > 0
+            ? params[0].location.merge(params[-1].location)
+            : name.location;
         const paramsList = new Extended.List(paramsLocation, params);
 
         return new Extended.List(location, [
@@ -249,19 +265,24 @@ export class Quoter implements Visitor {
           const value = node.values[i];
           const newIdentifier = identifier.accept(this);
           const newValue = value.accept(this);
-          
+
           // Create a new list of the identifier and value
           const newPair = new Extended.List(
-            newIdentifier.location.merge(newValue.location), 
-            [newIdentifier, newValue]);
+            newIdentifier.location.merge(newValue.location),
+            [newIdentifier, newValue],
+          );
 
           definitions.push(newPair);
-        } 
+        }
 
-        const definitionsLocation = definitions.length > 0
-        ? definitions[0].location.merge(definitions[-1].location)
-        : location;
-        const definitionsList = new Extended.List(definitionsLocation, definitions);
+        const definitionsLocation =
+          definitions.length > 0
+            ? definitions[0].location.merge(definitions[-1].location)
+            : location;
+        const definitionsList = new Extended.List(
+          definitionsLocation,
+          definitions,
+        );
 
         return new Extended.List(location, [
           new Atomic.Symbol(location, "let"),
@@ -286,11 +307,12 @@ export class Quoter implements Visitor {
           const consequent = node.consequents[i];
           const newPredicate = predicate.accept(this);
           const newConsequent = consequent.accept(this);
-          
+
           // Create a new list of the predicate and consequent
           const newPair = new Extended.List(
-            newPredicate.location.merge(newConsequent.location), 
-            [newPredicate, newConsequent]);
+            newPredicate.location.merge(newConsequent.location),
+            [newPredicate, newConsequent],
+          );
 
           clauses.push(newPair);
         }
@@ -298,9 +320,10 @@ export class Quoter implements Visitor {
         // Check if there is an else clause
         if (node.catchall) {
           const elseClause = node.catchall.accept(this);
-          const elsePair = new Extended.List(
-            elseClause.location, 
-            [new Atomic.Symbol(elseClause.location, "else"), elseClause]);
+          const elsePair = new Extended.List(elseClause.location, [
+            new Atomic.Symbol(elseClause.location, "else"),
+            elseClause,
+          ]);
           clauses.push(elsePair);
         }
 
@@ -361,7 +384,9 @@ export class Quoter implements Visitor {
         ]);
       default:
         // This is an error. Unquote should only be used within a quote or quasiquote.
-        throw new Error("Unquote can only be used within a quote or quasiquote.");
+        throw new Error(
+          "Unquote can only be used within a quote or quasiquote.",
+        );
     }
   }
 
@@ -376,9 +401,9 @@ export class Quoter implements Visitor {
           expression.accept(this),
         );
 
-        return new Extended.List(location, 
-          [new Atomic.Symbol(location, "begin"), 
-          ...newExpressions
+        return new Extended.List(location, [
+          new Atomic.Symbol(location, "begin"),
+          ...newExpressions,
         ]);
     }
   }
