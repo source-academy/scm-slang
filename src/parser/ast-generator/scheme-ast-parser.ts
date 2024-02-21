@@ -4,19 +4,28 @@ import { Location, Position } from "../types/location";
 import { Atomic, Expression, Extended } from "../types/node-types";
 import * as ParserError from "../parser-error";
 import { Group } from "./token-grouping";
+import { createDiffieHellmanGroup } from "crypto";
+
+/**
+ * An enum representing the current quoting mode of the parser
+ */
+enum QuoteMode {
+  NONE,
+  QUOTE,
+  QUASIQUOTE,
+}
 
 export class SchemeParser {
   private readonly source: string;
   private readonly tokens: Token[];
-  private readonly ast: Expression | undefined;
   private readonly chapter: number;
   private current: number = 0;
+  private quoteMode: QuoteMode = QuoteMode.NONE;
 
   constructor(source: string, tokens: Token[], chapter: number = Infinity) {
     this.source = source;
     this.tokens = tokens;
     this.chapter = chapter;
-    this.ast = undefined;
   }
 
   private advance(): Token {
@@ -60,17 +69,18 @@ export class SchemeParser {
    * @returns A group of tokens or groups of tokens.
    */
   private grouping(openparen?: Token): Group {
-    // grouping() is called without parentheses at top level or when quoting a token
-    let inList = openparen === undefined ? false : true;
     const elements: (Token | Group)[] = [];
+    let inList = false;
+    if (openparen) {
+      inList = true;
+      elements.push(openparen);
+    }
     do {
       let c = this.advance();
       switch (c.type) {
         case TokenType.LEFT_PAREN:
         case TokenType.LEFT_BRACKET:
           const innerGroup = this.grouping(c);
-          // append this parenthesis to the inner group
-          innerGroup.admit(c);
           elements.push(innerGroup);
           break;
         case TokenType.RIGHT_PAREN:
@@ -82,51 +92,51 @@ export class SchemeParser {
           elements.push(c);
           inList = false;
           break;
-        case TokenType.APOSTROPHE:
+        case TokenType.APOSTROPHE: // Quoting syntax (short form)
         case TokenType.BACKTICK:
         case TokenType.HASH:
         case TokenType.COMMA:
         case TokenType.COMMA_AT:
-          // These special notations are converted to their
-          // corresponding "procedure-style" tokens.
-          const convertedToken = c.convertToken();
-          // add this token to the next group
-          const nextGroup = this.grouping();
-          nextGroup.admit(convertedToken);
-          // modify the next group's location
-          elements.push(nextGroup);
+          // these cases modify only the next element
+          // so we group up the next element and use this
+          // token on it
+          const nextGrouping = this.grouping();
+          elements.push(this.affect(c, nextGrouping));
           break;
-        case TokenType.IMPORT:
-        case TokenType.EXPORT:
-        case TokenType.BEGIN:
-        case TokenType.DELAY:
-        case TokenType.COND:
-        case TokenType.ELSE:
-        case TokenType.IDENTIFIER:
+        case TokenType.QUOTE: // Quoting syntax
+        case TokenType.QUASIQUOTE:
+        case TokenType.UNQUOTE:
+        case TokenType.UNQUOTE_SPLICING:
+        case TokenType.IDENTIFIER: // Atomics
         case TokenType.NUMBER:
         case TokenType.BOOLEAN:
         case TokenType.STRING:
-        case TokenType.IF:
-        case TokenType.DEFINE:
-        case TokenType.QUOTE:
-        case TokenType.SET:
-        case TokenType.LAMBDA:
-        case TokenType.LET:
         case TokenType.DOT:
           elements.push(c);
           break;
-        case TokenType.EOF:
-          if (inList) {
-            throw new ParserError.UnexpectedEOFError(this.source, c.pos);
-          } else {
-            elements.push(c);
-          }
+        case TokenType.HASH_SEMICOLON:
+          // a datum comment
+          // ignore the next grouping
+          const ignoredGrouping = this.grouping();
           break;
+        case TokenType.EOF:
+          // We should be unable to reach this point at top level as parse()
+          // should prevent the grouping of the singular EOF token.
+          // However, with any element that ranges beyond the end of the
+          // file without its corresponding delemiter, we can reach this point.
+          throw new ParserError.UnexpectedEOFError(this.source, c.pos);
         default:
           throw new ParserError.UnexpectedTokenError(this.source, c.pos, c);
       }
     } while (inList);
-    return new Group(elements);
+    return Group.build(elements);
+  }
+
+  /**
+   * Groups an affector token with its target.
+   */
+  private affect(affector: Token, target: Token | Group): Group {
+    return Group.build([affector, target]);
   }
 
   /**
@@ -139,14 +149,25 @@ export class SchemeParser {
     if (expr instanceof Token) {
       return this.parseToken(expr);
     }
-    // It's a group
+
+    // We now know it is a group
+
+    // Due to group invariants we can determine if it represents a
+    // single token instead
+    if (expr.isSingleIdentifier()) {
+      return this.parseToken(expr.unwrap()[0] as Token);
+    }
+
     return this.parseGroup(expr);
   }
 
   private parseToken(token: Token): Expression {
     switch (token.type) {
       case TokenType.IDENTIFIER:
-        return new Atomic.Identifier(this.toLocation(token), token.lexeme);
+        return this.quoteMode === QuoteMode.NONE
+          ? new Atomic.Identifier(this.toLocation(token), token.lexeme)
+          : new Atomic.Symbol(this.toLocation(token), token.lexeme);
+      // all of these are self evaluating, and so can be left alone regardless of quote mode
       case TokenType.NUMBER:
         return new Atomic.NumericLiteral(
           this.toLocation(token),
@@ -172,119 +193,214 @@ export class SchemeParser {
   }
 
   private parseGroup(group: Group): Expression {
-    // No need to check for empty groups because they are not valid
-    if (!group.isParenthesized() && group.length() === 1) {
-      // Literal or Identifier
-      // Form: <literal>
-      //     | <identifier>
-      const firstElement = group.first();
-      if (firstElement instanceof Token) {
-        return this.parseToken(firstElement);
-      } else {
-        // Form: <group>
-        // Evaluate the inner grouping
-        return this.parseExpression(firstElement);
-      }
-    } else if (!group.isParenthesized() && group.length() === 2) {
-      // A product of admitting converted tokens to the start of groups
-      // Form: <converted-token> <group>
-      //     | <converted-token> <token>
-      const firstElement = group.first();
-      const secondElement = group.last();
-      if (firstElement instanceof Token) {
-        switch (firstElement.type) {
-          case TokenType.QUOTE:
-            this.validateChapter(firstElement, 2);
-            return this.parseQuote(group, false);
-          case TokenType.QUASIQUOTE:
-            this.validateChapter(firstElement, 2);
-            return this.parseQuote(group, true);
-          case TokenType.UNQUOTE:
-            this.validateChapter(firstElement, 2);
-            return this.parseUnquote(group);
-          default:
-            throw new ParserError.UnexpectedTokenError(
-              this.source,
-              firstElement.pos,
-              firstElement,
-            );
+    // No need to check if group represents a single token as well
+    if (!group.isParenthesized()) {
+      // The only case left is the unparenthesized case
+      // of a single affector token and a target group
+      // Form: <affector token> <group>
+      return this.parseAffectorGroup(group);
+    }
+    // Now we have fallen through to the generic group
+    // case - a parenthesized group of tokens.
+    switch (this.quoteMode) {
+      case QuoteMode.NONE:
+        return this.parseNormalGroup(group);
+      case QuoteMode.QUOTE:
+      case QuoteMode.QUASIQUOTE:
+        return this.parseQuotedGroup(group);
+    }
+  }
+
+  /**
+   * Parse a group of tokens affected by an affector.
+   * Important case as affector changes quotation mode.
+   *
+   * @param group A group of tokens, verified to be an affector and a target.
+   * @returns An expression.
+   */
+  parseAffectorGroup(group: Group): Expression {
+    const [affector, target] = group.unwrap();
+    // Safe to cast affector due to group invariants
+    switch ((<Token>affector).type) {
+      case TokenType.APOSTROPHE:
+      case TokenType.QUOTE:
+        if (this.quoteMode !== QuoteMode.NONE) {
+          const innerGroup = this.parseExpression(target);
+          const newSymbol = new Atomic.Symbol(
+            this.toLocation(<Token>affector),
+            "quote",
+          );
+
+          const newLocation = newSymbol.location.merge(innerGroup.location);
+          // wrap the entire expression in a list
+          return new Extended.List(newLocation, [newSymbol, innerGroup]);
         }
-      } else {
-        // Form: <group> <group>
-        // invalid
-        const firstInvalid = firstElement.firstToken();
+        this.quoteMode = QuoteMode.QUOTE;
+        const quotedExpression = this.parseExpression(target);
+        this.quoteMode = QuoteMode.NONE;
+        return quotedExpression;
+      case TokenType.BACKTICK:
+      case TokenType.QUASIQUOTE:
+        if (this.quoteMode !== QuoteMode.NONE) {
+          const innerGroup = this.parseExpression(target);
+          const newSymbol = new Atomic.Symbol(
+            this.toLocation(<Token>affector),
+            "quasiquote",
+          );
+
+          const newLocation = newSymbol.location.merge(innerGroup.location);
+          // wrap the entire expression in a list
+          return new Extended.List(newLocation, [newSymbol, innerGroup]);
+        }
+        this.quoteMode = QuoteMode.QUASIQUOTE;
+        const quasiquotedExpression = this.parseExpression(target);
+        this.quoteMode = QuoteMode.NONE;
+        return quasiquotedExpression;
+      case TokenType.COMMA:
+      case TokenType.UNQUOTE:
+        const currentQuoteMode = this.quoteMode;
+        if (currentQuoteMode === QuoteMode.NONE) {
+          throw new ParserError.UnsupportedTokenError(
+            this.source,
+            (<Token>affector).pos,
+            <Token>affector,
+          );
+        }
+        if (currentQuoteMode === QuoteMode.QUOTE) {
+          const innerGroup = this.parseExpression(target);
+          const newSymbol = new Atomic.Symbol(
+            this.toLocation(<Token>affector),
+            "unquote",
+          );
+
+          const newLocation = newSymbol.location.merge(innerGroup.location);
+          // wrap the entire expression in a list
+          return new Extended.List(newLocation, [newSymbol, innerGroup]);
+        }
+        this.quoteMode = QuoteMode.NONE;
+        const unquotedExpression = this.parseExpression(target);
+        this.quoteMode = currentQuoteMode;
+        return unquotedExpression;
+      case TokenType.COMMA_AT:
+      case TokenType.UNQUOTE_SPLICING:
+        throw new ParserError.UnsupportedTokenError(
+          this.source,
+          (<Token>affector).pos,
+          <Token>affector,
+        );
+      default:
         throw new ParserError.UnexpectedTokenError(
           this.source,
-          firstInvalid.pos,
-          firstInvalid,
+          (<Token>affector).pos,
+          <Token>affector,
         );
-      }
-    } else {
-      // the group is parenthesized and has more than 2 elements
-      // Form: (<expr> <expr>*)
-      // more work is needed
-      const elements = group.unwrap();
-      const firstElement = elements[0];
-
-      // If the first element is a token, it may be a keyword or a procedure call
-      if (firstElement instanceof Token) {
-        switch (firstElement.type) {
-          // Scheme chapter 1
-          case TokenType.LAMBDA:
-            this.validateChapter(firstElement, 1);
-            return this.parseLambda(group);
-          case TokenType.DEFINE:
-            this.validateChapter(firstElement, 1);
-            return this.parseDefinition(group);
-          case TokenType.IF:
-            this.validateChapter(firstElement, 1);
-            return this.parseConditional(group);
-          case TokenType.LET:
-            this.validateChapter(firstElement, 1);
-            return this.parseLet(group);
-          case TokenType.COND:
-            this.validateChapter(firstElement, 1);
-            return this.parseExtendedCond(group);
-
-          // Scheme chapter 2
-          case TokenType.QUOTE:
-            this.validateChapter(firstElement, 2);
-            return this.parseQuote(group, false);
-          case TokenType.QUASIQUOTE:
-            this.validateChapter(firstElement, 2);
-            return this.parseQuote(group, true);
-          case TokenType.UNQUOTE:
-            this.validateChapter(firstElement, 2);
-            return this.parseUnquote(group);
-
-          // Scheme chapter 3
-          case TokenType.BEGIN:
-            this.validateChapter(firstElement, 3);
-            return this.parseBegin(group);
-          case TokenType.DELAY:
-            this.validateChapter(firstElement, 3);
-            return this.parseDelay(group);
-          case TokenType.SET:
-            this.validateChapter(firstElement, 3);
-            return this.parseSet(group);
-
-          // Scm-slang misc
-          case TokenType.IMPORT:
-            this.validateChapter(firstElement, 1);
-            return this.parseImport(group);
-          case TokenType.EXPORT:
-            this.validateChapter(firstElement, 1);
-            return this.parseExport(group);
-
-          default:
-            // It's a procedure call
-            return this.parseApplication(group);
-        }
-      }
-      // Form: (<group> <expr>*)
-      // It's a procedure call
-      return this.parseApplication(group);
     }
+  }
+
+  private parseNormalGroup(group: Group): Expression {
+    // it is an error if the group is empty in a normal context
+    if (group.length() === 0) {
+      throw new Error("unexpected syntax in form ()");
+    }
+
+    // get the first element
+    const firstElement = group.unwrap()[0];
+
+    // If the first element is a token, it may be a keyword or a procedure call
+    if (firstElement instanceof Token) {
+      switch (firstElement.type) {
+        // Scheme chapter 1
+        case TokenType.LAMBDA:
+          this.validateChapter(firstElement, 1);
+          return this.parseLambda(group);
+        case TokenType.DEFINE:
+          this.validateChapter(firstElement, 1);
+          return this.parseDefinition(group);
+        case TokenType.IF:
+          this.validateChapter(firstElement, 1);
+          return this.parseConditional(group);
+        case TokenType.LET:
+          this.validateChapter(firstElement, 1);
+          return this.parseLet(group);
+        case TokenType.COND:
+          this.validateChapter(firstElement, 1);
+          return this.parseExtendedCond(group);
+
+        // Scheme chapter 2
+        case TokenType.QUOTE:
+        case TokenType.APOSTROPHE:
+        case TokenType.QUASIQUOTE:
+        case TokenType.BACKTICK:
+        case TokenType.UNQUOTE:
+        case TokenType.COMMA:
+        case TokenType.UNQUOTE_SPLICING:
+        case TokenType.COMMA_AT:
+          this.validateChapter(firstElement, 2);
+          // we can reuse the affector group method to control the quote mode
+          return this.parseAffectorGroup(group);
+
+        // Scheme chapter 3
+        case TokenType.BEGIN:
+          this.validateChapter(firstElement, 3);
+          return this.parseBegin(group);
+        case TokenType.DELAY:
+          this.validateChapter(firstElement, 3);
+          return this.parseDelay(group);
+        case TokenType.SET:
+          this.validateChapter(firstElement, 3);
+          return this.parseSet(group);
+
+        // Scm-slang misc
+        case TokenType.IMPORT:
+          this.validateChapter(firstElement, 1);
+          return this.parseImport(group);
+        case TokenType.EXPORT:
+          this.validateChapter(firstElement, 1);
+          return this.parseExport(group);
+
+        default:
+          // It's a procedure call
+          return this.parseApplication(group);
+      }
+    }
+    // Form: (<group> <expr>*)
+    // It's a procedure call
+    return this.parseApplication(group);
+  }
+
+  /**
+   * We are parsing a list/dotted list.
+   */
+  private parseQuotedGroup(group: Group): Expression {
+    // check if the group is an empty list
+    if (group.length() === 0) {
+      return new Atomic.Nil(group.location);
+    }
+
+    // check if the group is a list of length 1
+    if (group.length() === 1) {
+      const elem = [this.parseExpression(group.unwrap()[0])];
+      return new Extended.List(group.location, elem);
+    }
+
+    // we now know that the group is at least of length 2
+
+    const groupElements = group.unwrap();
+
+    // check if the group is a dotted list
+    // it is if the second last element is a dot
+    const potentialDot = groupElements.at(-2);
+
+    if (potentialDot instanceof Token && potentialDot.type === TokenType.DOT) {
+      const cdrElement = this.parseExpression(groupElements.at(-1)!);
+      const listElements = groupElements.slice(0, -2).map(this.parseExpression);
+      return new Extended.List(group.location, listElements, cdrElement);
+    }
+
+    // we now know that the group is a proper list
+    const listElements = groupElements.map(this.parseExpression);
+
+    return new Extended.List(group.location, listElements);
   }
 
   // _____________________CHAPTER 1_____________________
@@ -367,7 +483,7 @@ export class SchemeParser {
     // Body is treated as a group of expressions
     const convertedBody = this.parseAsSequence(body);
 
-    return new Atomic.Lambda(group.location, convertedFormals, convertedBody);
+    return new Atomic.Lambda(group.location, convertedBody, convertedFormals);
   }
 
   /**
@@ -472,8 +588,8 @@ export class SchemeParser {
       return new Extended.FunctionDefinition(
         group.location,
         convertedIdentifier,
-        convertedFormals,
         convertedBody,
+        convertedFormals,
       );
     }
 
@@ -1034,7 +1150,7 @@ export class SchemeParser {
    * @param group A group of tokens.
    * @returns An AST.
    */
-  parse(): Atomic.Sequence {
+  parse(): Expression[] {
     // collect all top-level elements
     const topElements: Expression[] = [];
     while (!this.isAtEnd()) {
@@ -1053,9 +1169,6 @@ export class SchemeParser {
       console.log(currentElement);
       topElements.push(convertedElement);
     }
-    return new Atomic.Sequence(
-      new Location(new Position(0, 0), this.previous().endPos),
-      topElements,
-    );
+    return topElements;
   }
 }
