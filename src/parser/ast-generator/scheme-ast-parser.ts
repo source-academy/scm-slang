@@ -4,7 +4,6 @@ import { Location, Position } from "../types/location";
 import { Atomic, Expression, Extended } from "../types/node-types";
 import * as ParserError from "../parser-error";
 import { Group } from "./token-grouping";
-import { createDiffieHellmanGroup } from "crypto";
 
 /**
  * An enum representing the current quoting mode of the parser
@@ -59,6 +58,48 @@ export class SchemeParser {
    */
   private toLocation(token: Token): Location {
     return new Location(token.pos, token.endPos);
+  }
+
+  /**
+   * Helper function used to destructure a list into its elements and terminator.
+   * An optional verifier is used if there are restrictions on the elements of the list.
+   */
+  private destructureList(
+    list: (Group | Token)[],
+    verifier = (x) => {},
+  ): [Expression[], Expression | undefined] {
+    // check if the list is an empty list
+    if (list.length === 0) {
+      return [[], undefined];
+    }
+
+    // check if the list is a list of length 1
+    if (list.length === 1) {
+      verifier(list[0]);
+      return [[this.parseExpression(list[0])], undefined];
+    }
+
+    // we now know that the list is at least of length 2
+
+    // check for a dotted list
+    // it is if the second last element is a dot
+    const potentialDot = list.at(-2);
+
+    if (potentialDot instanceof Token && potentialDot.type === TokenType.DOT) {
+      const cdrElement = list.at(-1)!;
+      const listElements = list.slice(0, -2);
+      verifier(cdrElement);
+      listElements.forEach(verifier);
+      return [
+        listElements.map(this.parseExpression),
+        this.parseExpression(cdrElement),
+      ];
+    }
+
+    // we now know that it is a proper list
+    const listElements = list;
+    listElements.forEach(verifier);
+    return [listElements.map(this.parseExpression), undefined];
   }
 
   /**
@@ -387,37 +428,12 @@ export class SchemeParser {
 
     const groupElements = group.unwrap();
 
-    // check if the group is a dotted list
-    // it is if the second last element is a dot
-    const potentialDot = groupElements.at(-2);
+    const [listElements, cdrElement] = this.destructureList(groupElements);
 
-    if (potentialDot instanceof Token && potentialDot.type === TokenType.DOT) {
-      const cdrElement = this.parseExpression(groupElements.at(-1)!);
-      const listElements = groupElements.slice(0, -2).map(this.parseExpression);
-      return new Extended.List(group.location, listElements, cdrElement);
-    }
-
-    // we now know that the group is a proper list
-    const listElements = groupElements.map(this.parseExpression);
-
-    return new Extended.List(group.location, listElements);
+    return new Extended.List(group.location, listElements, cdrElement);
   }
 
   // _____________________CHAPTER 1_____________________
-  /**
-   * Parse a single group as a sequence expression. Only used
-   * for top-level expressions and function bodies.
-   * @param group
-   * @returns
-   */
-  private parseAsSequence(group: Group): Atomic.Sequence {
-    const sourceElements = group.unwrap();
-    const convertedExpressions: Expression[] = [];
-    for (const sourceElement of sourceElements) {
-      convertedExpressions.push(this.parseExpression(sourceElement));
-    }
-    return new Atomic.Sequence(group.location, convertedExpressions);
-  }
 
   /**
    * Parse a lambda expression.
@@ -437,11 +453,12 @@ export class SchemeParser {
     }
     const elements = group.unwrap();
     const formals = elements[1];
-    const body = group.truncate(2);
+    const body = elements.slice(2);
 
     // Formals should be a group of identifiers or a single identifier
-    const convertedFormals: Atomic.Identifier[] = [];
-
+    let convertedFormals: Atomic.Identifier[] = [];
+    // if a rest element is detected,
+    let convertedRest: Atomic.Identifier | undefined = undefined;
     if (formals instanceof Token) {
       if (formals.type !== TokenType.IDENTIFIER) {
         throw new ParserError.UnexpectedTokenError(
@@ -450,40 +467,62 @@ export class SchemeParser {
           formals,
         );
       }
-      convertedFormals.push(
-        new Atomic.Identifier(this.toLocation(formals), formals.lexeme),
+      convertedRest = new Atomic.Identifier(
+        this.toLocation(formals),
+        formals.lexeme,
       );
     } else {
+      // it is a group
       const formalsElements = formals.unwrap();
-      for (const formalsElement of formalsElements) {
-        if (formalsElement instanceof Token) {
-          if (formalsElement.type !== TokenType.IDENTIFIER) {
+      [convertedFormals, convertedRest] = this.destructureList(
+        formalsElements,
+        // pass in a verifier that checks if the elements are identifiers
+        (formal) => {
+          if (!(formal instanceof Token)) {
             throw new ParserError.UnexpectedTokenError(
               this.source,
-              formalsElement.pos,
-              formalsElement,
+              formal.pos,
+              formal,
             );
           }
-          convertedFormals.push(
-            new Atomic.Identifier(
-              this.toLocation(formalsElement),
-              formalsElement.lexeme,
-            ),
-          );
-        } else {
-          throw new ParserError.UnexpectedTokenError(
-            this.source,
-            formalsElement.firstToken().pos,
-            formalsElement.firstToken(),
-          );
-        }
-      }
+          if (formal.type !== TokenType.IDENTIFIER) {
+            throw new ParserError.UnexpectedTokenError(
+              this.source,
+              formal.pos,
+              formal,
+            );
+          }
+        },
+      ) as [Atomic.Identifier[], Atomic.Identifier | undefined];
     }
 
     // Body is treated as a group of expressions
-    const convertedBody = this.parseAsSequence(body);
+    const convertedBody = body.map(this.parseExpression);
 
-    return new Atomic.Lambda(group.location, convertedBody, convertedFormals);
+    // assert that body is not empty
+    if (convertedBody.length < 1) {
+      throw new Error("body cannot be empty");
+    }
+
+    if (convertedBody.length === 1) {
+      return new Atomic.Lambda(
+        group.location,
+        convertedBody[0],
+        convertedFormals,
+        convertedRest,
+      );
+    }
+
+    const newLocation = convertedBody
+      .at(0)!
+      .location.merge(convertedBody.at(-1)!.location);
+    const bodySequence = new Atomic.Sequence(newLocation, convertedBody);
+    return new Atomic.Lambda(
+      group.location,
+      bodySequence,
+      convertedFormals,
+      convertedRest,
+    );
   }
 
   /**
@@ -507,10 +546,11 @@ export class SchemeParser {
     }
     const elements = group.unwrap();
     const identifier = elements[1];
-    const expr = group.truncate(2);
+    const expr = elements.slice(2);
 
     let convertedIdentifier: Atomic.Identifier;
     let convertedFormals: Atomic.Identifier[] = [];
+    let convertedRest: Atomic.Identifier | undefined = undefined;
     let isFunctionDefinition = false;
 
     // Identifier may be a token or a group of identifiers
@@ -543,29 +583,26 @@ export class SchemeParser {
         function_name.lexeme,
       );
 
-      // verify that the rest of the elements are identifiers
-      for (const formalsElement of formals) {
-        if (!(formalsElement instanceof Token)) {
-          throw new ParserError.UnexpectedTokenError(
-            this.source,
-            formalsElement.firstToken().pos,
-            formalsElement.firstToken(),
-          );
-        }
-        if (formalsElement.type !== TokenType.IDENTIFIER) {
-          throw new ParserError.UnexpectedTokenError(
-            this.source,
-            formalsElement.pos,
-            formalsElement,
-          );
-        }
-        convertedFormals.push(
-          new Atomic.Identifier(
-            this.toLocation(formalsElement),
-            formalsElement.lexeme,
-          ),
-        );
-      }
+      // Formals should be a group of identifiers
+      [convertedFormals, convertedRest] = this.destructureList(
+        formals,
+        (formal) => {
+          if (!(formal instanceof Token)) {
+            throw new ParserError.UnexpectedTokenError(
+              this.source,
+              formal.pos,
+              formal,
+            );
+          }
+          if (formal.type !== TokenType.IDENTIFIER) {
+            throw new ParserError.UnexpectedTokenError(
+              this.source,
+              formal.pos,
+              formal,
+            );
+          }
+        },
+      ) as [Atomic.Identifier[], Atomic.Identifier | undefined];
     } else if (identifier.type !== TokenType.IDENTIFIER) {
       throw new ParserError.UnexpectedTokenError(
         this.source,
@@ -581,20 +618,43 @@ export class SchemeParser {
       isFunctionDefinition = false;
     }
 
+    // expr cannot be empty
+    if (expr.length < 1) {
+      throw new Error("expr cannot be empty");
+    }
+
     if (isFunctionDefinition) {
       // Body is treated as a group of expressions
-      const convertedBody = this.parseAsSequence(expr);
+      const convertedBody = expr.map(this.parseExpression);
+
+      if (convertedBody.length === 1) {
+        return new Extended.FunctionDefinition(
+          group.location,
+          convertedIdentifier,
+          convertedBody[0],
+          convertedFormals,
+          convertedRest,
+        );
+      }
+
+      const newLocation = convertedBody
+        .at(0)!
+        .location.merge(convertedBody.at(-1)!.location);
+      const bodySequence = new Atomic.Sequence(newLocation, convertedBody);
 
       return new Extended.FunctionDefinition(
         group.location,
         convertedIdentifier,
-        convertedBody,
+        bodySequence,
         convertedFormals,
+        convertedRest,
       );
     }
 
+    // its a normal definition
+
     // Expr is treated as a single expression
-    const convertedExpr = this.parseExpression(expr);
+    const convertedExpr = this.parseExpression(expr[0]);
 
     return new Atomic.Definition(
       group.location,
@@ -695,7 +755,7 @@ export class SchemeParser {
     }
     const elements = group.unwrap();
     const bindings = elements[1];
-    const body = group.truncate(2);
+    const body = elements.slice(2);
 
     // Verify bindings is a group
     if (!(bindings instanceof Group)) {
@@ -752,13 +812,32 @@ export class SchemeParser {
     }
 
     // Body is treated as a group of expressions
-    const convertedBody = this.parseAsSequence(body);
+    const convertedBody = body.map(this.parseExpression);
+
+    // assert that body is not empty
+    if (convertedBody.length < 1) {
+      throw new Error("let body cannot be empty");
+    }
+
+    if (convertedBody.length === 1) {
+      return new Extended.Let(
+        group.location,
+        convertedIdentifiers,
+        convertedValues,
+        convertedBody[0],
+      );
+    }
+
+    const newLocation = convertedBody
+      .at(0)!
+      .location.merge(convertedBody.at(-1)!.location);
+    const bodySequence = new Atomic.Sequence(newLocation, convertedBody);
 
     return new Extended.Let(
       group.location,
       convertedIdentifiers,
       convertedValues,
-      convertedBody,
+      bodySequence,
     );
   }
 
@@ -786,7 +865,7 @@ export class SchemeParser {
     // Clauses are treated as a group of groups of expressions
     // Form: (<expr> <sequence>)
     const convertedClauses: Expression[] = [];
-    const convertedConsequents: Atomic.Sequence[] = [];
+    const convertedConsequents: Expression[] = [];
 
     for (const clause of clauses) {
       // Verify clause is a group with size no less than 2
@@ -805,18 +884,29 @@ export class SchemeParser {
         );
       }
       const test = clause.first();
-      const consequent = clause.truncate(1);
+      const consequent = clause.unwrap().slice(1);
 
       // verify that test is NOT an else token
       if (test instanceof Token && test.type === TokenType.ELSE) {
         throw new ParserError.UnexpectedTokenError(this.source, test.pos, test);
       }
 
+      // verify that consequent is at least 1 expression
+      if (consequent.length < 1) {
+        throw new Error("consequent cannot be empty");
+      }
       // Test is treated as a single expression
       const convertedTest = this.parseExpression(test);
 
       // Consequent is treated as a group of expressions
-      const convertedConsequent = this.parseAsSequence(consequent);
+      const consequentExpressions = consequent.map(this.parseExpression);
+      const consequentLocation = consequentExpressions
+        .at(0)!
+        .location.merge(consequentExpressions.at(-1)!.location);
+      const convertedConsequent =
+        consequent.length === 1
+          ? consequentExpressions[0]
+          : new Atomic.Sequence(consequentLocation, consequentExpressions);
 
       convertedClauses.push(convertedTest);
       convertedConsequents.push(convertedConsequent);
@@ -839,7 +929,8 @@ export class SchemeParser {
       );
     }
     const test = lastClause.first();
-    const consequent = lastClause.truncate(1);
+    const consequent = lastClause.unwrap().slice(1);
+
     let isElse = false;
 
     // verify that test is an else token
@@ -847,8 +938,20 @@ export class SchemeParser {
       isElse = true;
     }
 
+    // verify that consequent is at least 1 expression
+    if (consequent.length < 1) {
+      throw new Error("consequent cannot be empty");
+    }
+
     // Consequent is treated as a group of expressions
-    const lastConsequent = this.parseAsSequence(consequent);
+    const consequentExpressions = consequent.map(this.parseExpression);
+    const consequentLocation = consequentExpressions
+      .at(0)!
+      .location.merge(consequentExpressions.at(-1)!.location);
+    const lastConsequent =
+      consequent.length === 1
+        ? consequentExpressions[0]
+        : new Atomic.Sequence(consequentLocation, consequentExpressions);
 
     if (isElse) {
       return new Extended.Cond(
@@ -989,8 +1092,8 @@ export class SchemeParser {
         group.firstToken(),
       );
     }
-    const sequence = group.truncate(1);
-    const sequenceElements = sequence.unwrap();
+    const sequence = group.unwrap();
+    const sequenceElements = sequence.slice(1);
     const convertedExpressions: Expression[] = [];
     for (const sequenceElement of sequenceElements) {
       convertedExpressions.push(this.parseExpression(sequenceElement));
