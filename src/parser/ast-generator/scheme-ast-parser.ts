@@ -135,7 +135,7 @@ export class SchemeParser {
           break;
         case TokenType.APOSTROPHE: // Quoting syntax (short form)
         case TokenType.BACKTICK:
-        case TokenType.HASH:
+        case TokenType.HASH_VECTOR:
         case TokenType.COMMA:
         case TokenType.COMMA_AT:
           // these cases modify only the next element
@@ -299,7 +299,7 @@ export class SchemeParser {
         return quasiquotedExpression;
       case TokenType.COMMA:
       case TokenType.UNQUOTE:
-        const currentQuoteMode = this.quoteMode;
+        let currentQuoteMode = this.quoteMode;
         if (currentQuoteMode === QuoteMode.NONE) {
           throw new ParserError.UnsupportedTokenError(
             this.source,
@@ -324,11 +324,35 @@ export class SchemeParser {
         return unquotedExpression;
       case TokenType.COMMA_AT:
       case TokenType.UNQUOTE_SPLICING:
-        throw new ParserError.UnsupportedTokenError(
-          this.source,
-          (<Token>affector).pos,
-          <Token>affector,
+        currentQuoteMode = this.quoteMode;
+        if (currentQuoteMode === QuoteMode.NONE) {
+          throw new ParserError.UnsupportedTokenError(
+            this.source,
+            (<Token>affector).pos,
+            <Token>affector,
+          );
+        }
+        if (currentQuoteMode === QuoteMode.QUOTE) {
+          const innerGroup = this.parseExpression(target);
+          const newSymbol = new Atomic.Symbol(
+            this.toLocation(<Token>affector),
+            "unquote-splicing",
+          );
+
+          const newLocation = newSymbol.location.merge(innerGroup.location);
+          // wrap the entire expression in a list
+          return new Extended.List(newLocation, [newSymbol, innerGroup]);
+        }
+        this.quoteMode = QuoteMode.NONE;
+        const unquoteSplicedExpression = this.parseExpression(target);
+        this.quoteMode = currentQuoteMode;
+        const newLocation = this.toLocation(<Token>affector).merge(
+          unquoteSplicedExpression.location,
         );
+        return new Atomic.SpliceMarker(newLocation, unquoteSplicedExpression);
+      case TokenType.HASH_VECTOR:
+      case TokenType.VECTOR:
+        return this.parseVector(group);
       default:
         throw new ParserError.UnexpectedTokenError(
           this.source,
@@ -398,6 +422,10 @@ export class SchemeParser {
         case TokenType.EXPORT:
           this.validateChapter(firstElement, 1);
           return this.parseExport(group);
+        case TokenType.VECTOR:
+          this.validateChapter(firstElement, 1);
+          // same as above, this is an affector group
+          return this.parseAffectorGroup(group);
 
         default:
           // It's a procedure call
@@ -975,59 +1003,6 @@ export class SchemeParser {
       convertedConsequents,
     );
   }
-  // _____________________CHAPTER 2_____________________
-  // We leave the proper logic of quote, unquote, and quasiquote to a quoter visitor.
-  // It is important that the quoter visitor runs immediately after the parser, before
-  // any optimization passes.
-  // The parser only needs to convert the tokens to the appropriate expressions.
-
-  /**
-   * Parse a quote expression.
-   * @param group
-   * @returns
-   */
-  private parseQuote(group: Group, isQuasiquote: boolean): Extended.Quote {
-    // Form: (quote <expr>)
-    // ensure that the group has 2 elements
-    if (group.length() !== 2) {
-      throw new ParserError.UnexpectedTokenError(
-        this.source,
-        group.firstToken().pos,
-        group.firstToken(),
-      );
-    }
-    const elements = group.unwrap();
-    const expr = elements[1];
-
-    // Expr is treated as a single expression
-    const convertedExpr = this.parseExpression(expr);
-
-    return new Extended.Quote(group.location, convertedExpr, isQuasiquote);
-  }
-
-  /**
-   * Parse an unquote expression.
-   * @param group
-   * @returns
-   */
-  private parseUnquote(group: Group): Extended.Unquote {
-    // Form: (unquote <expr>)
-    // ensure that the group has 2 elements
-    if (group.length() !== 2) {
-      throw new ParserError.UnexpectedTokenError(
-        this.source,
-        group.firstToken().pos,
-        group.firstToken(),
-      );
-    }
-    const elements = group.unwrap();
-    const expr = elements[1];
-
-    // Expr is treated as a single expression
-    const convertedExpr = this.parseExpression(expr);
-
-    return new Extended.Unquote(group.location, convertedExpr);
-  }
 
   // _____________________CHAPTER 3_____________________
 
@@ -1243,6 +1218,24 @@ export class SchemeParser {
     }
 
     return new Atomic.Export(group.location, convertedDefinition);
+  }
+
+  /**
+   * Parses a vector expression
+   */
+  private parseVector(group: Group): Atomic.Vector {
+    // Because of the group invariants, we can safely assume that the group
+    // is strictly of size 2.
+    // Additionally, we can safely assume that the second element is a group
+    // because token HASH_VECTOR expects a parenthesis as the next immediate
+    // token.
+    const elements = group.unwrap()[1] as Group;
+
+    // Vectors will be treated normally regardless of the quote mode.
+    // but interior expressions will be affected by the mode.
+    const convertedElements = elements.unwrap().map(this.parseExpression);
+
+    return new Atomic.Vector(group.location, convertedElements);
   }
 
   // ___________________________________________________
