@@ -102,10 +102,17 @@ export namespace Atomic {
   export class Lambda implements Expression {
     location: Location;
     params: Identifier[];
+    rest?: Identifier;
     body: Sequence;
-    constructor(location: Location, params: Identifier[], body: Sequence) {
+    constructor(
+      location: Location,
+      body: Sequence,
+      params: Identifier[],
+      rest: Identifier | undefined = undefined,
+    ) {
       this.location = location;
       this.params = params;
+      this.rest = rest;
       this.body = body;
     }
     accept(visitor: Visitor): any {
@@ -318,17 +325,21 @@ export namespace Extended {
     location: Location;
     name: Atomic.Identifier;
     params: Atomic.Identifier[];
+    rest?: Atomic.Identifier;
     body: Atomic.Sequence;
     constructor(
       location: Location,
       name: Atomic.Identifier,
-      params: Atomic.Identifier[],
       body: Atomic.Sequence,
+      params: Atomic.Identifier[],
+      rest: Atomic.Identifier | undefined = undefined,
     ) {
       this.location = location;
       this.name = name;
-      this.params = params;
+
       this.body = body;
+      this.params = params;
+      this.rest = rest;
     }
     accept(visitor: Visitor): any {
       return visitor.visitFunctionDefinition(this);

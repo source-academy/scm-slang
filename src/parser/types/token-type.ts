@@ -4,19 +4,14 @@
 export enum TokenType {
   // + - * / % ^ ! = < > & | ~ etc are recognized as IDENTIFIERS
 
-  // Single-character tokens
+  // S-expression syntax
   LEFT_PAREN,
   RIGHT_PAREN,
   LEFT_BRACKET,
   RIGHT_BRACKET,
-  APOSTROPHE,
-  BACKTICK,
-  COMMA,
-  HASH,
   DOT,
 
-  // Two-character tokens
-  COMMA_AT,
+  // Datum comments
   HASH_SEMICOLON,
 
   // Atoms: Literals or Identifiers
@@ -34,9 +29,14 @@ export enum TokenType {
   LAMBDA,
 
   // SICP Chapter 2
+  APOSTROPHE, // Quote
+  BACKTICK, // Quasiquote
+  COMMA, // Unquote
+  COMMA_AT, // Unquote-splicing
   QUOTE,
-  UNQUOTE,
   QUASIQUOTE,
+  UNQUOTE,
+  UNQUOTE_SPLICING,
 
   // SICP Chapter 3
   SET,
@@ -48,8 +48,8 @@ export enum TokenType {
   EXPORT,
 
   // Not in scope at the moment
+  HASH, // vector
   VECTOR,
-  UNQUOTE_SPLICING,
 
   EOF,
 }
