@@ -17,6 +17,7 @@ export enum TokenType {
 
   // Two-character tokens
   COMMA_AT,
+  HASH_SEMICOLON,
 
   // Atoms: Literals or Identifiers
   IDENTIFIER,

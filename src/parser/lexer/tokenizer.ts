@@ -125,6 +125,9 @@ export class Tokenizer {
         } else if (this.match("|")) {
           // a multiline comment
           this.comment();
+        } else if (this.match(";")) {
+          // a datum comment
+          this.addToken(TokenType.HASH_SEMICOLON);
         } else {
           this.addToken(TokenType.HASH);
         }
