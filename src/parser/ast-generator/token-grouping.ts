@@ -96,7 +96,7 @@ export class Group {
         return new Group(elements);
       }
 
-      // If all else fails, use the most generic case. below.
+      // If all else fails, use the most generic case below.
     }
 
     // If the group is parenthesized, the parentheses must match.
@@ -168,6 +168,14 @@ export class Group {
       (firstElement.type === TokenType.LEFT_PAREN ||
         firstElement.type === TokenType.LEFT_BRACKET)
     );
+  }
+
+  /**
+   * Using the invariants, we can determine if a group actually
+   * represents a singular identifier.
+   */
+  public isSingleIdentifier(): boolean {
+    return !this.isParenthesized() && this.length() === 1;
   }
 
   /**
