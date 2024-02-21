@@ -35,6 +35,7 @@ export class Printer implements Visitor {
   display(value: any): void {
     process.stdout.write(value);
   }
+
   // Atomic AST
   visitSequence(node: Atomic.Sequence): void {
     this.indent();
@@ -52,14 +53,17 @@ export class Printer implements Visitor {
     //   this.indent();
     this.display(node.value.toString());
   }
+
   visitBooleanLiteral(node: Atomic.BooleanLiteral): void {
     //   this.indent();
     this.display(node.value.toString());
   }
+
   visitStringLiteral(node: Atomic.StringLiteral): void {
     //   this.indent();
     this.display(node.value);
   }
+
   visitLambda(node: Atomic.Lambda): void {
     //   this.indent();
     this.display("( lambda ");
@@ -68,6 +72,10 @@ export class Printer implements Visitor {
       parameter.accept(this.increment());
       this.display(" ");
     });
+    if (node.rest) {
+      this.display(". ");
+      node.rest.accept(this);
+    }
     this.display(") ");
     node.body.accept(this.increment());
     this.decrement();
@@ -150,14 +158,20 @@ export class Printer implements Visitor {
       parameter.accept(this.increment());
       this.display(" ");
     });
+    if (node.rest) {
+      this.display(". ");
+      node.rest.accept(this);
+    }
     this.display(") ");
     this.display("\n");
     node.body.accept(this.increment());
     this.display(") ");
   }
+
   visitLet(node: Extended.Let): any {
     throw new Error("Method not implemented.");
   }
+
   visitCond(node: Extended.Cond): any {
     throw new Error("Method not implemented.");
   }
@@ -169,14 +183,19 @@ export class Printer implements Visitor {
       this.display(" ");
       value.accept(this.increment());
     });
+    if (node.terminator) {
+      node.terminator.accept(this);
+    }
     this.display(") ");
   }
+
   visitQuote(node: Extended.Quote): any {
     // this.indent();
     this.display("( quote ");
     node.expression.accept(this.increment());
     this.display(") ");
   }
+
   visitUnquote(node: Extended.Unquote): any {
     // this.indent();
     this.display("( unquote ");

@@ -39,7 +39,7 @@ export class Simplifier implements Visitor {
     const params = node.params;
     const newBody = node.body.accept(this);
 
-    return new Atomic.Lambda(location, params, newBody);
+    return new Atomic.Lambda(location, newBody, params);
   }
 
   visitIdentifier(node: Atomic.Identifier): Atomic.Identifier {
@@ -119,9 +119,10 @@ export class Simplifier implements Visitor {
     const location = node.location;
     const name = node.name;
     const params = node.params;
+    const rest = node.rest;
     const newBody = node.body.accept(this);
 
-    const newLambda = new Atomic.Lambda(location, params, newBody);
+    const newLambda = new Atomic.Lambda(location, newBody, params, rest);
     return new Atomic.Definition(location, name, newLambda);
   }
 
@@ -131,7 +132,7 @@ export class Simplifier implements Visitor {
     const newValues = node.values.map((value) => value.accept(this));
     const newBody = node.body.accept(this);
 
-    const newLambda = new Atomic.Lambda(location, identifiers, newBody);
+    const newLambda = new Atomic.Lambda(location, newBody, identifiers);
     return new Atomic.Application(location, newLambda, newValues);
   }
 
@@ -181,25 +182,27 @@ export class Simplifier implements Visitor {
     return newConditional;
   }
 
-  visitList(node: Extended.List): Atomic.Pair | Atomic.Nil {
+  visitList(node: Extended.List): Expression {
     const location = node.location;
     const newElements = node.elements.map((element) => element.accept(this));
-
+    const newTerminator = node.terminator
+      ? node.terminator.accept(this)
+      : undefined;
     if (newElements.length === 0) {
-      return new Atomic.Nil(location);
+      return newTerminator ? newTerminator : new Atomic.Nil(location);
     }
     if (newElements.length === 1) {
       const nilLocation = newElements[0].location;
       return new Atomic.Pair(
         location,
         newElements[0],
-        new Atomic.Nil(nilLocation),
+        newTerminator ? newTerminator : new Atomic.Nil(nilLocation),
       );
     }
 
     newElements.reverse();
     const lastLocation = newElements[0].location;
-    let newPair = new Atomic.Nil(lastLocation);
+    let newPair = newTerminator ? newTerminator : new Atomic.Nil(lastLocation);
 
     for (let i = 0; i < newElements.length - 1; i++) {
       const element = newElements[i];
@@ -233,7 +236,7 @@ export class Simplifier implements Visitor {
     const location = node.location;
     const newBody = node.expression.accept(this);
 
-    return new Atomic.Lambda(location, [], newBody);
+    return new Atomic.Lambda(location, newBody, []);
   }
 
   visitForce(node: Extended.Force): Atomic.Application {

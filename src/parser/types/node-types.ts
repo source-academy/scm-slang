@@ -398,14 +398,20 @@ export namespace Extended {
   // Scheme chapter 2
 
   /**
-   * A node representing a Scheme list.
+   * A node representing a Scheme list or dotted list.
    */
   export class List implements Expression {
     location: Location;
     elements: Expression[];
-    constructor(location: Location, elements: Expression[]) {
+    terminator: Expression | undefined;
+    constructor(
+      location: Location,
+      elements: Expression[],
+      terminator: Expression | undefined = undefined,
+    ) {
       this.location = location;
       this.elements = elements;
+      this.terminator = terminator;
     }
     accept(visitor: Visitor): any {
       return visitor.visitList(this);
