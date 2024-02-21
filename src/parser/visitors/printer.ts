@@ -1,5 +1,5 @@
 import { Visitor } from "./visitor";
-import { Atomic, Extended } from "../types/node-types";
+import { Atomic, Extended } from "../types/scheme-node-types";
 
 /**
  * Visitor implementation that prints the AST.
@@ -186,20 +186,6 @@ export class Printer implements Visitor {
     if (node.terminator) {
       node.terminator.accept(this);
     }
-    this.display(") ");
-  }
-
-  visitQuote(node: Extended.Quote): any {
-    // this.indent();
-    this.display("( quote ");
-    node.expression.accept(this.increment());
-    this.display(") ");
-  }
-
-  visitUnquote(node: Extended.Unquote): any {
-    // this.indent();
-    this.display("( unquote ");
-    node.expression.accept(this.increment());
     this.display(") ");
   }
 

@@ -3,7 +3,7 @@
  * Except for everything inside a quote, which is left alone.
  */
 
-import { Expression, Atomic, Extended } from "../types/node-types";
+import { Expression, Atomic, Extended } from "../types/scheme-node-types";
 import { Visitor } from "./visitor";
 import { Location } from "../types/location";
 
@@ -211,16 +211,6 @@ export class Simplifier implements Visitor {
     }
 
     return newPair;
-  }
-
-  // Leave quotes alone.
-  visitQuote(node: Extended.Quote): Extended.Quote {
-    return node;
-  }
-
-  // Leave unquotes alone.
-  visitUnquote(node: Extended.Unquote): Extended.Unquote {
-    return node;
   }
 
   visitBegin(node: Extended.Begin): Atomic.Sequence {

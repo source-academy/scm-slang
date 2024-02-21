@@ -3,7 +3,7 @@
  * Allows us to traverse the AST and perform operations on it.
  */
 
-import { Atomic, Extended } from "../types/node-types";
+import { Atomic, Extended } from "../types/scheme-node-types";
 
 export interface Visitor {
   // Atomic AST
@@ -35,8 +35,6 @@ export interface Visitor {
   visitCond(node: Extended.Cond): any;
 
   visitList(node: Extended.List): any;
-  visitQuote(node: Extended.Quote): any;
-  visitUnquote(node: Extended.Unquote): any;
 
   visitBegin(node: Extended.Begin): any;
   visitDelay(node: Extended.Delay): any;

@@ -1,6 +1,6 @@
 import { Tokenizer } from "./lexer/tokenizer";
 import { SchemeParser } from "./ast-generator/scheme-ast-parser";
-import { Expression } from "./types/node-types";
+import { Expression } from "./types/scheme-node-types";
 
 export * as TokenizerError from "./lexer/tokenizer-error";
 export * as ParserError from "./parser-error";
