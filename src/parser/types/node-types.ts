@@ -103,10 +103,10 @@ export namespace Atomic {
     location: Location;
     params: Identifier[];
     rest?: Identifier;
-    body: Sequence;
+    body: Expression;
     constructor(
       location: Location,
-      body: Sequence,
+      body: Expression,
       params: Identifier[],
       rest: Identifier | undefined = undefined,
     ) {
@@ -326,11 +326,11 @@ export namespace Extended {
     name: Atomic.Identifier;
     params: Atomic.Identifier[];
     rest?: Atomic.Identifier;
-    body: Atomic.Sequence;
+    body: Expression;
     constructor(
       location: Location,
       name: Atomic.Identifier,
-      body: Atomic.Sequence,
+      body: Expression,
       params: Atomic.Identifier[],
       rest: Atomic.Identifier | undefined = undefined,
     ) {
@@ -353,12 +353,12 @@ export namespace Extended {
     location: Location;
     identifiers: Atomic.Identifier[];
     values: Expression[];
-    body: Atomic.Sequence;
+    body: Expression;
     constructor(
       location: Location,
       identifiers: Atomic.Identifier[],
       values: Expression[],
-      body: Atomic.Sequence,
+      body: Expression,
     ) {
       this.location = location;
       this.identifiers = identifiers;
