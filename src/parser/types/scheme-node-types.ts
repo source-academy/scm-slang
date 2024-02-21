@@ -245,6 +245,22 @@ export namespace Atomic {
     }
   }
 
+  /**
+   * A node representing a Scheme marker for unquote_splicing.
+   * This will be evaluated at runtime.
+   */
+  export class SpliceMarker implements Expression {
+    location: Location;
+    value: Expression;
+    constructor(location: Location, value: Expression) {
+      this.location = location;
+      this.value = value;
+    }
+    accept(visitor: Visitor): any {
+      return visitor.visitSpliceMarker(this);
+    }
+  }
+
   // Scheme chapter 3
 
   /**
@@ -305,6 +321,21 @@ export namespace Atomic {
     }
     accept(visitor: Visitor): any {
       return visitor.visitExport(this);
+    }
+  }
+
+  /**
+   * A node representing a Scheme Vector.
+   */
+  export class Vector implements Expression {
+    location: Location;
+    elements: Expression[];
+    constructor(location: Location, elements: Expression[]) {
+      this.location = location;
+      this.elements = elements;
+    }
+    accept(visitor: Visitor): any {
+      return visitor.visitVector(this);
     }
   }
 }
@@ -415,46 +446,6 @@ export namespace Extended {
     }
     accept(visitor: Visitor): any {
       return visitor.visitList(this);
-    }
-  }
-
-  /**
-   * A node representing a Scheme quote expression.
-   * Returns the quoted expression.
-   * syntax: (quote <expression>)
-   * syntax: (quasiquote <expression>)
-   * syntax: '<expression>
-   * syntax: `<expression>
-   */
-  export class Quote implements Expression {
-    location: Location;
-    expression: Expression;
-    quasi: boolean;
-    constructor(location: Location, expression: Expression, quasi: boolean) {
-      this.location = location;
-      this.expression = expression;
-      this.quasi = quasi;
-    }
-    accept(visitor: Visitor): any {
-      return visitor.visitQuote(this);
-    }
-  }
-
-  /**
-   * A node representing a Scheme unquote expression.
-   * Returns the unquoted expression.
-   * syntax: (unquote <expression>)
-   * syntax: ,<expression>
-   */
-  export class Unquote implements Expression {
-    location: Location;
-    expression: Expression;
-    constructor(location: Location, expression: Expression) {
-      this.location = location;
-      this.expression = expression;
-    }
-    accept(visitor: Visitor): any {
-      return visitor.visitUnquote(this);
     }
   }
 

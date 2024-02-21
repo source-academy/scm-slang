@@ -59,7 +59,7 @@ export class Token {
           this.pos.line,
           this.pos.column,
         );
-      case TokenType.HASH:
+      case TokenType.HASH_VECTOR:
         return new Token(
           TokenType.VECTOR,
           this.lexeme,

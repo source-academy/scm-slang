@@ -23,11 +23,14 @@ export interface Visitor {
   visitPair(node: Atomic.Pair): any;
   visitNil(node: Atomic.Nil): any;
   visitSymbol(node: Atomic.Symbol): any;
+  visitSpliceMarker(node: Atomic.SpliceMarker): any;
 
   visitReassignment(node: Atomic.Reassignment): any;
 
   visitImport(node: Atomic.Import): any;
   visitExport(node: Atomic.Export): any;
+
+  visitVector(node: Atomic.Vector): any;
 
   // Extended AST
   visitFunctionDefinition(node: Extended.FunctionDefinition): any;

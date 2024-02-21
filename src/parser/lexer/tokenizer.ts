@@ -120,6 +120,7 @@ export class Tokenizer {
         this.addToken(TokenType.COMMA);
         break;
       case "#":
+        // by itself, it is an error
         if (this.match("t") || this.match("f")) {
           this.booleanToken();
         } else if (this.match("|")) {
@@ -128,8 +129,16 @@ export class Tokenizer {
         } else if (this.match(";")) {
           // a datum comment
           this.addToken(TokenType.HASH_SEMICOLON);
+        } else if (this.peek() === "(" || this.peek() === "[") {
+          // ensure that the next character is a vector
+          this.addToken(TokenType.HASH_VECTOR);
         } else {
-          this.addToken(TokenType.HASH);
+          // chars are not currently supported
+          throw new TokenizerError.UnexpectedCharacterError(
+            this.line,
+            this.col,
+            c,
+          );
         }
         break;
       case ";":

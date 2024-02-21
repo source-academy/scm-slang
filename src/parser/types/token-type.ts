@@ -48,7 +48,7 @@ export enum TokenType {
   EXPORT,
 
   // Not in scope at the moment
-  HASH, // vector
+  HASH_VECTOR, // vector
   VECTOR,
 
   EOF,

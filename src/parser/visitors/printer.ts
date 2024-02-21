@@ -104,6 +104,7 @@ export class Printer implements Visitor {
     });
     this.display(") ");
   }
+
   visitConditional(node: Atomic.Conditional): any {
     // this.indent();
     this.display("( if ");
@@ -127,9 +128,17 @@ export class Printer implements Visitor {
     // this.indent();
     this.display("()");
   }
+
   visitSymbol(node: Atomic.Symbol): any {
     // this.indent();
     this.display(node.value);
+  }
+
+  visitSpliceMarker(node: Atomic.SpliceMarker): any {
+    // this.indent();
+    this.display(",@");
+    this.display(node.value);
+    this.display(" ");
   }
 
   visitReassignment(node: Atomic.Reassignment): any {
@@ -145,6 +154,15 @@ export class Printer implements Visitor {
   }
   visitExport(node: Atomic.Export): any {
     throw new Error("Method not implemented.");
+  }
+  visitVector(node: Atomic.Vector) {
+    // this.indent();
+    this.display("#( ");
+    node.elements.forEach((element) => {
+      this.display(" ");
+      element.accept(this.increment());
+    });
+    this.display(") ");
   }
 
   // Extended AST

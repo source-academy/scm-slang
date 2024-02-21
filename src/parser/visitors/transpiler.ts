@@ -33,6 +33,7 @@ export class Transpiler implements Visitor {
   visitPair(node: Atomic.Pair): any;
   visitNil(node: Atomic.Nil): any;
   visitSymbol(node: Atomic.Symbol): any;
+  visitSpliceMarker(node: Atomic.SpliceMarker): any;
 
   // turns into expression that returns assigned value
   // maybe in the future we can make a setall! macro
@@ -41,6 +42,9 @@ export class Transpiler implements Visitor {
   // make a verifier that keeps this top level
   visitImport(node: Atomic.Import): any;
   visitExport(node: Atomic.Export): any;
+
+  // turn into an array
+  visitVector(node: Atomic.Vector): any;
 
   // Extended AST
 

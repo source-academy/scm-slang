@@ -92,6 +92,13 @@ export class Simplifier implements Visitor {
     return node;
   }
 
+  visitSpliceMarker(node: Atomic.SpliceMarker) {
+    const location = node.location;
+    const newValue = node.value.accept(this);
+
+    return new Atomic.SpliceMarker(location, newValue);
+  }
+
   visitReassignment(node: Atomic.Reassignment): Atomic.Reassignment {
     const location = node.location;
     const name = node.name;
