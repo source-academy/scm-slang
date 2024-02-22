@@ -52,7 +52,7 @@ export class Group {
       return (
         token.type === TokenType.APOSTROPHE ||
         token.type === TokenType.BACKTICK ||
-        token.type === TokenType.HASH ||
+        token.type === TokenType.HASH_VECTOR ||
         token.type === TokenType.COMMA ||
         token.type === TokenType.COMMA_AT
       );

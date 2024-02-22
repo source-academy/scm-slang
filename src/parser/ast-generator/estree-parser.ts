@@ -143,7 +143,7 @@ export class EstreeParser {
           break;
         case TokenType.APOSTROPHE:
         case TokenType.BACKTICK:
-        case TokenType.HASH:
+        case TokenType.HASH_VECTOR:
         case TokenType.COMMA:
         case TokenType.COMMA_AT:
           // These special notations are converted to their
@@ -233,7 +233,7 @@ export class EstreeParser {
           token.pos.line,
           token.pos.column,
         );
-      case TokenType.HASH:
+      case TokenType.HASH_VECTOR:
         return new Token(
           TokenType.VECTOR,
           token.lexeme,
