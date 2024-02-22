@@ -158,7 +158,7 @@ export class SchemeParser {
         case TokenType.HASH_SEMICOLON:
           // a datum comment
           // ignore the next grouping
-          const ignoredGrouping = this.grouping();
+          const _ignoredGrouping = this.grouping();
           break;
         case TokenType.EOF:
           // We should be unable to reach this point at top level as parse()
@@ -225,6 +225,10 @@ export class SchemeParser {
           token.literal as string,
         );
       default:
+        // if in a quoting context, any keyword is instead treated as a symbol
+        if (this.quoteMode !== QuoteMode.NONE) {
+          return new Atomic.Symbol(this.toLocation(token), token.lexeme);
+        }
         throw new ParserError.UnexpectedTokenError(
           this.source,
           token.pos,

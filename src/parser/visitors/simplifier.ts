@@ -119,6 +119,15 @@ export class Simplifier implements Visitor {
     return new Atomic.Export(location, newDefinition);
   }
 
+  visitVector(node: Atomic.Vector) {
+    const location = node.location;
+
+    // Simplify the elements of the vector
+    const newElements = node.elements.map((element) => element.accept(this));
+
+    return new Atomic.Vector(location, newElements);
+  }
+
   // Extended AST
   visitFunctionDefinition(
     node: Extended.FunctionDefinition,
@@ -189,35 +198,14 @@ export class Simplifier implements Visitor {
     return newConditional;
   }
 
+  // we will keep list as it is useful in its current state.
   visitList(node: Extended.List): Expression {
     const location = node.location;
     const newElements = node.elements.map((element) => element.accept(this));
     const newTerminator = node.terminator
       ? node.terminator.accept(this)
       : undefined;
-    if (newElements.length === 0) {
-      return newTerminator ? newTerminator : new Atomic.Nil(location);
-    }
-    if (newElements.length === 1) {
-      const nilLocation = newElements[0].location;
-      return new Atomic.Pair(
-        location,
-        newElements[0],
-        newTerminator ? newTerminator : new Atomic.Nil(nilLocation),
-      );
-    }
-
-    newElements.reverse();
-    const lastLocation = newElements[0].location;
-    let newPair = newTerminator ? newTerminator : new Atomic.Nil(lastLocation);
-
-    for (let i = 0; i < newElements.length - 1; i++) {
-      const element = newElements[i];
-      const eleLocation = element.location;
-      newPair = new Atomic.Pair(eleLocation, element, newPair);
-    }
-
-    return newPair;
+    return new Extended.List(location, newElements, newTerminator);
   }
 
   visitBegin(node: Extended.Begin): Atomic.Sequence {
