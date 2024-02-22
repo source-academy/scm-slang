@@ -31,11 +31,10 @@ function wrapInReturn(expression: es.Expression): es.ReturnStatement {
 }
 
 export class Transpiler implements Visitor {
-  /**
-   *
-   * @param program T
-   * @returns
-   */
+  public static create(): Transpiler {
+    return new Transpiler();
+  }
+
   public transpile(program: scmExpression[]): es.Program {
     // create an array of expressions
     const expressions = program.flatMap((e) => e.accept(this));
@@ -78,21 +77,28 @@ export class Transpiler implements Visitor {
     // turn the statements into a block
     const body = estreeBuilder.makeBlockStatement(statements);
 
-    return [
-      estreeBuilder.makeCallExpression(
-        estreeBuilder.makeArrowFunctionExpression([], body, node.location),
-        [],
-        node.location,
-      ),
-    ];
+    // make the call expression
+    const iife = estreeBuilder.makeCallExpression(
+      estreeBuilder.makeArrowFunctionExpression([], body, node.location),
+      [],
+      node.location,
+    );
+
+    // if other parts of the program want to optimize their code, eliminating
+    // the iife sequence, they can see that this is a sequence with this flag
+    (iife as any).isSequence = true;
+    return [iife];
   }
+
   // literals
   visitNumericLiteral(node: Atomic.NumericLiteral): [es.Literal] {
     return [estreeBuilder.makeLiteral(node.value, node.location)];
   }
+
   visitBooleanLiteral(node: Atomic.BooleanLiteral): [es.Literal] {
     return [estreeBuilder.makeLiteral(node.value, node.location)];
   }
+
   visitStringLiteral(node: Atomic.StringLiteral): [es.Literal] {
     return [estreeBuilder.makeLiteral(node.value, node.location)];
   }
@@ -109,10 +115,20 @@ export class Transpiler implements Visitor {
 
     const [body] = node.body.accept(this);
 
+    // if the inner body is a sequence, we can optimize it by removing the sequence
+    // and making the arrow function expression return the last expression
+    // we left a flag in the sequence to indicate that it is an iife
+    const finalBody = (body as any).isSequence
+      ? // then we know that body is a sequence, stored as a call expression to an
+        // inner callee with an interior arrow function expression that takes no arguments
+        // let's steal that arrow function expression's body and use it as ours
+        body.callee.body
+      : body;
+
     return [
       estreeBuilder.makeArrowFunctionExpression(
         parameters,
-        body,
+        finalBody,
         node.location,
       ),
     ];
@@ -143,6 +159,14 @@ export class Transpiler implements Visitor {
 
   visitConditional(node: Atomic.Conditional): [es.ConditionalExpression] {
     const [test] = node.test.accept(this);
+    // scheme's truthiness is different from javascript's,
+    // and so we must use a custom truthiness function $true to evaluate the test
+    const truthy = estreeBuilder.makeIdentifier("$true", node.location);
+    const schemeTest = estreeBuilder.makeCallExpression(
+      truthy,
+      [test],
+      node.location,
+    );
     const [consequent] = node.consequent.accept(this);
     const [alternate] = node.alternate.accept(this);
     return [
