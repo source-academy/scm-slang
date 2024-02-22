@@ -13,6 +13,10 @@ export class Simplifier implements Visitor {
     return new Simplifier();
   }
 
+  public simplify(node: Expression[]): Expression[] {
+    return node.map((expression) => expression.accept(this));
+  }
+
   // Atomic AST
   visitSequence(node: Atomic.Sequence): Atomic.Sequence {
     const location = node.location;
