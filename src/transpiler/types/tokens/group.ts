@@ -6,13 +6,13 @@ import { Token } from "./token";
 import { TokenType } from "./token-type";
 import { Location, Position } from "../location";
 import { Datum } from "./datum";
-import { isToken } from ".";
+import { isGroup, isToken } from ".";
 
 export class Group {
   // Invariants:
-  // - A group must not be empty.
+  // - A group must not be empty (ie no tokens at all).
   // - If a group is not parenthesized, it contains either one element, that is not a group,
-  //   or two elements, of which the first one is not a group but the second one is.
+  //   or two elements, of which the first one is not a group.
   // - If a group is parenthesized, it must have matching parentheses.
   readonly elements: Datum[];
   readonly location: Location;
@@ -68,7 +68,7 @@ export class Group {
     if (elements.length === 1) {
       const onlyElement: Datum = elements[0];
 
-      if (onlyElement instanceof Group) {
+      if (isGroup(onlyElement)) {
         // Return the inner group.
         // Avoid nested groups that are a product of the grouping generation in the parser.
         // Ensures the single internal element is not a group.
@@ -89,9 +89,8 @@ export class Group {
     if (elements.length === 2) {
       const firstElement = elements[0];
 
-      // Ensure the first element is an affector type.
+      // Ensure the first element is an affector type and
       if (isToken(firstElement) && isShortAffector(firstElement)) {
-        // Ensure the first element is an affector type.
         return new Group(elements);
       }
 

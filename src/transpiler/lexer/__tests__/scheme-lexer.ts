@@ -2,7 +2,7 @@ import { SchemeLexer } from "..";
 import { TokenType } from "../../types/tokens";
 import { UnexpectedCharacterError, UnexpectedEOFError } from "../lexer-error";
 
-test("Lexer parses simple identifiers correctly", () => {
+test("SchemeLexer parses simple identifiers correctly", () => {
   const source = "helloworld";
   const lexer = new SchemeLexer(source);
   const tokens = lexer.scanTokens();
@@ -12,7 +12,7 @@ test("Lexer parses simple identifiers correctly", () => {
   expect(tokens[0].lexeme).toBe("helloworld");
 });
 
-test("Lexer parses identifiers with special characters correctly", () => {
+test("SchemeLexer parses identifiers with special characters correctly", () => {
   const source = "hello-$+!%#world";
   const lexer = new SchemeLexer(source);
   const tokens = lexer.scanTokens();
@@ -22,17 +22,21 @@ test("Lexer parses identifiers with special characters correctly", () => {
   expect(tokens[0].lexeme).toBe("hello-$+!%#world");
 });
 
-test("Lexer parses extended identifiers correctly", () => {
-  const source = "|你好世界 this is one identifier!|";
+test("SchemeLexer parses extended identifiers correctly", () => {
+  const source = `|你好世界 this is one identifier!
+
+|`;
   const lexer = new SchemeLexer(source);
   const tokens = lexer.scanTokens();
   // tokens should be 2: hello-world, EOF
   expect(tokens.length).toBe(2);
   expect(tokens[0].type).toBe(TokenType.IDENTIFIER);
-  expect(tokens[0].lexeme).toBe("你好世界 this is one identifier!");
+  expect(tokens[0].lexeme).toBe(`你好世界 this is one identifier!
+
+`);
 });
 
-test("Lexer parses integer numbers correctly", () => {
+test("SchemeLexer parses integer numbers correctly", () => {
   const source = "123";
   const lexer = new SchemeLexer(source);
   const tokens = lexer.scanTokens();
@@ -43,7 +47,7 @@ test("Lexer parses integer numbers correctly", () => {
   expect(tokens[0].literal).toBe(123);
 });
 
-test("Lexer parses floating point numbers correctly", () => {
+test("SchemeLexer parses floating point numbers correctly", () => {
   const source = ".45";
   const lexer = new SchemeLexer(source);
   const tokens = lexer.scanTokens();
@@ -54,7 +58,7 @@ test("Lexer parses floating point numbers correctly", () => {
   expect(tokens[0].literal).toBe(0.45);
 });
 
-test("Lexer parses negative numbers correctly", () => {
+test("SchemeLexer parses negative numbers correctly", () => {
   const source = "-123";
   const lexer = new SchemeLexer(source);
   const tokens = lexer.scanTokens();
@@ -65,7 +69,7 @@ test("Lexer parses negative numbers correctly", () => {
   expect(tokens[0].literal).toBe(-123);
 });
 
-test("Lexer treats poorly formatted numbers as identifiers", () => {
+test("SchemeLexer treats poorly formatted numbers as identifiers", () => {
   const source = "123.45.67";
   const lexer = new SchemeLexer(source);
   const tokens = lexer.scanTokens();
@@ -75,7 +79,7 @@ test("Lexer treats poorly formatted numbers as identifiers", () => {
   expect(tokens[0].lexeme).toBe("123.45.67");
 });
 
-test("Lexer parses strings correctly", () => {
+test("SchemeLexer parses strings correctly", () => {
   const source = `"hello world"`;
   const lexer = new SchemeLexer(source);
   const tokens = lexer.scanTokens();
@@ -85,7 +89,7 @@ test("Lexer parses strings correctly", () => {
   expect(tokens[0].lexeme).toBe('"hello world"');
 });
 
-test("Lexer parses booleans correctly", () => {
+test("SchemeLexer parses booleans correctly", () => {
   const source = `#t #f`;
   const lexer = new SchemeLexer(source);
   const tokens = lexer.scanTokens();
@@ -99,7 +103,7 @@ test("Lexer parses booleans correctly", () => {
   expect(tokens[1].literal).toBe(false);
 });
 
-test("Lexer can detect keywords", () => {
+test("SchemeLexer can detect keywords", () => {
   const source = `if else lambda define`;
   const lexer = new SchemeLexer(source);
   const tokens = lexer.scanTokens();
@@ -111,7 +115,7 @@ test("Lexer can detect keywords", () => {
   expect(tokens[3].type).toBe(TokenType.DEFINE);
 });
 
-test("Lexer can ignore comments", () => {
+test("SchemeLexer can ignore comments", () => {
   const source = `; this is a comment
   123`;
   const lexer = new SchemeLexer(source);
@@ -122,7 +126,7 @@ test("Lexer can ignore comments", () => {
   expect(tokens[0].literal).toBe(123);
 });
 
-test("Lexer can ignore comments at the end of a line", () => {
+test("SchemeLexer can ignore comments at the end of a line", () => {
   const source = `123 ; this is a comment`;
   const lexer = new SchemeLexer(source);
   const tokens = lexer.scanTokens();
@@ -132,7 +136,7 @@ test("Lexer can ignore comments at the end of a line", () => {
   expect(tokens[0].literal).toBe(123);
 });
 
-test("Lexer can ignore multiline comments", () => {
+test("SchemeLexer can ignore multiline comments", () => {
   const source = `#| this is a comment
    this is another comment |# 456
   123`;
@@ -146,7 +150,7 @@ test("Lexer can ignore multiline comments", () => {
   expect(tokens[1].literal).toBe(123);
 });
 
-test("Lexer can properly detect all the double character tokens", () => {
+test("SchemeLexer can properly detect all the double character tokens", () => {
   const source = `#t #f #;`;
   const lexer = new SchemeLexer(source);
   const tokens = lexer.scanTokens();
@@ -157,7 +161,7 @@ test("Lexer can properly detect all the double character tokens", () => {
   expect(tokens[2].type).toBe(TokenType.HASH_SEMICOLON);
 });
 
-test("Lexer can promote a hash to a hash vector in the right context", () => {
+test("SchemeLexer can promote a hash to a hash vector in the right context", () => {
   const source = `#(1 2 3)`;
   const lexer = new SchemeLexer(source);
   const tokens = lexer.scanTokens();
@@ -171,19 +175,19 @@ test("Lexer can promote a hash to a hash vector in the right context", () => {
   expect(tokens[5].type).toBe(TokenType.RIGHT_PAREN);
 });
 
-test("Lexer does not recognise hash as a vector if it is not followed immediately by a ( or [", () => {
+test("SchemeLexer does not recognise hash as a vector if it is not followed immediately by a ( or [", () => {
   const source = `# (`;
   const lexer = new SchemeLexer(source);
   expect(() => lexer.scanTokens()).toThrow(UnexpectedCharacterError);
 });
 
-test("Lexer throws EOF error when it encounters undelimited strings", () => {
+test("SchemeLexer throws EOF error when it encounters undelimited strings", () => {
   const source = `"hello world`;
   const lexer = new SchemeLexer(source);
   expect(() => lexer.scanTokens()).toThrow(UnexpectedEOFError);
 });
 
-test("Lexer throws EOF error when it encounters undelimited comments", () => {
+test("SchemeLexer throws EOF error when it encounters undelimited comments", () => {
   const source = `#| hello world
   
   
@@ -193,7 +197,7 @@ test("Lexer throws EOF error when it encounters undelimited comments", () => {
   expect(() => lexer.scanTokens()).toThrow(UnexpectedEOFError);
 });
 
-test("Lexer throws EOF error if it encounters undelimited loose identifiers", () => {
+test("SchemeLexer throws EOF error if it encounters undelimited loose identifiers", () => {
   const source = `| hello world`;
   const lexer = new SchemeLexer(source);
   expect(() => lexer.scanTokens()).toThrow(UnexpectedEOFError);
