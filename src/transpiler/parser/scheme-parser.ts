@@ -912,7 +912,7 @@ export class SchemeParser implements Parser {
     const elements = group.unwrap();
     const clauses = elements.splice(1);
     // safe to cast because of the check above
-    const lastClause = <Token | Group>clauses.pop();
+    const lastClause = <Datum>clauses.pop();
 
     // Clauses are treated as a group of groups of expressions
     // Form: (<expr> <sequence>)
@@ -967,7 +967,7 @@ export class SchemeParser implements Parser {
     }
 
     // Check last clause
-    // Verify lastClause is a group with size 2
+    // Verify lastClause is a group with size at least 2
     if (!isGroup(lastClause)) {
       throw new ParserError.UnexpectedTokenError(
         this.source,
@@ -975,7 +975,8 @@ export class SchemeParser implements Parser {
         lastClause,
       );
     }
-    if (lastClause.length() !== 2) {
+
+    if (lastClause.length() < 2) {
       throw new ParserError.UnexpectedTokenError(
         this.source,
         lastClause.firstToken().pos,
@@ -990,6 +991,10 @@ export class SchemeParser implements Parser {
     // verify that test is an else token
     if (isToken(test) && test.type === TokenType.ELSE) {
       isElse = true;
+      // verify that consequent is of length 1
+      if (consequent.length != 1) {
+        throw new Error("else consequent must be of length 1");
+      }
     }
 
     // verify that consequent is at least 1 expression
