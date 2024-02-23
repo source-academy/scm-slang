@@ -1,9 +1,11 @@
-import { Token } from "../types/token";
-import { TokenType } from "../types/token-type";
+import { Token } from "../types/tokens/token";
+import { TokenType } from "../types/tokens/token-type";
 import { Location } from "../types/location";
-import { Atomic, Expression, Extended } from "../types/scheme-node-types";
-import * as ParserError from "../parser-error";
-import { Group } from "./token-grouping";
+import { Atomic, Expression, Extended } from "../types/nodes/scheme-node-types";
+import * as ParserError from "./parser-error";
+import { Datum } from "../types/tokens/datum";
+import { Group } from "../types/tokens/group";
+import { Parser } from "./parser";
 
 /**
  * An enum representing the current quoting mode of the parser
@@ -14,7 +16,7 @@ enum QuoteMode {
   QUASIQUOTE,
 }
 
-export class SchemeParser {
+export class SchemeParser implements Parser {
   private readonly source: string;
   private readonly tokens: Token[];
   private readonly chapter: number;
@@ -65,7 +67,7 @@ export class SchemeParser {
    * An optional verifier is used if there are restrictions on the elements of the list.
    */
   private destructureList(
-    list: (Group | Token)[],
+    list: Datum[],
     verifier = (x: any) => {},
   ): [Expression[], Expression | undefined] {
     // check if the list is an empty list
@@ -106,11 +108,11 @@ export class SchemeParser {
    * Returns a group of associated tokens.
    * Tokens are grouped by level of parentheses.
    *
-   * @param openparen The type of opening parenthesis.
+   * @param openparen The opening parenthesis, if one exists.
    * @returns A group of tokens or groups of tokens.
    */
   private grouping(openparen?: Token): Group {
-    const elements: (Token | Group)[] = [];
+    const elements: Datum[] = [];
     let inList = false;
     if (openparen) {
       inList = true;
@@ -177,7 +179,7 @@ export class SchemeParser {
   /**
    * Groups an affector token with its target.
    */
-  private affect(affector: Token, target: Token | Group): Group {
+  private affect(affector: Token, target: Datum): Group {
     return Group.build([affector, target]);
   }
 
@@ -186,7 +188,7 @@ export class SchemeParser {
    * @param expr A token or a group of tokens.
    * @returns
    */
-  private parseExpression(expr: Token | Group): Expression {
+  private parseExpression(expr: Datum): Expression {
     // Discern the type of expression
     if (expr instanceof Token) {
       return this.parseToken(expr);

@@ -1,3 +1,12 @@
+/**
+ * The original parser, used in the original
+ * implementation of scm-slang in 2023.
+ *
+ * Directly translates tokens to ESTree nodes.
+ * Ultimately, we decided to produce an intermediate
+ * format first.
+ */
+
 import {
   Program,
   Expression,
@@ -14,9 +23,9 @@ import {
   ModuleDeclaration,
 } from "estree";
 
-import { Token } from "../types/token";
-import { TokenType } from "../types/token-type";
-import * as ParserError from "../parser-error";
+import { Token } from "../types/tokens/token";
+import { TokenType } from "../types/tokens/token-type";
+import * as ParserError from "./parser-error.ts";
 
 import {
   makeArrowFunctionExpression,
@@ -33,7 +42,7 @@ import {
   makeLiteral,
   makeProgram,
   makeReturnStatement,
-} from "../../estree-nodes";
+} from "../../utils/estree-nodes.ts";
 
 class Group {
   group: (Token | Group)[];
@@ -71,7 +80,7 @@ class Group {
   }
 }
 
-export class EstreeParser {
+export class DirectParser {
   private readonly source: string;
   private readonly tokens: Token[];
   private readonly estree: Program;

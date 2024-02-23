@@ -1,12 +1,12 @@
 /**
- * A data structure grouping together elements of the same level of parentheses.
- * The parentheses are included in the grouping.
- * An intermediate representation before AST generation.
+ * A group of elements, possibly bounded by parentheses.
+ * Represents a group of related elements.
  */
-
-import { Token } from "../types/token";
-import { TokenType } from "../types/token-type";
-import { Location, Position } from "../types/location";
+import { Token } from "./token";
+import { TokenType } from "./token-type";
+import { Location, Position } from "../location";
+import { Datum } from "./datum";
+import { isToken } from ".";
 
 export class Group {
   // Invariants:
@@ -14,10 +14,9 @@ export class Group {
   // - If a group is not parenthesized, it contains either one element, that is not a group,
   //   or two elements, of which the first one is not a group but the second one is.
   // - If a group is parenthesized, it must have matching parentheses.
-
-  readonly elements: (Token | Group)[];
+  readonly elements: Datum[];
   readonly location: Location;
-  private constructor(elements: (Token | Group)[]) {
+  private constructor(elements: Datum[]) {
     this.elements = elements;
     this.location = new Location(this.firstPos(), this.lastPos());
   }
@@ -25,7 +24,7 @@ export class Group {
   /**
    * A constructor function for a group that enforces group invariants.
    */
-  public static build(elements: (Token | Group)[]) {
+  public static build(elements: Datum[]) {
     // helper function to check if the parentheses match.
     function matchingParentheses(lParen: Token, rParen: Token) {
       return (
@@ -67,7 +66,7 @@ export class Group {
 
     // If the group is not parenthesized, the first case contains only one element.
     if (elements.length === 1) {
-      const onlyElement: Group | Token = elements[0];
+      const onlyElement: Datum = elements[0];
 
       if (onlyElement instanceof Group) {
         // Return the inner group.
@@ -91,7 +90,7 @@ export class Group {
       const firstElement = elements[0];
 
       // Ensure the first element is an affector type.
-      if (firstElement instanceof Token && isShortAffector(firstElement)) {
+      if (isToken(firstElement) && isShortAffector(firstElement)) {
         // Ensure the first element is an affector type.
         return new Group(elements);
       }
@@ -103,8 +102,8 @@ export class Group {
     const firstElement = elements[0];
     const lastElement = elements[elements.length - 1];
     if (
-      firstElement instanceof Token &&
-      lastElement instanceof Token &&
+      isToken(firstElement) &&
+      isToken(lastElement) &&
       matchingParentheses(firstElement, lastElement)
     ) {
       return new Group(elements);
@@ -114,14 +113,14 @@ export class Group {
   }
 
   // Get the first element of the group.
-  first(): Token | Group {
+  first(): Datum {
     return this.elements[0];
   }
 
   // Get the first token of the group.
   public firstToken(): Token {
     const firstElement = this.first();
-    if (firstElement instanceof Token) {
+    if (isToken(firstElement)) {
       return firstElement;
     } else {
       return firstElement.firstToken();
@@ -134,13 +133,13 @@ export class Group {
   }
 
   // Get the last element of the group.
-  last(): Token | Group {
+  last(): Datum {
     return this.elements[this.elements.length - 1];
   }
 
   lastToken(): Token {
     const lastElement = this.last();
-    if (lastElement instanceof Token) {
+    if (isToken(lastElement)) {
       return lastElement;
     } else {
       return lastElement.lastToken();
@@ -161,9 +160,8 @@ export class Group {
     // Because of the validation performed by the factory function,
     // we can assume that as long as the first element is a paranthesis,
     // the last element is also the corresponding paranthesis.
-
     return (
-      firstElement instanceof Token &&
+      isToken(firstElement) &&
       (firstElement.type === TokenType.LEFT_PAREN ||
         firstElement.type === TokenType.LEFT_BRACKET)
     );
@@ -182,7 +180,7 @@ export class Group {
    * If the group is bounded by parentheses, the parentheses are excluded.
    * @returns All elements of the group excluding parentheses.
    */
-  public unwrap(): (Token | Group)[] {
+  public unwrap(): Datum[] {
     if (this.isParenthesized()) {
       return this.elements.slice(1, this.elements.length - 1);
     }

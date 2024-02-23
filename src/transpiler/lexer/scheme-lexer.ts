@@ -1,14 +1,15 @@
 // Thanks to Ken Jin (py-slang) for the great resource
 // https://craftinginterpreters.com/scanning.html
-// This tokenizer is a modified version, inspired by both the
-// tokenizer above as well as Ken Jin's py-slang tokenizer.
+// This tokenizer/lexer is a modified version, inspired by both the
+// tokenizer/lexer above as well as Ken Jin's py-slang tokenizer/lexer.
 // It has been adapted to be written in typescript for scheme.
 // Crafting Interpreters: https://craftinginterpreters.com/
 // py-slang: https://github.com/source-academy/py-slang
 
-import { Token } from "../types/token";
-import { TokenType } from "../types/token-type";
-import * as TokenizerError from "./tokenizer-error";
+import { Token } from "../types/tokens/token";
+import { TokenType } from "../types/tokens/token-type";
+import { Lexer } from "./lexer";
+import * as LexerError from "./lexer-error";
 
 // syntactic keywords in the scheme language
 let keywords = new Map<string, TokenType>([
@@ -27,7 +28,7 @@ let keywords = new Map<string, TokenType>([
   ["lambda", TokenType.LAMBDA],
 ]);
 
-export class Tokenizer {
+export class SchemeLexer implements Lexer {
   private readonly source: string;
   private readonly tokens: Token[];
   private start: number = 0;
@@ -129,15 +130,15 @@ export class Tokenizer {
           // a datum comment
           this.addToken(TokenType.HASH_SEMICOLON);
         } else if (this.peek() === "(" || this.peek() === "[") {
+          // We keep the hash character and the parenthesis/bracket
+          // separate as our parentheses matching systems
+          // will suffer with 4 possible left grouping tokens!
+
           // ensure that the next character is a vector
           this.addToken(TokenType.HASH_VECTOR);
         } else {
           // chars are not currently supported
-          throw new TokenizerError.UnexpectedCharacterError(
-            this.line,
-            this.col,
-            c,
-          );
+          throw new LexerError.UnexpectedCharacterError(this.line, this.col, c);
         }
         break;
       case ";":
@@ -161,7 +162,7 @@ export class Tokenizer {
         this.identifierTokenLoose();
         break;
       default:
-        // Deviates slightly from the original tokenizer.
+        // Deviates slightly from the original lexer.
         // Scheme allows for identifiers to start with a digit
         // or include a specific set of symbols.
         if (this.isDigit(c) || c === "-" || c === ".") {
@@ -173,11 +174,7 @@ export class Tokenizer {
           this.identifierToken();
         } else {
           // error
-          throw new TokenizerError.UnexpectedCharacterError(
-            this.line,
-            this.col,
-            c,
-          );
+          throw new LexerError.UnexpectedCharacterError(this.line, this.col, c);
         }
         break;
     }
@@ -193,7 +190,7 @@ export class Tokenizer {
     }
 
     if (this.isAtEnd()) {
-      throw new TokenizerError.UnexpectedEOFError(this.line, this.col);
+      throw new LexerError.UnexpectedEOFError(this.line, this.col);
     }
 
     this.jump();
@@ -218,7 +215,7 @@ export class Tokenizer {
     }
 
     if (this.isAtEnd()) {
-      throw new TokenizerError.UnexpectedEOFError(this.line, this.col);
+      throw new LexerError.UnexpectedEOFError(this.line, this.col);
     }
     this.addToken(this.checkKeyword());
     // ignore the closing pipe character
@@ -293,7 +290,7 @@ export class Tokenizer {
     }
 
     if (this.isAtEnd()) {
-      throw new TokenizerError.UnexpectedEOFError(this.line, this.col);
+      throw new LexerError.UnexpectedEOFError(this.line, this.col);
     }
 
     // closing "

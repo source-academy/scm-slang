@@ -1,5 +1,5 @@
-import { Visitor } from "./visitor";
-import { Atomic, Extended } from "../types/scheme-node-types";
+import { Visitor } from ".";
+import { Atomic, Extended } from "../types/nodes/scheme-node-types";
 
 /**
  * Visitor implementation that prints the AST.

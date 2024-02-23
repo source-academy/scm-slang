@@ -2,8 +2,8 @@
  * A data structure representing a particular token.
  */
 
-import { Position } from "./location";
-import { TokenType } from "./token-type";
+import { Position } from "../location";
+import { TokenType } from ".";
 
 export class Token {
   type: TokenType;

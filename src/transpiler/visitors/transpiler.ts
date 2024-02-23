@@ -4,13 +4,13 @@
  */
 
 import * as es from "estree";
-import * as estreeBuilder from "../../estree-nodes";
+import * as estreeBuilder from "../../utils/estree-nodes";
 import {
   Atomic,
   Extended,
   Expression as scmExpression,
-} from "../types/scheme-node-types";
-import { Visitor } from "./visitor";
+} from "../types/nodes/scheme-node-types";
+import { Visitor } from ".";
 
 // helper functions
 
@@ -65,7 +65,10 @@ export class Transpiler implements Visitor {
     // the sequence should return undefined
     if (lastExpression.type !== "ExpressionStatement") {
       statements.push(
-        wrapInStatement(estreeBuilder.makeLiteral(undefined, node.location)),
+        // alwayr remember that undefined is an identifier
+        wrapInStatement(
+          estreeBuilder.makeIdentifier("undefined", node.location),
+        ),
       );
     } else {
       // if the last expression is an expression statement, we should promote it to a return statement

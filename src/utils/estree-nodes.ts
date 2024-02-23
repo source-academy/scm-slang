@@ -21,14 +21,23 @@ import {
 } from "estree";
 
 export function makeProgram(body: Statement[] = []): Program {
+  // generate a good location based on the start of the first element of the body
+  // and its last, as long as the body is not empty
+  const loc =
+    body.length > 0
+      ? {
+          start: body[0].loc!.start,
+          end: body[body.length - 1].loc!.end,
+        }
+      : {
+          start: { line: 1, column: 0 },
+          end: { line: 1, column: 0 },
+        };
   return {
     type: "Program",
     body,
     sourceType: "module",
-    loc: {
-      start: { line: 1, column: 0 },
-      end: { line: 1, column: 0 },
-    },
+    loc: loc,
   };
 }
 

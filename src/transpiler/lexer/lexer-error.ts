@@ -1,6 +1,6 @@
 import { Position } from "../types/location";
 
-export abstract class TokenizerError extends SyntaxError {
+export abstract class LexerError extends SyntaxError {
   // This base error shouldn't be used directly.
   loc: Position;
   constructor(message: string, line: number, col: number) {
@@ -15,7 +15,7 @@ export abstract class TokenizerError extends SyntaxError {
   }
 }
 
-export class UnexpectedCharacterError extends TokenizerError {
+export class UnexpectedCharacterError extends LexerError {
   char: string;
   constructor(line: number, col: number, char: string) {
     super(`Unexpected character \'${char}\' (${line}:${col})`, line, col);
@@ -24,7 +24,7 @@ export class UnexpectedCharacterError extends TokenizerError {
   }
 }
 
-export class UnexpectedEOFError extends TokenizerError {
+export class UnexpectedEOFError extends LexerError {
   constructor(line: number, col: number) {
     super(`Unexpected EOF (${line}:${col})`, line, col);
     this.name = "UnexpectedEOFError";

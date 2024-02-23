@@ -3,8 +3,8 @@
  * Except for everything inside a quote, which is left alone.
  */
 
-import { Expression, Atomic, Extended } from "../types/scheme-node-types";
-import { Visitor } from "./visitor";
+import { Expression, Atomic, Extended } from "../types/nodes/scheme-node-types";
+import { Visitor } from ".";
 import { Location } from "../types/location";
 
 export class Simplifier implements Visitor {

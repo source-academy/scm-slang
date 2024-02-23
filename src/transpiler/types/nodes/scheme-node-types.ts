@@ -8,8 +8,8 @@
  * with a transformer visitor, and perhaps later with a macro system.
  */
 
-import { Visitor } from "../visitors/visitor";
-import { Location } from "./location";
+import { Visitor } from "../../visitors";
+import { Location } from "../location";
 
 /**
  * A basic node that represents a Scheme expression.

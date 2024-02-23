@@ -1,9 +1,9 @@
 import { encode as b64Encode, decode as b64Decode } from "js-base64";
 
-export * from "./stdlib/prelude-visitor";
-export { TokenizerError } from "./parser";
-export { ParserError } from "./parser";
-export { schemeParse } from "./parser";
+export * from "./utils/prelude-visitor";
+export { LexerError } from "./transpiler";
+export { ParserError } from "./transpiler";
+export { schemeParse } from "./transpiler";
 
 const JS_KEYWORDS: string[] = [
   "break",
