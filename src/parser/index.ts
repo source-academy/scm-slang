@@ -13,18 +13,21 @@ export function schemeParse(source: string, chapter?: number): Program {
   const tokenizer = new Tokenizer(source);
   const parser = new SchemeParser(source, tokenizer.scanTokens(), chapter);
 
+  // The Scheme AST is represented as an
+  // array of expressions, which is all top-level expressions
+
   // Generate the first AST
-  const firstAST = parser.parse();
+  const firstAST: Expression[] = parser.parse();
 
   // TODO: Then we verify the AST
 
   // Then we simplify the AST
   const simplifier = Simplifier.create();
-  const simplifiedAST = simplifier.simplify(firstAST);
+  const simplifiedAST: Expression[] = simplifier.simplify(firstAST);
 
   // Then we transpile the AST
   const transpiler = Transpiler.create();
-  const program = transpiler.transpile(simplifiedAST);
+  const program: Program = transpiler.transpile(simplifiedAST);
 
   return program;
 }

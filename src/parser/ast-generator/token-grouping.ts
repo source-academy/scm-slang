@@ -157,7 +157,6 @@ export class Group {
    */
   public isParenthesized(): boolean {
     const firstElement = this.first();
-    const lastElement = this.last();
 
     // Because of the validation performed by the factory function,
     // we can assume that as long as the first element is a paranthesis,
@@ -184,8 +183,6 @@ export class Group {
    * @returns All elements of the group excluding parentheses.
    */
   public unwrap(): (Token | Group)[] {
-    const firstElement = this.first();
-    const lastElement = this.last();
     if (this.isParenthesized()) {
       return this.elements.slice(1, this.elements.length - 1);
     }

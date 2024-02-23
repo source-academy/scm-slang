@@ -9,7 +9,6 @@
 import { Token } from "../types/token";
 import { TokenType } from "../types/token-type";
 import * as TokenizerError from "./tokenizer-error";
-import { Position } from "../types/location";
 
 // syntactic keywords in the scheme language
 let keywords = new Map<string, TokenType>([

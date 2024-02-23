@@ -171,7 +171,7 @@ export class Transpiler implements Visitor {
     const [alternate] = node.alternate.accept(this);
     return [
       estreeBuilder.makeConditionalExpression(
-        test,
+        schemeTest,
         consequent,
         alternate,
         node.location,
@@ -241,9 +241,17 @@ export class Transpiler implements Visitor {
       return copy;
     });
 
-    const makeSpecifiers = (importeds, locals) =>
-      importeds.map((imported, i) =>
-        estreeBuilder.makeImportSpecifier(imported, locals[i], imported.loc),
+    const makeSpecifiers = (
+      importeds: es.Identifier[],
+      locals: es.Identifier[],
+    ) =>
+      importeds.map((imported: es.Identifier, i: number) =>
+        // safe to cast as we are assured all source locations are present
+        estreeBuilder.makeImportSpecifier(
+          imported,
+          locals[i],
+          imported.loc as es.SourceLocation,
+        ),
       );
 
     const specifiers = makeSpecifiers(newIdentifiers, mappedIdentifierNames);
@@ -259,13 +267,17 @@ export class Transpiler implements Visitor {
     // then for each imported function, we define their proper
     // names with definitions
 
-    const makeRedefinitions = (importeds, locals) =>
-      importeds.flatMap((imported, i) =>
+    const makeRedefinitions = (
+      importeds: es.Identifier[],
+      locals: es.Identifier[],
+    ) =>
+      importeds.flatMap((imported: es.Identifier, i: number) =>
         estreeBuilder.makeDeclaration(
           "let",
           imported,
           locals[i],
-          imported.location,
+          // we are assured that all source locations are present
+          imported.loc as es.SourceLocation,
         ),
       );
 

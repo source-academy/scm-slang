@@ -1,4 +1,3 @@
-import { Program } from "estree";
 import { encode as b64Encode, decode as b64Decode } from "js-base64";
 
 export * from "./stdlib/prelude-visitor";

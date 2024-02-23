@@ -1,6 +1,6 @@
 import { Token } from "../types/token";
 import { TokenType } from "../types/token-type";
-import { Location, Position } from "../types/location";
+import { Location } from "../types/location";
 import { Atomic, Expression, Extended } from "../types/scheme-node-types";
 import * as ParserError from "../parser-error";
 import { Group } from "./token-grouping";
@@ -66,7 +66,7 @@ export class SchemeParser {
    */
   private destructureList(
     list: (Group | Token)[],
-    verifier = (x) => {},
+    verifier = (x: any) => {},
   ): [Expression[], Expression | undefined] {
     // check if the list is an empty list
     if (list.length === 0) {
@@ -157,8 +157,9 @@ export class SchemeParser {
           break;
         case TokenType.HASH_SEMICOLON:
           // a datum comment
-          // ignore the next grouping
-          const _ignoredGrouping = this.grouping();
+          // get the next grouping
+          // and ignore it
+          this.grouping();
           break;
         case TokenType.EOF:
           // We should be unable to reach this point at top level as parse()
