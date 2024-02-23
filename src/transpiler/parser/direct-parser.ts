@@ -25,7 +25,7 @@ import {
 
 import { Token } from "../types/tokens/token";
 import { TokenType } from "../types/tokens/token-type";
-import * as ParserError from "./parser-error.ts";
+import * as ParserError from "./parser-error";
 
 import {
   makeArrowFunctionExpression,
@@ -42,7 +42,7 @@ import {
   makeLiteral,
   makeProgram,
   makeReturnStatement,
-} from "../../utils/estree-nodes.ts";
+} from "../../utils/estree-nodes";
 
 class Group {
   group: (Token | Group)[];

@@ -24,8 +24,6 @@ export class SchemeParser implements Parser {
   private current: number = 0;
   private quoteMode: QuoteMode = QuoteMode.NONE;
 
-  private readonly self = this;
-
   constructor(source: string, tokens: Token[], chapter: number = Infinity) {
     this.source = source;
     this.tokens = tokens;

@@ -1,5 +1,3 @@
-import { LexerError } from "..";
-
 /**
  * Exports all lexer related components.
  */
