@@ -117,6 +117,10 @@ export class SchemeLexer implements Lexer {
         this.addToken(TokenType.BACKTICK);
         break;
       case ",":
+        if (this.match("@")) {
+          this.addToken(TokenType.COMMA_AT);
+          break;
+        }
         this.addToken(TokenType.COMMA);
         break;
       case "#":
