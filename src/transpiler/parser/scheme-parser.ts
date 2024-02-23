@@ -42,6 +42,10 @@ export class SchemeParser implements Parser {
     return this.tokens[this.current - 1];
   }
 
+  private peek(): Token {
+    return this.tokens[this.current];
+  }
+
   private validateChapter(c: Token, chapter: number): void {
     if (this.chapter < chapter) {
       throw new ParserError.DisallowedTokenError(
@@ -137,9 +141,9 @@ export class SchemeParser implements Parser {
           break;
         case TokenType.APOSTROPHE: // Quoting syntax (short form)
         case TokenType.BACKTICK:
-        case TokenType.HASH_VECTOR:
         case TokenType.COMMA:
         case TokenType.COMMA_AT:
+        case TokenType.HASH_VECTOR: // Vector syntax
           // these cases modify only the next element
           // so we group up the next element and use this
           // token on it
@@ -155,6 +159,18 @@ export class SchemeParser implements Parser {
         case TokenType.BOOLEAN:
         case TokenType.STRING:
         case TokenType.DOT:
+
+        case TokenType.DEFINE: // Chapter 1
+        case TokenType.IF:
+        case TokenType.ELSE:
+        case TokenType.COND:
+        case TokenType.LAMBDA:
+        case TokenType.LET:
+        case TokenType.SET: // Chapter 3
+        case TokenType.BEGIN:
+        case TokenType.DELAY:
+        case TokenType.IMPORT:
+        case TokenType.EXPORT:
           elements.push(c);
           break;
         case TokenType.HASH_SEMICOLON:
@@ -358,7 +374,6 @@ export class SchemeParser implements Parser {
         );
         return new Atomic.SpliceMarker(newLocation, unquoteSplicedExpression);
       case TokenType.HASH_VECTOR:
-      case TokenType.VECTOR:
         return this.parseVector(group);
       default:
         throw new ParserError.UnexpectedTokenError(
@@ -1257,19 +1272,16 @@ export class SchemeParser implements Parser {
     // collect all top-level elements
     const topElements: Expression[] = [];
     while (!this.isAtEnd()) {
-      const currentGroup = this.grouping();
-      // top level definitions are always wrapped up in
-      // a second group
-      // so unwrap them
-      const currentElement = currentGroup.unwrap()[0];
-      if (
-        currentElement instanceof Token &&
-        currentElement.type === TokenType.EOF
-      ) {
+      if (this.peek().type === TokenType.EOF) {
         break;
       }
+      const currentGroup = this.grouping();
+      // top level definitions are always wrapped up in
+      // a group, so unwrap them
+      const currentElement = currentGroup.unwrap()[0];
+
       const convertedElement = this.parseExpression(currentElement);
-      console.log(currentElement);
+      console.log(convertedElement);
       topElements.push(convertedElement);
     }
     return topElements;

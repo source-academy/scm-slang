@@ -49,7 +49,7 @@ export enum TokenType {
 
   // Not in scope at the moment
   HASH_VECTOR, // vector
-  VECTOR,
-
+  VECTOR, // depreciated, as i believe
+  // turning vector into a procedure call is better
   EOF,
 }
