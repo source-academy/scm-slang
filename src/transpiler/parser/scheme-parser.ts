@@ -325,15 +325,15 @@ export class SchemeParser implements Parser {
         return quasiquotedExpression;
       case TokenType.COMMA:
       case TokenType.UNQUOTE:
-        let currentQuoteMode = this.quoteMode;
-        if (currentQuoteMode === QuoteMode.NONE) {
+        let preUnquoteMode = this.quoteMode;
+        if (preUnquoteMode === QuoteMode.NONE) {
           throw new ParserError.UnsupportedTokenError(
             this.source,
             (<Token>affector).pos,
             <Token>affector,
           );
         }
-        if (currentQuoteMode === QuoteMode.QUOTE) {
+        if (preUnquoteMode === QuoteMode.QUOTE) {
           const innerGroup = this.parseExpression(target);
           const newSymbol = new Atomic.Symbol(
             this.toLocation(<Token>affector),
@@ -346,19 +346,19 @@ export class SchemeParser implements Parser {
         }
         this.quoteMode = QuoteMode.NONE;
         const unquotedExpression = this.parseExpression(target);
-        this.quoteMode = currentQuoteMode;
+        this.quoteMode = preUnquoteMode;
         return unquotedExpression;
       case TokenType.COMMA_AT:
       case TokenType.UNQUOTE_SPLICING:
-        currentQuoteMode = this.quoteMode;
-        if (currentQuoteMode === QuoteMode.NONE) {
-          throw new ParserError.UnsupportedTokenError(
+        let preUnquoteSplicingMode = this.quoteMode;
+        if (preUnquoteSplicingMode === QuoteMode.NONE) {
+          throw new ParserError.UnexpectedTokenError(
             this.source,
             (<Token>affector).pos,
             <Token>affector,
           );
         }
-        if (currentQuoteMode === QuoteMode.QUOTE) {
+        if (preUnquoteSplicingMode === QuoteMode.QUOTE) {
           const innerGroup = this.parseExpression(target);
           const newSymbol = new Atomic.Symbol(
             this.toLocation(<Token>affector),
@@ -371,13 +371,18 @@ export class SchemeParser implements Parser {
         }
         this.quoteMode = QuoteMode.NONE;
         const unquoteSplicedExpression = this.parseExpression(target);
-        this.quoteMode = currentQuoteMode;
+        this.quoteMode = preUnquoteSplicingMode;
         const newLocation = this.toLocation(<Token>affector).merge(
           unquoteSplicedExpression.location,
         );
         return new Atomic.SpliceMarker(newLocation, unquoteSplicedExpression);
       case TokenType.HASH_VECTOR:
-        return this.parseVector(group);
+        // vectors quote over all elements inside.
+        let preVectorQuoteMode = this.quoteMode;
+        this.quoteMode = QuoteMode.QUOTE;
+        const vector = this.parseVector(group);
+        this.quoteMode = preVectorQuoteMode;
+        return vector;
       default:
         throw new ParserError.UnexpectedTokenError(
           this.source,
@@ -744,7 +749,7 @@ export class SchemeParser implements Parser {
 
     const convertedAlternate = alternate
       ? this.parseExpression(alternate)
-      : new Atomic.Nil(group.location);
+      : new Atomic.Identifier(group.location, "undefined");
 
     return new Atomic.Conditional(
       group.location,
