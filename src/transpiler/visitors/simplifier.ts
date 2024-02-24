@@ -41,9 +41,10 @@ export class Simplifier implements Visitor {
   visitLambda(node: Atomic.Lambda): Atomic.Lambda {
     const location = node.location;
     const params = node.params;
+    const rest = node.rest;
     const newBody = node.body.accept(this);
 
-    return new Atomic.Lambda(location, newBody, params);
+    return new Atomic.Lambda(location, newBody, params, rest);
   }
 
   visitIdentifier(node: Atomic.Identifier): Atomic.Identifier {
