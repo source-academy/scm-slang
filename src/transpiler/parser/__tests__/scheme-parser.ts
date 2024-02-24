@@ -179,6 +179,7 @@ test("does not throw on parsing vector literals with nested lists", () => {
 });
 
 test("does not throw on parsing let expressions", () => {
+  expect(() => parse("(let () (= 1 1))")).not.toThrow();
   expect(() => parse("(let ((x 1)) x)")).not.toThrow();
   expect(() => parse("(let ((x 1) (y 2)) x y)")).not.toThrow();
   expect(() => parse("(let ((x 1) (y 2) (z 3)) x y z)")).not.toThrow();
@@ -208,4 +209,77 @@ test("does not throw on parsing force expressions", () => {
   expect(() => parse("(force 1)")).not.toThrow();
   expect(() => parse("(force (+ 1 2))")).not.toThrow();
   expect(() => parse("(force (delay (+ 1 2)))")).not.toThrow();
+});
+
+test("does not throw on parsing datum comments", () => {
+  expect(() => parse("#; (this-should-be-ignored)")).not.toThrow();
+  expect(() =>
+    parse("#; (this-should-be-ignored) (but-this-should-not)"),
+  ).not.toThrow();
+});
+
+test("able to parse a program with all features", () => {
+  expect(() =>
+    parse(`
+#|
+
+a test of the parser
+
+|#
+
+#; (this-should-be-ignored) (but-this-should-not)
+
+(import "rune" (square stack beside_n))
+
+(export (define 你好世界 1))
+
+;testinng the tokenizer name rules
+#t
+bad#name,butstillvalid!
+#f
+'a
+a'
+\`a
+a\`
+\`(a b ,c d, )
+
+(define a 1)
+(define (f x) (+ x a))
+(define (g x f) (f (+ x a)))
+(cond [(= (g 1 f) 3) 'great]
+      [(= (g 1 f) 4) 'fail]
+      [else 'fail])
+(if #t 'great 'fail)
+(if #f 'fail)
+
+(let ((x 1)) (+ 1 1 1 1) (- 1 1 1) 4)
+(let ((x 1) (y 2)) (+ x y))
+(lambda () (+ x 1))
+(define nullary (lambda () (+ 1 1 1 1) (- 1 1 1) 4))
+
+(lambda x x)
+(lambda (. x) x)
+(lambda (x . y) y)
+
+(define (test x) x)
+(define (test x y) x y)
+(define (test . x) x)
+
+(cond [(= 1 1)]
+      [(= 1 2) 'fail 1])
+
+(if #t 1 (begin (error "help!") 1 2 3))
+
+'(hello my 1 friend)
+
+\`(one is equal to ,(/ 100 100))
+'(a . b)
+
+(set! a 2)
+
+(((((((((1)))))))))
+
+(= #t true)
+`),
+  ).not.toThrow();
 });

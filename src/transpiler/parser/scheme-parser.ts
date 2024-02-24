@@ -116,7 +116,7 @@ export class SchemeParser implements Parser {
    * @param openparen The opening parenthesis, if one exists.
    * @returns A group of tokens or groups of tokens.
    */
-  private grouping(openparen?: Token): Group {
+  private grouping(openparen?: Token): Group | undefined {
     const elements: Datum[] = [];
     let inList = false;
     if (openparen) {
@@ -128,7 +128,9 @@ export class SchemeParser implements Parser {
       switch (c.type) {
         case TokenType.LEFT_PAREN:
         case TokenType.LEFT_BRACKET:
-          const innerGroup = this.grouping(c);
+          // the next group is not empty, especially because it
+          // has an open parenthesis
+          const innerGroup = this.grouping(c) as Group;
           elements.push(innerGroup);
           break;
         case TokenType.RIGHT_PAREN:
@@ -148,7 +150,10 @@ export class SchemeParser implements Parser {
           // these cases modify only the next element
           // so we group up the next element and use this
           // token on it
-          const nextGrouping = this.grouping();
+          let nextGrouping;
+          do {
+            nextGrouping = this.grouping();
+          } while (!nextGrouping);
           elements.push(this.affect(c, nextGrouping));
           break;
         case TokenType.QUOTE: // Quoting syntax
@@ -190,6 +195,9 @@ export class SchemeParser implements Parser {
           throw new ParserError.UnexpectedTokenError(this.source, c.pos, c);
       }
     } while (inList);
+    if (elements.length === 0) {
+      return;
+    }
     return Group.build(elements);
   }
 
@@ -913,12 +921,12 @@ export class SchemeParser implements Parser {
     const lastClause = <Datum>clauses.pop();
 
     // Clauses are treated as a group of groups of expressions
-    // Form: (<expr> <sequence>)
+    // Form: (<expr> <sequence>*)
     const convertedClauses: Expression[] = [];
     const convertedConsequents: Expression[] = [];
 
     for (const clause of clauses) {
-      // Verify clause is a group with size no less than 2
+      // Verify clause is a group with size no less than 1
       if (!isGroup(clause)) {
         throw new ParserError.UnexpectedTokenError(
           this.source,
@@ -926,7 +934,7 @@ export class SchemeParser implements Parser {
           clause,
         );
       }
-      if (clause.length() < 2) {
+      if (clause.length() < 1) {
         throw new ParserError.UnexpectedTokenError(
           this.source,
           clause.firstToken().pos,
@@ -941,10 +949,6 @@ export class SchemeParser implements Parser {
         throw new ParserError.UnexpectedTokenError(this.source, test.pos, test);
       }
 
-      // verify that consequent is at least 1 expression
-      if (consequent.length < 1) {
-        throw new Error("consequent cannot be empty");
-      }
       // Test is treated as a single expression
       const convertedTest = this.parseExpression(test);
 
@@ -952,13 +956,22 @@ export class SchemeParser implements Parser {
       const consequentExpressions = consequent.map(
         this.parseExpression.bind(this),
       ) as Expression[];
-      const consequentLocation = consequentExpressions
-        .at(0)!
-        .location.merge(consequentExpressions.at(-1)!.location);
+      const consequentLocation =
+        consequent.length < 1
+          ? convertedTest.location
+          : consequentExpressions
+              .at(0)!
+              .location.merge(consequentExpressions.at(-1)!.location);
+
+      // if consequent is empty, the test itself is treated
+      // as the value returned.
+      // if consequent is more than length one, there is a sequence.
       const convertedConsequent =
-        consequent.length === 1
-          ? consequentExpressions[0]
-          : new Atomic.Sequence(consequentLocation, consequentExpressions);
+        consequent.length < 1
+          ? convertedTest
+          : consequent.length < 2
+            ? consequentExpressions[0]
+            : new Atomic.Sequence(consequentLocation, consequentExpressions);
 
       convertedClauses.push(convertedTest);
       convertedConsequents.push(convertedConsequent);
@@ -1283,9 +1296,10 @@ export class SchemeParser implements Parser {
         break;
       }
       const currentElement = this.grouping();
-
+      if (!currentElement) {
+        continue;
+      }
       const convertedElement = this.parseExpression(currentElement);
-      console.log(convertedElement);
       topElements.push(convertedElement);
     }
     return topElements;

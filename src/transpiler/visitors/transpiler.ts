@@ -51,7 +51,7 @@ export class Transpiler implements Visitor {
 
   // iife
   visitSequence(node: Atomic.Sequence): [es.CallExpression] {
-    const expressions = node.expressions.map((e) => e.accept(this));
+    const expressions = node.expressions.flatMap((e) => e.accept(this));
 
     // wrap each expression into an expression statement if required
     const statements = expressions.map((e) =>

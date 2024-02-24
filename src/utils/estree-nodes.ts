@@ -82,7 +82,7 @@ export function makeLiteral(
 }
 
 export function makeArrowFunctionExpression(
-  params: Identifier[],
+  params: (Identifier | RestElement)[],
   body: Expression | BlockStatement,
   loc?: SourceLocation,
 ): ArrowFunctionExpression {
