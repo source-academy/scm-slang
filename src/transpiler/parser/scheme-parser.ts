@@ -356,6 +356,14 @@ export class SchemeParser implements Parser {
         return unquotedExpression;
       case TokenType.COMMA_AT:
       case TokenType.UNQUOTE_SPLICING:
+        // Unquote-splicing will be evaluated at runtime,
+        // Proper unquote splicing will be dealt with in semester 2.
+        throw new ParserError.UnsupportedTokenError(
+          this.source,
+          (<Token>affector).pos,
+          <Token>affector,
+        );
+
         let preUnquoteSplicingMode = this.quoteMode;
         if (preUnquoteSplicingMode === QuoteMode.NONE) {
           throw new ParserError.UnexpectedTokenError(

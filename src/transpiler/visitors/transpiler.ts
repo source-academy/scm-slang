@@ -11,6 +11,7 @@ import {
   Expression as scmExpression,
 } from "../types/nodes/scheme-node-types";
 import { Visitor } from ".";
+import { encode } from "../../index";
 
 // helper functions
 
@@ -108,25 +109,75 @@ export class Transpiler implements Visitor {
 
   visitLambda(node: Atomic.Lambda): [es.ArrowFunctionExpression] {
     const parameters: any[] = node.params.flatMap((p) => p.accept(this));
-
-    if (node.rest) {
-      const [restParameter] = node.rest.accept(this);
-      // wrap it in a restElement
-      const restElement = wrapInRest(restParameter);
-      parameters.push(restElement);
-    }
-
-    const [body] = node.body.accept(this);
+    const [fnBody] = node.body.accept(this);
 
     // if the inner body is a sequence, we can optimize it by removing the sequence
     // and making the arrow function expression return the last expression
     // we left a flag in the sequence to indicate that it is an iife
-    const finalBody = (body as any).isSequence
+    let finalBody = (fnBody as any).isSequence
       ? // then we know that body is a sequence, stored as a call expression to an
         // inner callee with an interior arrow function expression that takes no arguments
         // let's steal that arrow function expression's body and use it as ours
-        body.callee.body
-      : body;
+        fnBody.callee.body
+      : fnBody;
+
+    if (!node.rest) {
+      return [
+        estreeBuilder.makeArrowFunctionExpression(
+          parameters,
+          finalBody,
+          node.location,
+        ),
+      ];
+    }
+
+    // there is a rest parameter to deal with
+
+    const [restParameter] = node.rest.accept(this);
+    // wrap it in a restElement
+    const restElement = wrapInRest(restParameter);
+    parameters.push(restElement);
+
+    // place an implicit vector-to-list conversion around the rest parameter
+    // this is to ensure that the rest parameter is always a list
+    const vectorToList = estreeBuilder.makeIdentifier(
+      encode("vector->list"),
+      node.location,
+    );
+
+    // then we inject it into the final body
+    if (finalBody.type === "BlockStatement") {
+      finalBody.body.unshift(
+        wrapInStatement(
+          estreeBuilder.makeCallExpression(
+            vectorToList,
+            [restParameter],
+            node.location,
+          ),
+        ),
+      );
+
+      return [
+        estreeBuilder.makeArrowFunctionExpression(
+          parameters,
+          finalBody,
+          node.location,
+        ),
+      ];
+    }
+
+    // otherwise, we need to wrap the final body in a block statement
+    // and then inject the vectorToList call
+    finalBody = estreeBuilder.makeBlockStatement([
+      wrapInStatement(
+        estreeBuilder.makeCallExpression(
+          vectorToList,
+          [restParameter],
+          node.location,
+        ),
+      ),
+      wrapInReturn(finalBody),
+    ]);
 
     return [
       estreeBuilder.makeArrowFunctionExpression(
@@ -164,7 +215,7 @@ export class Transpiler implements Visitor {
     const [test] = node.test.accept(this);
     // scheme's truthiness is different from javascript's,
     // and so we must use a custom truthiness function $true to evaluate the test
-    const truthy = estreeBuilder.makeIdentifier("$true", node.location);
+    const truthy = estreeBuilder.makeIdentifier(encode("$true"), node.location);
     const schemeTest = estreeBuilder.makeCallExpression(
       truthy,
       [test],
@@ -217,7 +268,7 @@ export class Transpiler implements Visitor {
     const [expr] = node.value.accept(this);
 
     const makeSplice = estreeBuilder.makeIdentifier(
-      "make-splice",
+      encode("make-splice"),
       node.location,
     );
 
@@ -317,7 +368,10 @@ export class Transpiler implements Visitor {
       // cons* or list* produces dotted lists
       // we prefer list* here as it explicitly describes the
       // construction of an improper list - the word LIST
-      const dottedList = estreeBuilder.makeIdentifier("list*", node.location);
+      const dottedList = estreeBuilder.makeIdentifier(
+        encode("list*"),
+        node.location,
+      );
       return [
         estreeBuilder.makeCallExpression(
           dottedList,
@@ -328,7 +382,7 @@ export class Transpiler implements Visitor {
     }
 
     // a proper list
-    const list = estreeBuilder.makeIdentifier("list", node.location);
+    const list = estreeBuilder.makeIdentifier(encode("list"), node.location);
 
     return [estreeBuilder.makeCallExpression(list, newElements, node.location)];
   }
