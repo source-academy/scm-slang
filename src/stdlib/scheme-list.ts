@@ -1,12 +1,12 @@
-import { Pair } from "./scheme-base";
+import { Pair, car, cdr, cons, pairQ } from "./scheme-base";
 
 export let dotted_listQ = function (list: Pair): boolean {
   if (list === null) {
     return false;
-  } else if (list.cdr === null) {
+  } else if (cdr(list) === null) {
     return false;
-  } else if (list.cdr instanceof Pair) {
-    return dotted_listQ(list.cdr);
+  } else if (pairQ(cdr(list))) {
+    return dotted_listQ(cdr(list));
   } else {
     return true;
   }
@@ -18,10 +18,10 @@ export let filter = function (
 ): Pair | null {
   if (list === null) {
     return null;
-  } else if (predicate(list.car)) {
-    return new Pair(list.car, filter(predicate, list.cdr));
+  } else if (predicate(car(list))) {
+    return cons(car(list), filter(predicate, cdr(list)));
   } else {
-    return filter(predicate, list.cdr);
+    return filter(predicate, cdr(list));
   }
 };
 
@@ -39,8 +39,8 @@ export let fold = function (f: Function, init: any, ...lists: Pair[]): any {
   } else {
     return fold(
       f,
-      f(init, ...lists.map((list) => list.car)),
-      ...lists.map((list) => list.cdr),
+      f(init, ...lists.map((list) => car(list))),
+      ...lists.map((list) => cdr(list)),
     );
   }
 };
@@ -62,8 +62,8 @@ export let fold_right = function (
     return init;
   } else {
     return f(
-      ...lists.map((list) => list.car),
-      fold_right(f, init, ...lists.map((list) => list.cdr)),
+      ...lists.map((list) => car(list)),
+      fold_right(f, init, ...lists.map((list) => cdr(list))),
     );
   }
 };

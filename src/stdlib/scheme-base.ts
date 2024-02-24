@@ -11,6 +11,36 @@ G --> >
 to be changed with regex.
 */
 
+// Splice resolver
+
+// class SpliceMark {
+//   val: Pair | null;
+// }
+
+// // maps over a list. if the list contains a splice mark, it will
+// // splice the list into the result list.
+// export let resolve_splice = function (xs: any): Pair | null {
+//   if (!pairQ(xs)) {
+//     if (xs instanceof SpliceMark) {
+//       return xs.val;
+
+//   }
+//   const car_xs = car(xs);
+//   const cdr_xs = cdr(xs);
+//   if (car_xs instanceof SpliceMark) {
+//     return append(car_xs.val, resolve_splice(cdr_xs as Pair));
+//   } else {
+//     return cons(car_xs, resolve_splice(cdr_xs as Pair));
+//   }
+// }
+
+// export let make_splice = function(xs: any) {
+//   if (!listQ(xs)) {
+//     throw new Error("unquote-splicing: expected list, got " + xs.toString());
+//   }
+//   return new SpliceMark(xs);
+// }
+
 // Equivalence predicates
 
 export let eqQ = function (x: any, y: any): boolean {
@@ -37,8 +67,8 @@ export let equalQ = function (x: any, y: any): boolean {
     return true;
   } else if (typeof x === "number" && typeof y === "number") {
     return isNaN(x) && isNaN(y);
-  } else if (x instanceof Pair && y instanceof Pair) {
-    return equalQ(x.car, y.car) && equalQ(x.cdr, y.cdr);
+  } else if (pairQ(x) && pairQ(y)) {
+    return equalQ(car(x), car(y)) && equalQ(cdr(x), cdr(y));
   } else if (x instanceof _Symbol && y instanceof _Symbol) {
     return x.sym === y.sym;
   } else {
@@ -315,78 +345,68 @@ export let booleanEQ = function (b1: boolean, b2: boolean): boolean {
 
 // Special function needed by base scm-slang
 // to work with lists.
-export const $list_to_array = function (l: Pair): any[] {
+export const $list_to_array = function (l: List): any[] {
   let acc: any = [];
   while (!nullQ(l)) {
-    acc.push(car(l));
-    l = cdr(l);
+    acc.push(car(l as Pair));
+    l = cdr(l as Pair);
   }
   return acc;
 };
 
-export class Pair {
-  car: any;
-  cdr: any;
-  constructor(car: any, cdr: any) {
-    this.car = car;
-    this.cdr = cdr;
-  }
-
-  toString() {
-    return `(${this.car} . ${this.cdr})`;
-  }
-}
+export type Pair = [any, any];
+export type List = Pair | null;
 
 export let pairQ = function (p: any): boolean {
-  return p instanceof Pair;
+  return p instanceof Array && p.length === 2;
 };
 
 export let cons = function (car: any, cdr: any): Pair {
-  return new Pair(car, cdr);
+  return [car, cdr];
 };
 
 export let car = function (p: Pair): any {
   if (p === null) {
     error("car: null pair");
   }
-  return p.car;
+  return p[0];
 };
 
 export let cdr = function (p: Pair): any {
   if (p === null) {
     error("cdr: null pair");
   }
-  return p.cdr;
+  return p[1];
 };
 
 export let set_carB = function (p: Pair, val: any): void {
   if (p === null) {
     error("set-car!: null pair");
   }
-  p.car = val;
+  p[0] = val;
 };
 
 export let set_cdrB = function (p: Pair, val: any): void {
   if (p === null) {
     error("set-cdr!: null pair");
   }
-  p.cdr = val;
+  p[1] = val;
 };
 
 export let caar = function (p: Pair): any {
-  return p.car.car;
+  return car(car(p));
 };
 
 export let cadr = function (p: Pair): any {
-  return p.cdr.car;
+  return car(cdr(p));
 };
 
 export let cdar = function (p: Pair): any {
-  return p.car.cdr;
+  return cdr(car(p));
 };
 
 export let cddr = function (p: Pair): any {
-  return p.cdr.cdr;
+  return cdr(cdr(p));
 };
 
 export let nullQ = function (p: any): boolean {
@@ -394,13 +414,13 @@ export let nullQ = function (p: any): boolean {
 };
 
 export let listQ = function (p: any): boolean {
-  return p === null ? true : p instanceof Pair && listQ(p.cdr);
+  return p === null ? true : pairQ(p) && listQ(cdr(p));
 };
 
 export let make_list = function (n: number, val: any = null): Pair | null {
   let acc: Pair | null = null;
   for (let i = 0; i < n; i++) {
-    acc = new Pair(val, acc);
+    acc = cons(val, acc);
   }
   return acc;
 };
@@ -408,7 +428,15 @@ export let make_list = function (n: number, val: any = null): Pair | null {
 export let list = function (...args: any[]): Pair | null {
   let acc: Pair | null = null;
   for (let i = args.length - 1; i >= 0; i--) {
-    acc = new Pair(args[i], acc);
+    acc = cons(args[i], acc);
+  }
+  return acc;
+};
+
+export let list_star = function (...args: any[]): Pair | any {
+  let acc: any = args[args.length - 1];
+  for (let i = args.length - 2; i >= 0; i--) {
+    acc = cons(args[i], acc);
   }
   return acc;
 };
@@ -417,7 +445,7 @@ export let length = function (p: Pair | null): number {
   let acc = 0;
   while (p !== null) {
     acc++;
-    p = p.cdr;
+    p = cdr(p);
   }
   return acc;
 };
@@ -442,8 +470,8 @@ export let append = function (...args: (Pair | null)[]): Pair | null {
 export let reverse = function (p: Pair | null): Pair | null {
   let acc: Pair | null = null;
   while (p !== null) {
-    acc = new Pair(p.car, acc);
-    p = p.cdr;
+    acc = cons(car(p), acc);
+    p = cdr(p);
   }
   return acc;
 };
@@ -452,7 +480,7 @@ export let list_tail = function (p: Pair | null, n: number): Pair | null {
   if (n === 0) {
     return p;
   } else {
-    return list_tail(p!.cdr, n - 1);
+    return list_tail(cdr(p as Pair), n - 1);
   }
 };
 
@@ -467,20 +495,20 @@ export let list_setB = function (p: Pair | null, n: number, val: any): void {
 export let memq = function (item: any, p: Pair | null): Pair | null | boolean {
   if (p === null) {
     return false;
-  } else if (eqQ(p.car, item)) {
+  } else if (eqQ(car(p), item)) {
     return p;
   } else {
-    return memq(item, p.cdr);
+    return memq(item, cdr(p));
   }
 };
 
 export let memv = function (item: any, p: Pair | null): Pair | null | boolean {
   if (p === null) {
     return false;
-  } else if (eqvQ(p.car, item)) {
+  } else if (eqvQ(car(p), item)) {
     return p;
   } else {
-    return memv(item, p.cdr);
+    return memv(item, cdr(p));
   }
 };
 
@@ -490,40 +518,40 @@ export let member = function (
 ): Pair | null | boolean {
   if (p === null) {
     return false;
-  } else if (equalQ(p.car, item)) {
+  } else if (equalQ(car(p), item)) {
     return p;
   } else {
-    return member(item, p.cdr);
+    return member(item, cdr(p));
   }
 };
 
 export let assq = function (item: any, p: Pair | null): Pair | null | boolean {
   if (p === null) {
     return false;
-  } else if (eqQ(p.car.car, item)) {
-    return p.car;
+  } else if (eqQ(caar(p), item)) {
+    return car(p);
   } else {
-    return assq(item, p.cdr);
+    return assq(item, cdr(p));
   }
 };
 
 export let assv = function (item: any, p: Pair | null): Pair | null | boolean {
   if (p === null) {
     return false;
-  } else if (eqvQ(p.car.car, item)) {
-    return p.car;
+  } else if (eqvQ(caar(p), item)) {
+    return car(p);
   } else {
-    return assv(item, p.cdr);
+    return assv(item, cdr(p));
   }
 };
 
 export let assoc = function (item: any, p: Pair | null): Pair | null | boolean {
   if (p === null) {
     return false;
-  } else if (equalQ(p.car.car, item)) {
-    return p.car;
+  } else if (equalQ(caar(p), item)) {
+    return car(p);
   } else {
-    return assoc(item, p.cdr);
+    return assoc(item, cdr(p));
   }
 };
 
@@ -531,7 +559,7 @@ export let list_copy = function (p: Pair | null): Pair | null {
   if (p === null) {
     return null;
   } else {
-    return cons(p.car, list_copy(p.cdr));
+    return cons(car(p), list_copy(cdr(p)));
   }
 };
 
@@ -634,7 +662,7 @@ export let string_append = function (...args: string[]): string {
 export let string_Glist = function (s: string): Pair | null {
   let acc: Pair | null = null;
   for (let i = s.length - 1; i >= 0; i--) {
-    acc = new Pair(s[i], acc);
+    acc = cons(s[i], acc);
   }
   return acc;
 };
@@ -642,8 +670,8 @@ export let string_Glist = function (s: string): Pair | null {
 export let list_Gstring = function (p: Pair | null): string {
   let acc = "";
   while (p !== null) {
-    acc += p.car;
-    p = p.cdr;
+    acc += car(p);
+    p = cdr(p);
   }
   return acc;
 };
@@ -680,23 +708,10 @@ export let string_for_each = function (f: Function, s: string): void {
 
 // Vectors
 
-export class Vector {
-  vec: any[];
-  constructor(vec: any[]) {
-    this.vec = vec;
-  }
-
-  toString() {
-    return "#(" + this.vec.join(" ") + ")";
-  }
-
-  equals(other: any) {
-    return other instanceof Vector && this.vec === other.vec;
-  }
-}
+export type Vector = Array<any>;
 
 export let vectorQ = function (v: any): boolean {
-  return v instanceof Vector;
+  return v instanceof Array;
 };
 
 export let make_vector = function (n: number, fill: any = null): Vector {
@@ -704,29 +719,29 @@ export let make_vector = function (n: number, fill: any = null): Vector {
   for (let i = 0; i < n; i++) {
     acc.push(fill);
   }
-  return new Vector(acc);
+  return acc;
 };
 
 export let vector = function (...args: any[]): Vector {
-  return new Vector(args);
+  return args;
 };
 
 export let vector_length = function (v: Vector): number {
-  return v.vec.length;
+  return v.length;
 };
 
 export let vector_ref = function (v: Vector, n: number): any {
-  return v.vec[n];
+  return v[n];
 };
 
 export let vector_setB = function (v: Vector, n: number, item: any): void {
-  v.vec[n] = item;
+  v[n] = item;
 };
 
 export let vector_Glist = function (v: Vector): Pair | null {
   let acc: Pair | null = null;
-  for (let i = v.vec.length - 1; i >= 0; i--) {
-    acc = new Pair(v.vec[i], acc);
+  for (let i = v.length - 1; i >= 0; i--) {
+    acc = cons(v[i], acc);
   }
   return acc;
 };
@@ -734,16 +749,16 @@ export let vector_Glist = function (v: Vector): Pair | null {
 export let list_Gvector = function (p: Pair | null): Vector {
   let acc: any[] = [];
   while (p !== null) {
-    acc.push(p.car);
-    p = p.cdr;
+    acc.push(car(p));
+    p = cdr(p);
   }
-  return new Vector(acc);
+  return acc;
 };
 
 export let vector_Gstring = function (v: Vector): string {
   let acc = "";
-  for (let i = 0; i < v.vec.length; i++) {
-    acc += v.vec[i];
+  for (let i = 0; i < v.length; i++) {
+    acc += v[i];
   }
   return acc;
 };
@@ -753,29 +768,37 @@ export let string_Gvector = function (s: string): Vector {
   for (let i = 0; i < s.length; i++) {
     acc.push(s[i]);
   }
-  return new Vector(acc);
+  return acc;
 };
 
 export let vector_copy = function (v: Vector): Vector {
-  return new Vector(v.vec);
+  return [...v];
 };
 
-// Does nothing.
-export let vector_copyB = function (v: Vector): Vector {
-  return new Vector(v.vec);
+export let vector_copyB = function (
+  to: Vector,
+  at: number,
+  from: Vector,
+  start: number | undefined = undefined,
+  end: number | undefined = undefined,
+): Vector {
+  if (start === undefined) {
+    start = 0;
+  }
+  if (end === undefined) {
+    end = from.length;
+  }
+  to.splice(at, end - start, ...from.slice(start, end));
+  return to;
 };
 
 export let vector_append = function (...args: Vector[]): Vector {
-  let acc: any[] = [];
-  for (let i = 0; i < args.length; i++) {
-    acc = acc.concat(args[i].vec);
-  }
-  return new Vector(acc);
+  return args.reduce((a, b) => a.concat(b), []);
 };
 
 export let vector_fillB = function (v: Vector, fill: any): void {
-  for (let i = 0; i < v.vec.length; i++) {
-    v.vec[i] = fill;
+  for (let i = 0; i < v.length; i++) {
+    v[i] = fill;
   }
 };
 

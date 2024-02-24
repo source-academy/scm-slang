@@ -32,8 +32,8 @@ export function schemeToString(x: any): string {
     str = "(";
     let p = x as base.Pair;
     while (p !== null) {
-      str += schemeToString(p.car);
-      p = p.cdr;
+      str += schemeToString(base.car(p));
+      p = base.cdr(p) as base.Pair;
       if (p !== null) {
         str += " ";
       }
@@ -43,16 +43,16 @@ export function schemeToString(x: any): string {
     str = "(";
     let p = x as base.Pair;
     while (base.pairQ(p)) {
-      str = `${str}${schemeToString(p.car)} `;
-      p = p.cdr;
+      str = `${str}${schemeToString(base.car(p))} `;
+      p = base.cdr(p) as base.Pair;
     }
     str = `${str}. ${schemeToString(p)})`;
   } else if (base.vectorQ(x)) {
     str = "#(";
     let v = x as base.Vector;
-    for (let i = 0; i < v.vec.length; i++) {
-      str += schemeToString(v.vec[i]);
-      if (i !== v.vec.length - 1) {
+    for (let i = 0; i < v.length; i++) {
+      str += schemeToString(v[i]);
+      if (i !== v.length - 1) {
         str += " ";
       }
     }
