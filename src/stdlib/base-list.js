@@ -47,8 +47,7 @@ export let circular$45$list = (...elems) => {
     elems = vector$45$$62$list(elems);
     return (xs => {
         truthy(not(null$63$(xs))) ? set_tail(last$45$pair(xs), xs) : undefined;
-        xs;
-        undefined;
+        return xs;
     })(apply(list, elems));
 };
 export let list$45$tail = (xs, k) => truthy($61$(k, 0)) ? xs : list$45$tail(cdr(xs), $45$(k, 1));
@@ -57,8 +56,7 @@ export let car = head;
 export let cdr = tail;
 export let take = (xs, i) => {
     let take$45$helper = (xs, i, acc) => truthy(or(null$63$(xs), $61$(i, 0))) ? reverse(acc) : take$45$helper(cdr(xs), $45$(i, 1), cons(car(xs), acc));
-    take$45$helper(xs, i, null);
-    undefined;
+    return take$45$helper(xs, i, null);
 };
 export let drop = (xs, i) => truthy(or(null$63$(xs), $61$(i, 0))) ? xs : drop(cdr(xs), $45$(i, 1));
 export let last = xs => truthy(null$63$(xs)) ? error('last: empty list') : truthy(null$63$(cdr(xs))) ? car(xs) : last(cdr(xs));
@@ -109,13 +107,11 @@ export let not$45$pair$63$ = compose(not, pair$63$);
 export let null$63$ = is_null;
 export let circular$45$list$63$ = cxs => {
     let circular$45$helper = (xs, ys) => truthy(null$63$(xs)) ? false : truthy(null$63$(ys)) ? false : truthy(not(pair$63$(xs))) ? false : truthy(not(pair$63$(ys))) ? false : truthy(not(pair$63$(cdr(ys)))) ? false : truthy(eq$63$(xs, ys)) ? true : circular$45$helper(cdr(xs), cddr(ys));
-    truthy(null$63$(cxs)) ? false : truthy(not(pair$63$(cxs))) ? false : circular$45$helper(cxs, cdr(cxs));
-    undefined;
+    return truthy(null$63$(cxs)) ? false : truthy(not(pair$63$(cxs))) ? false : circular$45$helper(cxs, cdr(cxs));
 };
 export let proper$45$list$63$ = pxs => {
     let list$45$helper = xs => truthy(null$63$(xs)) ? true : truthy(not(pair$63$(xs))) ? false : list$45$helper(cdr(xs));
-    and(not(circular$45$list$63$(pxs)), is_list(pxs));
-    undefined;
+    return and(not(circular$45$list$63$(pxs)), is_list(pxs));
 };
 export let dotted$45$list$63$ = dxs => and(not(proper$45$list$63$(dxs)), not(circular$45$list$63$(dxs)));
 export let null$45$list$63$ = null$63$;
@@ -128,21 +124,18 @@ export let map = (f, xs, ...rest$45$xs) => {
         xss = vector$45$$62$list(xss);
         return truthy(any(null$63$, xxs)) ? null : cons(apply(f, atomic$45$map(car, xxs)), apply(map$45$all, f, atomic$45$map(cdr, xxs)));
     };
-    truthy(null$63$(rest$45$xs)) ? atomic$45$map(f, xs) : map$45$all(f, cons(xs, rest$45$xs));
-    undefined;
+    return truthy(null$63$(rest$45$xs)) ? atomic$45$map(f, xs) : map$45$all(f, cons(xs, rest$45$xs));
 };
 export let fold = (f, init, xs1, ...rest) => {
     rest = vector$45$$62$list(rest);
     let all$45$xs = cons(xs1, rest);
     let elem = () => apply(f, append(map(car, all$45$xs), list(init)));
-    truthy(any(null$63$, all$45$xs)) ? init : apply(fold, f, force(elem), cdr(xs1), map(cdr, rest));
-    undefined;
+    return truthy(any(null$63$, all$45$xs)) ? init : apply(fold, f, force(elem), cdr(xs1), map(cdr, rest));
 };
 export let fold$45$right = (f, init, xs1, ...rest) => {
     rest = vector$45$$62$list(rest);
     let all$45$xs = cons(xs1, rest);
-    truthy(any(null$63$, all$45$xs)) ? init : apply(f, append(map(car, all$45$xs), list(apply(fold$45$right, f, init, cdr(xs1), map(cdr, rest)))));
-    undefined;
+    return truthy(any(null$63$, all$45$xs)) ? init : apply(f, append(map(car, all$45$xs), list(apply(fold$45$right, f, init, cdr(xs1), map(cdr, rest)))));
 };
 export let fold$45$left = fold;
 export let reduce = (f, ridentity, xs) => truthy(null$63$(xs)) ? ridentity : fold(f, car(xs), cdr(xs));
@@ -158,8 +151,7 @@ export let list$61$ = (elt$61$, ...rest) => {
             return ((wish, curr) => and(wish, apply(elt$61$, curr)))(car(reverse(all)), cdr(reverse(all)));
         }, true, rest);
     };
-    truthy(null$63$(rest)) ? true : truthy(not(length$45$helper(rest))) ? false : apply(list$61$helper, elt$61$, rest);
-    undefined;
+    return truthy(null$63$(rest)) ? true : truthy(not(length$45$helper(rest))) ? false : apply(list$61$helper, elt$61$, rest);
 };
 export let any = (pred, xs) => $62$(length(filter(pred, xs)), 0);
 export let length = xs => fold((x, y) => $43$(1, y), 0, xs);
