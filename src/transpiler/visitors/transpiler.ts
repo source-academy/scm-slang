@@ -59,7 +59,7 @@ export class Transpiler implements Visitor {
     );
 
     // promote the last expression to a return statement
-    const lastExpression: es.Statement = expressions.at(-1);
+    const lastExpression: es.Statement = statements.at(-1);
 
     // if the last expression is not something that emits an expression,
     // the sequence should return undefined
