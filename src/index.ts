@@ -1,6 +1,6 @@
 import { encode as b64Encode, decode as b64Decode } from "js-base64";
 
-export * from "./utils/prelude-visitor";
+export * from "./utils/encoder-visitor";
 export { LexerError } from "./transpiler";
 export { ParserError } from "./transpiler";
 export { schemeParse } from "./transpiler";

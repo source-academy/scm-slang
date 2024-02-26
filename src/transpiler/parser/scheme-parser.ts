@@ -1257,7 +1257,12 @@ export class SchemeParser implements Parser {
 
     const convertedDefinition = this.parseExpression(definition);
     // assert that convertedDefinition is a definition
-    if (!(convertedDefinition instanceof Atomic.Definition)) {
+    if (
+      !(
+        convertedDefinition instanceof Atomic.Definition ||
+        convertedDefinition instanceof Extended.FunctionDefinition
+      )
+    ) {
       throw new ParserError.UnexpectedTokenError(
         this.source,
         definition.firstToken().pos,

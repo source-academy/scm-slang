@@ -11,7 +11,6 @@ import {
   Expression as scmExpression,
 } from "../types/nodes/scheme-node-types";
 import { Visitor } from ".";
-import { encode } from "../../index";
 
 // helper functions
 
@@ -66,7 +65,7 @@ export class Transpiler implements Visitor {
     // the sequence should return undefined
     if (lastExpression.type !== "ExpressionStatement") {
       statements.push(
-        // alwayr remember that undefined is an identifier
+        // always remember that undefined is an identifier
         wrapInStatement(
           estreeBuilder.makeIdentifier("undefined", node.location),
         ),
@@ -141,22 +140,27 @@ export class Transpiler implements Visitor {
     // place an implicit vector-to-list conversion around the rest parameter
     // this is to ensure that the rest parameter is always a list
     const vectorToList = estreeBuilder.makeIdentifier(
-      encode("vector->list"),
+      "vector->list",
+      node.location,
+    );
+
+    // we make a call to it with the rest parameter as the argument
+    const restParameterConversion = estreeBuilder.makeCallExpression(
+      vectorToList,
+      [restParameter],
+      node.location,
+    );
+
+    // then we reassign the rest parameter to the result of the call
+    const restParameterAssignment = estreeBuilder.makeAssignmentExpression(
+      restParameter,
+      restParameterConversion,
       node.location,
     );
 
     // then we inject it into the final body
     if (finalBody.type === "BlockStatement") {
-      finalBody.body.unshift(
-        wrapInStatement(
-          estreeBuilder.makeCallExpression(
-            vectorToList,
-            [restParameter],
-            node.location,
-          ),
-        ),
-      );
-
+      finalBody.body.unshift(wrapInStatement(restParameterAssignment));
       return [
         estreeBuilder.makeArrowFunctionExpression(
           parameters,
@@ -169,13 +173,7 @@ export class Transpiler implements Visitor {
     // otherwise, we need to wrap the final body in a block statement
     // and then inject the vectorToList call
     finalBody = estreeBuilder.makeBlockStatement([
-      wrapInStatement(
-        estreeBuilder.makeCallExpression(
-          vectorToList,
-          [restParameter],
-          node.location,
-        ),
-      ),
+      wrapInStatement(restParameterAssignment),
       wrapInReturn(finalBody),
     ]);
 
@@ -214,8 +212,8 @@ export class Transpiler implements Visitor {
   visitConditional(node: Atomic.Conditional): [es.ConditionalExpression] {
     const [test] = node.test.accept(this);
     // scheme's truthiness is different from javascript's,
-    // and so we must use a custom truthiness function $true to evaluate the test
-    const truthy = estreeBuilder.makeIdentifier(encode("$true"), node.location);
+    // and so we must use a custom truthiness function truthy to evaluate the test
+    const truthy = estreeBuilder.makeIdentifier("truthy", node.location);
     const schemeTest = estreeBuilder.makeCallExpression(
       truthy,
       [test],
@@ -268,7 +266,7 @@ export class Transpiler implements Visitor {
     const [expr] = node.value.accept(this);
 
     const makeSplice = estreeBuilder.makeIdentifier(
-      encode("make-splice"),
+      "make-splice",
       node.location,
     );
 
@@ -310,7 +308,7 @@ export class Transpiler implements Visitor {
 
     const specifiers = makeSpecifiers(newIdentifiers, mappedIdentifierNames);
 
-    const source = node.source.accept(this);
+    const [source] = node.source.accept(this);
 
     const importDeclaration = estreeBuilder.makeImportDeclaration(
       specifiers,
@@ -344,7 +342,7 @@ export class Transpiler implements Visitor {
   }
 
   visitExport(node: Atomic.Export): [es.ModuleDeclaration] {
-    const newDefinition = node.definition.accept(this);
+    const [newDefinition] = node.definition.accept(this);
     return [
       estreeBuilder.makeExportNamedDeclaration(newDefinition, node.location),
     ];
@@ -361,17 +359,14 @@ export class Transpiler implements Visitor {
   // this is in the extended AST, but useful enough to keep.
   visitList(node: Extended.List): [es.CallExpression] {
     const newElements = node.elements.flatMap((e) => e.accept(this));
-    const newTerminator = node.terminator
+    const [newTerminator] = node.terminator
       ? node.terminator.accept(this)
-      : undefined;
+      : [undefined];
     if (newTerminator) {
       // cons* or list* produces dotted lists
       // we prefer list* here as it explicitly describes the
       // construction of an improper list - the word LIST
-      const dottedList = estreeBuilder.makeIdentifier(
-        encode("list*"),
-        node.location,
-      );
+      const dottedList = estreeBuilder.makeIdentifier("list*", node.location);
       return [
         estreeBuilder.makeCallExpression(
           dottedList,
@@ -382,7 +377,7 @@ export class Transpiler implements Visitor {
     }
 
     // a proper list
-    const list = estreeBuilder.makeIdentifier(encode("list"), node.location);
+    const list = estreeBuilder.makeIdentifier("list", node.location);
 
     return [estreeBuilder.makeCallExpression(list, newElements, node.location)];
   }

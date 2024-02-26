@@ -91,7 +91,7 @@ export function makeArrowFunctionExpression(
     params,
     body,
     async: false,
-    expression: true,
+    expression: body.type !== "BlockStatement",
     loc: loc ? loc : body.loc,
   };
 }
