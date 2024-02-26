@@ -4,22 +4,28 @@ import {
     atomic_not as importedatomic_not,
     is_boolean as importedis_boolean
 } from './core-bool';
-let atomic_and = importedatomic_and;
-let atomic_or = importedatomic_or;
-let atomic_not = importedatomic_not;
-let is_boolean = importedis_boolean;
 import { vector$45$$62$list as importedvector$45$$62$list } from './core-list';
-let vector$45$$62$list = importedvector$45$$62$list;
 import { fold as importedfold } from './base-list';
-let fold = importedfold;
-export let boolean$63$ = is_boolean;
-export let and = (...args) => {
-    args = vector$45$$62$list(args);
+
+let atomic_and: (a: boolean, b: boolean) => boolean = importedatomic_and;
+let atomic_or: (a: boolean, b: boolean) => boolean = importedatomic_or;
+let atomic_not: (a: boolean) => boolean = importedatomic_not;
+let is_boolean: (a: any) => boolean = importedis_boolean;
+let vector$44$$62$list: (a: any[]) => any[] = importedvector$45$$62$list;
+let fold: (a: (accumulator: any, currentValue: any) => any, b: any, c: any[]) => any = importedfold;
+
+export let boolean$62$: (a: any) => boolean = is_boolean;
+
+export let and: (...args: any[]) => boolean = (...args) => {
+    args = vector$44$$62$list(args);
     return fold(atomic_and, true, args);
 };
-export let or = (...args) => {
-    args = vector$45$$62$list(args);
+
+export let or: (...args: any[]) => boolean = (...args) => {
+    args = vector$44$$62$list(args);
     return fold(atomic_or, false, args);
 };
-export let not = atomic_not;
-export let boolean$61$$63$ = (p1, p2) => and(boolean$63$(p1), boolean$63$(p2), or(and(p1, p2), and(not(p1), not(p2))));
+
+export let not: (a: boolean) => boolean = atomic_not;
+
+export let boolean$61$$63$: (p1: any, p2: any) => boolean = (p1, p2) => and(boolean$62$(p1), boolean$62$(p2), or(and(p1, p2), and(not(p1), not(p2))));
