@@ -5,7 +5,7 @@
     atomic_add atomic_subtract atomic_multiply atomic_divide))
 
 (import "./base-list" (fold last reverse car cdr null?))
-(import "./base-boolean" (and))
+(import "./base-bool" (and))
 
 (export (define number? is_number))
 (export (define integer? is_integer))

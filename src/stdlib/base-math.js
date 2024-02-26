@@ -46,7 +46,7 @@ let reverse = importedreverse;
 let car = importedcar;
 let cdr = importedcdr;
 let null$63$ = importednull$63$;
-import { and as importedand } from './base-boolean';
+import { and as importedand } from './base-bool';
 let and = importedand;
 export let number$63$ = is_number;
 export let integer$63$ = is_integer;
