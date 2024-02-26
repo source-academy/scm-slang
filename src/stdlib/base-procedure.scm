@@ -1,4 +1,5 @@
-(import "./base" (fold))
+(import "./base-list" (fold))
+(import "./core-list" (vector->list))
 
 (export (define (identity x) x))
 (export (define (compose . fs)

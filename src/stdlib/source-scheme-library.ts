@@ -1,5 +1,5 @@
 import * as base from "./base";
-import * as core from "./core";
+//import * as core from "./core";
 //import * as lazy from "./scheme-lazy";
 //import * as cxr from "./scheme-cxr";
 
