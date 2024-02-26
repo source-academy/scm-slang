@@ -314,8 +314,11 @@ export namespace Atomic {
    */
   export class Export implements Expression {
     location: Location;
-    definition: Definition;
-    constructor(location: Location, definition: Definition) {
+    definition: Definition | Extended.FunctionDefinition;
+    constructor(
+      location: Location,
+      definition: Definition | Extended.FunctionDefinition,
+    ) {
       this.location = location;
       this.definition = definition;
     }

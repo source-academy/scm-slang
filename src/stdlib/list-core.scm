@@ -1,5 +1,6 @@
 #|
 We will implement scm-slang's core list library using scheme itself.
+list-core implements SRFI-1, which is the core list library for scheme.
 |#
 (import "sicp" (error pair head tail set_head set_tail is_pair is_list is_null))
 
@@ -35,8 +36,48 @@ We will implement scm-slang's core list library using scheme itself.
                 (if (not (null? xs)) (set_tail (last-pair xs) xs))
                 xs)))
 ;; Define the accessors
+(export (define (list-tail xs k)
+            (if (= k 0)
+                xs
+                (list-tail (cdr xs) (- k 1)))))
+(export (define (list-ref xs k)
+            (car (list-tail xs k))))
 (export (define car head))
 (export (define cdr tail))
+(export (define (take xs i)
+            (define (take-helper xs i acc)
+                (if (or (null? xs) (= i 0))
+                    (reverse acc)
+                    (take-helper (cdr xs) (- i 1) (cons (car xs) acc))))
+            (take-helper xs i '())))
+(export (define (drop xs i)
+            (if (or (null? xs) (= i 0))
+                xs
+                (drop (cdr xs) (- i 1)))))
+;; we have omitted quite a few functions from SRFI-1 here.
+;; see take-right, drop-right, take-while, drop-while, etc...
+(export (define (last xs)
+            (if (null? xs)
+                (error "last: empty list")
+                (if (null? (cdr xs))
+                    (car xs)
+                    (last (cdr xs))))))
+(export (define (last-pair xs)
+            (if (null? xs)
+                (error "last-pair: empty list")
+                (if (null? (cdr xs))
+                    xs
+                    (last-pair (cdr xs))))))
+(export (define first car))
+(export (define second cadr))
+(export (define third caddr))
+(export (define fourth cadddr))
+(export (define fifth (compose car cddddr)))
+(export (define sixth (compose cadr cddddr)))
+(export (define seventh (compose caddr cddddr)))
+(export (define eighth (compose cadddr cddddr)))
+(export (define ninth (compose car cddddr cddddr)))
+(export (define tenth (compose cadr cddddr cddddr)))
 (export (define caar (compose car car)))
 (export (define cadr (compose car cdr)))
 (export (define cdar (compose cdr car)))
@@ -69,19 +110,45 @@ We will implement scm-slang's core list library using scheme itself.
 ;; Define the mutators
 (export (define set-car! set_head))
 (export (define set-cdr! set_tail))
+(export (define (list-set! xs k v)
+            (set-car! (list-tail xs k) v)))
 
 ;; Define the predicates
 (export (define pair? is_pair))
+(export (define not-pair? (compose not pair?)))
 (export (define null? is_null))
-(export (define proper-list? is_list))
+(export (define (circular-list? cxs)
+            (define (circular-helper xs ys)
+                (cond
+                    [(null? xs) #f]
+                    [(null? ys) #f]
+                    [(not (pair? xs)) #f]
+                    [(not (pair? ys)) #f]
+                    [(not (pair? (cdr ys))) #f]
+                    [(eq? xs ys) #t]
+                    [else (circular-helper (cdr xs) (cddr ys))]))
+            (cond 
+                [(null? cxs) #f]
+                [(not (pair? cxs)) #f]
+                [else (circular-helper cxs (cdr cxs))])))
+(export (define (proper-list? pxs)
+            ;; ensure that the list is not circular before
+            ;; using our helper function.
+            (define (list-helper xs)
+                (cond
+                    [(null? xs) #t]
+                    [(not (pair? xs)) #f]
+                    [else (list-helper (cdr xs))]))
+            (and
+                (not (circular-list? pxs))
+                (is_list pxs))))
+;; we have defined proper lists and circular lists.
+;; dotted lists are the remainder of cases.
 (export (define (dotted-list? dxs)
-            (and (pair? dxs) (not (proper-list? dxs)))))
-(export (define (circular-list? xs)
-            (let ([tortoise xs] [hare xs])
-                (let loop ([tortoise (cdr tortoise)] [hare (cdr (cdr hare))])
-                    (cond [(or (null? tortoise) (null? hare)) #f]
-                          [(eq? tortoise hare) #t]
-                          [else (loop (cdr tortoise) (cdr (cdr hare)))])))))
+            (and 
+                (not (proper-list? dxs))
+                (not (circular-list? dxs)))))
+(export (define null-list? null?))
 ;; for SICP
 (export (define list? proper-list?))
 
@@ -115,7 +182,7 @@ We will implement scm-slang's core list library using scheme itself.
 (export (define (fold f init xs1 . rest)
             ;; it's easier to reason about all of the lists together
             (define all-xs (cons xs1 rest))
-            (define elem (delay (apply f (append (map car all-xs) '(init)))))
+            (define elem (delay (apply f (append (map car all-xs) (list init)))))
             (if (any null? all-xs)
                 init
                 (apply fold f (force elem) (cdr xs1) (map cdr rest)))))
@@ -123,12 +190,12 @@ We will implement scm-slang's core list library using scheme itself.
 (export (define (fold-right f init xs1 . rest)
             ;; its easier to reason about all of the lists together
             (define all-xs (cons xs1 rest))
-            (define elem (delay (apply f (append (map car all-xs) '(init)))))
             (if (any null? all-xs)
                 init
-                (apply f
-                    (map car all-xs)
-                    (apply fold-right f init (cdr xs1) (map cdr rest))))))
+                (apply f 
+                    (append
+                        (map car all-xs)
+                        (list (apply fold-right f init (cdr xs1) (map cdr rest))))))))
 
 (export (define fold-left fold))
 
@@ -149,11 +216,50 @@ We will implement scm-slang's core list library using scheme itself.
 ;; The rest of the functions needed to deal with lists.
 ;; Most can be implemented in terms of the core functions defined above.
 
+;; list equality predicate
+(export (define (list= elt= . rest)
+            ;; length-helper helps to find if each list is of the same length.
+            ;; the list is assured not to be empty
+            (define (length-helper xxs)
+                (reduce 
+                    ;; wish is the length of the first list
+                    ;; or false
+                    (lambda (curr wish) 
+                        (cond
+                            [wish (if (= (length curr) wish) wish #f)]
+                            [else #f])) 
+                    #t 
+                    xxs))
+
+            ;; list=helper is a helper function that takes a list of lists
+            ;; where it is assured that each are of the same length.
+            (define (list=helper elt= . rest)
+                (apply fold
+                    (lambda all 
+                        ;; all represents all the elements plus
+                        ;; one wish element
+                        (let ([wish (car (reverse all))] [curr (cdr (reverse all))])
+                            (and 
+                                wish
+                                (apply elt= curr))))
+                    #t
+                    rest))
+            (cond
+                [(null? rest) #t]
+                [(not (length-helper rest)) #f]
+                [else (apply list=helper elt= rest)])))
+            
+
 (export (define (any pred xs)
             (> (length (filter pred xs)) 0)))
 
 (export (define (length xs)
             (fold (lambda (x y) (+ 1 y)) 0 xs)))
+
+(export (define (length+ xs)
+            (if (circular-list? xs)
+                #f
+                (fold (lambda (x y) (+ 1 y)) 0 xs))))
 
 (export (define (append . xss)
             (cond 
@@ -163,16 +269,9 @@ We will implement scm-slang's core list library using scheme itself.
                 ;; else recursively destruct the first list and append the rest.
                 [else (cons (caar xxs) (apply append (cons (cdar xss) (cdr xss))))])))
 
+(export (define (concatenate xss)
+            (apply append xss)))
+
 (export (define (reverse xs) 
             (fold (lambda (x y) (cons x y)) '() xs)))
 
-(export (define (list-tail xs k)
-            (if (= k 0)
-                xs
-                (list-tail (cdr xs) (- k 1)))))
-
-(export (define (list-ref xs k)
-            (car (list-tail xs k))))
-
-(export (define (list-set! xs k v)
-            (set-car! (list-tail xs k) v)))
