@@ -5,10 +5,12 @@ list-core implements SRFI-1, which is the core list library for scheme.
 (import "sicp" (error pair head tail set_head set_tail is_pair is_list is_null))
 
 ;; these imports are required to support variadic functions and truthy values.
-(import "./core" (truthy vector->list force))
-(import "./core" (apply))
-(import "./base" (compose))
-(import "./base" (< = + -))
+(import "./core-list" (vector->list))
+(import "./core-procedure" (apply))
+(import "./core-delay" (force))
+(import "./core-bool" (truthy))
+(import "./base-procedure" (compose))
+(import "./base-math" (< = + -))
 
 ;; Define the constructors
 (export (define cons pair))

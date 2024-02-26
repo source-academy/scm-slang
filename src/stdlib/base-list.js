@@ -18,24 +18,22 @@ let set_tail = importedset_tail;
 let is_pair = importedis_pair;
 let is_list = importedis_list;
 let is_null = importedis_null;
-import {
-    truthy as importedtruthy,
-    vector$45$$62$list as importedvector$45$$62$list,
-    force as importedforce
-} from './core';
-let truthy = importedtruthy;
+import { vector$45$$62$list as importedvector$45$$62$list } from './core-list';
 let vector$45$$62$list = importedvector$45$$62$list;
-let force = importedforce;
-import { apply as importedapply } from './core';
+import { apply as importedapply } from './core-procedure';
 let apply = importedapply;
-import { compose as importedcompose } from './base';
+import { force as importedforce } from './core-delay';
+let force = importedforce;
+import { truthy as importedtruthy } from './core-bool';
+let truthy = importedtruthy;
+import { compose as importedcompose } from './base-procedure';
 let compose = importedcompose;
 import {
     $60$ as imported$60$,
     $61$ as imported$61$,
     $43$ as imported$43$,
     $45$ as imported$45$
-} from './base';
+} from './base-math';
 let $60$ = imported$60$;
 let $61$ = imported$61$;
 let $43$ = imported$43$;

@@ -15,7 +15,7 @@ import {
     atomic_subtract as importedatomic_subtract,
     atomic_multiply as importedatomic_multiply,
     atomic_divide as importedatomic_divide
-} from 'core-math';
+} from './core-math';
 let is_number = importedis_number;
 let is_integer = importedis_integer;
 let is_rational = importedis_rational;
@@ -39,14 +39,14 @@ import {
     car as importedcar,
     cdr as importedcdr,
     null$63$ as importednull$63$
-} from 'base-list';
+} from './base-list';
 let fold = importedfold;
 let last = importedlast;
 let reverse = importedreverse;
 let car = importedcar;
 let cdr = importedcdr;
 let null$63$ = importednull$63$;
-import { and as importedand } from 'base-boolean';
+import { and as importedand } from './base-boolean';
 let and = importedand;
 export let number$63$ = is_number;
 export let integer$63$ = is_integer;

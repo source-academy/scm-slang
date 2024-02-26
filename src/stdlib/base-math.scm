@@ -1,11 +1,11 @@
-(import "core-math" 
+(import "./core-math" 
     (is_number is_integer is_rational is_real is_complex
     atomic_negate atomic_inverse 
     atomic_equals atomic_less_than atomic_less_than_or_equals atomic_greater_than atomic_greater_than_or_equals
     atomic_add atomic_subtract atomic_multiply atomic_divide))
 
-(import "base-list" (fold last reverse car cdr null?))
-(import "base-boolean" (and))
+(import "./base-list" (fold last reverse car cdr null?))
+(import "./base-boolean" (and))
 
 (export (define number? is_number))
 (export (define integer? is_integer))

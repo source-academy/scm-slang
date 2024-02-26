@@ -3,13 +3,17 @@ import {
     atomic_or as importedatomic_or,
     atomic_not as importedatomic_not,
     is_boolean as importedis_boolean
-} from 'core-bool';
+} from './core-bool';
 let atomic_and = importedatomic_and;
 let atomic_or = importedatomic_or;
 let atomic_not = importedatomic_not;
 let is_boolean = importedis_boolean;
-import { fold as importedfold } from 'core-list';
+import {
+    fold as importedfold,
+    vector$45$$62$list as importedvector$45$$62$list
+} from './core-list';
 let fold = importedfold;
+let vector$45$$62$list = importedvector$45$$62$list;
 export let boolean$63$ = is_boolean;
 export let and = (...args) => {
     args = vector$45$$62$list(args);
