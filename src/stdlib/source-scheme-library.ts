@@ -1,13 +1,10 @@
-import * as base from "./scheme-base";
-import * as list from "./scheme-list";
+import * as base from "./base";
+import * as core from "./core";
 //import * as lazy from "./scheme-lazy";
 //import * as cxr from "./scheme-cxr";
 
-export * from "./scheme-base";
-export * from "./scheme-list";
-export * from "./scheme-lazy";
-export * from "./scheme-cxr";
-
+export * from "./base";
+export * from "./core";
 // Extracts the arguments from a function as a string array.
 // Taken from https://stackoverflow.com/questions/1007981/how-to-get-function-parameter-names-values-dynamically-from-javascript
 // Adapted to work on both arrow functions and default functions.
@@ -28,28 +25,28 @@ export function schemeToString(x: any): string {
   let str: string = "";
   if (x === undefined) {
     str = "undefined";
-  } else if (base.listQ(x)) {
+  } else if (base.list$63$(x)) {
     str = "(";
-    let p = x as base.Pair;
+    let p = x;
     while (p !== null) {
       str += schemeToString(base.car(p));
-      p = base.cdr(p) as base.Pair;
+      p = base.cdr(p);
       if (p !== null) {
         str += " ";
       }
     }
     str += ")";
-  } else if (list.dotted_listQ(x) && base.pairQ(x)) {
+  } else if (base.dotted$45$list$63$(x) && base.pair$63$(x)) {
     str = "(";
-    let p = x as base.Pair;
-    while (base.pairQ(p)) {
+    let p = x;
+    while (base.pair$63$(p)) {
       str = `${str}${schemeToString(base.car(p))} `;
-      p = base.cdr(p) as base.Pair;
+      p = base.cdr(p);
     }
     str = `${str}. ${schemeToString(p)})`;
-  } else if (base.vectorQ(x)) {
+  } else if /*(base.vectorQ(x))*/ (x instanceof Array) {
     str = "#(";
-    let v = x as base.Vector;
+    let v = x;
     for (let i = 0; i < v.length; i++) {
       str += schemeToString(v[i]);
       if (i !== v.length - 1) {
@@ -57,11 +54,11 @@ export function schemeToString(x: any): string {
       }
     }
     str += ")";
-  } else if (base.procedureQ(x)) {
+  } else if /*(base.procedureQ(x))*/ (typeof x === "function") {
     str = `#<procedure (${$args(x)
       .reduce((a, b) => `${a} ${b.replace("...", ". ")}`, "")
       .trimStart()})>`;
-  } else if (base.booleanQ(x)) {
+  } else if (base.boolean$63$(x)) {
     str = x ? "#t" : "#f";
   } else {
     str = x.toString();
