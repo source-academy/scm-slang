@@ -34,10 +34,20 @@ let atomic_multiply = importedatomic_multiply;
 let atomic_divide = importedatomic_divide;
 import {
     fold as importedfold,
-    last as importedlast
+    last as importedlast,
+    reverse as importedreverse,
+    car as importedcar,
+    cdr as importedcdr,
+    null$63$ as importednull$63$
 } from 'base-list';
 let fold = importedfold;
 let last = importedlast;
+let reverse = importedreverse;
+let car = importedcar;
+let cdr = importedcdr;
+let null$63$ = importednull$63$;
+import { and as importedand } from 'base-boolean';
+let and = importedand;
 export let number$63$ = is_number;
 export let integer$63$ = is_integer;
 export let rational$63$ = is_rational;
@@ -54,8 +64,7 @@ export let $60$ = (...ns) => {
     return truthy(null$63$(ns)) ? true : truthy(null$63$(cdr(ns))) ? true : ((a, ns_no_a) => fold((curr, wish) => {
         let res = and(wish, atomic_less_than(curr, a));
         a = curr;
-        res;
-        undefined;
+        return res;
     }, true, ns_no_a))(last(ns), reverse(cdr(reverse(ns))));
 };
 export let $60$$61$ = (...ns) => {
@@ -63,8 +72,7 @@ export let $60$$61$ = (...ns) => {
     return truthy(null$63$(ns)) ? true : truthy(null$63$(cdr(ns))) ? true : ((a, ns_no_a) => fold((curr, wish) => {
         let res = and(wish, atomic_less_than_or_equals(curr, a));
         a = curr;
-        res;
-        undefined;
+        return res;
     }, true, ns_no_a))(last(ns), reverse(cdr(reverse(ns))));
 };
 export let $62$ = (...ns) => {
@@ -72,8 +80,7 @@ export let $62$ = (...ns) => {
     return truthy(null$63$(ns)) ? true : truthy(null$63$(cdr(ns))) ? true : ((a, ns_no_a) => fold((curr, wish) => {
         let res = and(wish, atomic_greater_than(curr, a));
         a = curr;
-        res;
-        undefined;
+        return res;
     }, true, ns_no_a))(last(ns), reverse(cdr(reverse(ns))));
 };
 export let $62$$61$ = (...ns) => {
@@ -81,8 +88,7 @@ export let $62$$61$ = (...ns) => {
     return truthy(null$63$(ns)) ? true : truthy(null$63$(cdr(ns))) ? true : ((a, ns_no_a) => fold((curr, wish) => {
         let res = and(wish, atomic_greater_than_or_equals(curr, a));
         a = curr;
-        res;
-        undefined;
+        return res;
     }, true, ns_no_a))(last(ns), reverse(cdr(reverse(ns))));
 };
 export let zero$63$ = n => $61$(n, 0);

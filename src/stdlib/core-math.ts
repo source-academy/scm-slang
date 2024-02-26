@@ -19,6 +19,14 @@ type SchemeNumber = SchemeInteger | SchemeRational | SchemeReal | SchemeComplex;
 
 // If a simplified rational number has a denominator of 1, it will convert to an integer.
 
+// for now, either a integer or real.
+export let make_number = (value: number): SchemeNumber => {
+  if (Number.isInteger(value)) {
+    return SchemeInteger.build(value);
+  }
+  return SchemeReal.build(value > 0, Math.abs(value), 0);
+}
+
 class SchemeInteger {
   readonly numberType = 1;
   private readonly value: bigint;
