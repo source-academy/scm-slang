@@ -32,8 +32,11 @@ import {
     $60$ as imported$60$,
     $61$ as imported$61$,
     $43$ as imported$43$,
-    $45$ as imported$45$
+    $45$ as imported$45$,
+    $62$
 } from './base-math';
+import { make_number } from './core-math';
+import { and, not, or } from './base-bool';
 let $60$ = imported$60$;
 let $61$ = imported$61$;
 let $43$ = imported$43$;
@@ -66,23 +69,6 @@ export let list$45$tail = (xs, k) => truthy($61$(k, make_number(0))) ? xs : list
 export let list$45$ref = (xs, k) => car(list$45$tail(xs, k));
 export let car = head;
 export let cdr = tail;
-export let take = (xs, i) => {
-    let take$45$helper = (xs, i, acc) => truthy(or(null$63$(xs), $61$(i, make_number(0)))) ? reverse(acc) : take$45$helper(cdr(xs), $45$(i, make_number(1)), cons(car(xs), acc));
-    return take$45$helper(xs, i, null);
-};
-export let drop = (xs, i) => truthy(or(null$63$(xs), $61$(i, make_number(0)))) ? xs : drop(cdr(xs), $45$(i, make_number(1)));
-export let last = xs => truthy(null$63$(xs)) ? error('last: empty list') : truthy(null$63$(cdr(xs))) ? car(xs) : last(cdr(xs));
-export let last$45$pair = xs => truthy(null$63$(xs)) ? error('last-pair: empty list') : truthy(null$63$(cdr(xs))) ? xs : last$45$pair(cdr(xs));
-export let first = car;
-export let second = cadr;
-export let third = caddr;
-export let fourth = cadddr;
-export let fifth = compose(car, cddddr);
-export let sixth = compose(cadr, cddddr);
-export let seventh = compose(caddr, cddddr);
-export let eighth = compose(cadddr, cddddr);
-export let ninth = compose(car, cddddr, cddddr);
-export let tenth = compose(cadr, cddddr, cddddr);
 export let caar = compose(car, car);
 export let cadr = compose(car, cdr);
 export let cdar = compose(cdr, car);
@@ -111,6 +97,24 @@ export let cddaar = compose(cdr, cadaar);
 export let cddadr = compose(cdr, cadadr);
 export let cdddar = compose(cdr, caddar);
 export let cddddr = compose(cdr, cadddr);
+export let take = (xs, i) => {
+    let take$45$helper = (xs, i, acc) => truthy(or(null$63$(xs), $61$(i, make_number(0)))) ? reverse(acc) : take$45$helper(cdr(xs), $45$(i, make_number(1)), cons(car(xs), acc));
+    return take$45$helper(xs, i, null);
+};
+export let drop = (xs, i) => truthy(or(null$63$(xs), $61$(i, make_number(0)))) ? xs : drop(cdr(xs), $45$(i, make_number(1)));
+export let last = xs => truthy(null$63$(xs)) ? error('last: empty list') : truthy(null$63$(cdr(xs))) ? car(xs) : last(cdr(xs));
+export let last$45$pair = xs => truthy(null$63$(xs)) ? error('last-pair: empty list') : truthy(null$63$(cdr(xs))) ? xs : last$45$pair(cdr(xs));
+export let first = car;
+export let second = cadr;
+export let third = caddr;
+export let fourth = cadddr;
+export let fifth = compose(car, cddddr);
+export let sixth = compose(cadr, cddddr);
+export let seventh = compose(caddr, cddddr);
+export let eighth = compose(cadddr, cddddr);
+export let ninth = compose(car, cddddr, cddddr);
+export let tenth = compose(cadr, cddddr, cddddr);
+
 export let set$45$car$33$ = set_head;
 export let set$45$cdr$33$ = set_tail;
 export let list$45$set$33$ = (xs, k, v) => set$45$car$33$(list$45$tail(xs, k), v);
@@ -134,7 +138,7 @@ export let map = (f, xs, ...rest$45$xs) => {
     let atomic$45$map = (f, xs) => truthy(null$63$(xs)) ? null : cons(f(car(xs)), atomic$45$map(f, cdr(xs)));
     let map$45$all = (f, ...xss) => {
         xss = vector$45$$62$list(xss);
-        return truthy(any(null$63$, xxs)) ? null : cons(apply(f, atomic$45$map(car, xxs)), apply(map$45$all, f, atomic$45$map(cdr, xxs)));
+        return truthy(any(null$63$, xss)) ? null : cons(apply(f, atomic$45$map(car, xss)), apply(map$45$all, f, atomic$45$map(cdr, xss)));
     };
     return truthy(null$63$(rest$45$xs)) ? atomic$45$map(f, xs) : map$45$all(f, cons(xs, rest$45$xs));
 };
@@ -170,7 +174,16 @@ export let length = xs => fold((x, y) => $43$(make_number(1), y), make_number(0)
 export let length$43$ = xs => truthy(circular$45$list$63$(xs)) ? false : fold((x, y) => $43$(make_number(1), y), make_number(0), xs);
 export let append = (...xss) => {
     xss = vector$45$$62$list(xss);
-    return truthy(null$63$(xss)) ? null : truthy($60$(length(xss), make_number(2))) ? car(xss) : truthy(null$63$(car(xss))) ? apply(append, cdr(xss)) : cons(caar(xxs), apply(append, cons(cdar(xss), cdr(xss))));
+    return truthy(null$63$(xss)) 
+    ? null 
+    : truthy($60$(length(xss), make_number(2))) 
+    ? car(xss) : truthy(null$63$(car(xss))) 
+    ? apply(append, cdr(xss)) 
+    : cons(caar(xss), apply(append, cons(cdar(xss), cdr(xss))));
 };
 export let concatenate = xss => apply(append, xss);
 export let reverse = xs => fold((x, y) => cons(x, y), null, xs);
+
+function eq$63$(xs: any, ys: any): any {
+    return xs === ys;
+}

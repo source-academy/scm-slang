@@ -14,7 +14,8 @@ import {
     atomic_add as importedatomic_add,
     atomic_subtract as importedatomic_subtract,
     atomic_multiply as importedatomic_multiply,
-    atomic_divide as importedatomic_divide
+    atomic_divide as importedatomic_divide,
+    make_number
 } from './core-math';
 let is_number = importedis_number;
 let is_integer = importedis_integer;
@@ -46,7 +47,10 @@ let reverse = importedreverse;
 let car = importedcar;
 let cdr = importedcdr;
 let null$63$ = importednull$63$;
-import { and as importedand } from './base-bool';
+import { and as importedand, not } from './base-bool';
+import { vector$45$$62$list } from './core-list';
+import { truthy } from './core-bool';
+import { apply } from './core-procedure';
 let and = importedand;
 export let number$63$ = is_number;
 export let integer$63$ = is_integer;
@@ -112,10 +116,10 @@ export let $42$ = (...ns) => {
 };
 export let $45$ = (n, ...ns) => {
     ns = vector$45$$62$list(ns);
-    return truthy(null$63$(ns)) ? atomic_negate(n) : atomic_subtract(n, apply($43$, ns));
+    return truthy(null$63$(ns)) ? atomic_negate(n) : atomic_subtract(n, apply($43$, ns) as any);
 };
 export let $47$ = (n, ...ns) => {
     ns = vector$45$$62$list(ns);
-    return truthy(null$63$(ns)) ? atomic_inverse(n) : atomic_divide(n, apply($42$, ns));
+    return truthy(null$63$(ns)) ? atomic_inverse(n) : atomic_divide(n, apply($42$, ns) as any);
 };
 export let abs = n => truthy(negative$63$(n)) ? atomic_negate(n) : n;

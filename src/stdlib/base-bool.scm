@@ -1,5 +1,6 @@
 (import "./core-bool" (atomic_and atomic_or atomic_not is_boolean))
-(import "./core-list" (fold vector->list))
+(import "./core-list" (vector->list))
+(import "./base-list" (fold))
 
 (export (define boolean? is_boolean))
 (export (define (and . args)

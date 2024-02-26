@@ -15,8 +15,8 @@ export function apply(fun, ...args) {
     error("apply: last argument must be a list");
   }
   // convert the list into an array.
-  const lastArray = [];
-  let current = lastArray;
+  const lastArray: any[] = [];
+  let current = lastList;
   while (current !== null) {
     lastArray.push(head(current));
     current = tail(current);
