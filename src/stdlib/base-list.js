@@ -26,6 +26,20 @@ import {
 let truthy = importedtruthy;
 let vector$45$$62$list = importedvector$45$$62$list;
 let force = importedforce;
+import { apply as importedapply } from './core';
+let apply = importedapply;
+import { compose as importedcompose } from './base';
+let compose = importedcompose;
+import {
+    $60$ as imported$60$,
+    $61$ as imported$61$,
+    $43$ as imported$43$,
+    $45$ as imported$45$
+} from './base';
+let $60$ = imported$60$;
+let $61$ = imported$61$;
+let $43$ = imported$43$;
+let $45$ = imported$45$;
 export let cons = pair;
 export let xcons = (a, b) => cons(b, a);
 export let list = (...xs) => {
@@ -39,9 +53,9 @@ export let list$42$ = (curr, ...rest) => {
 export let cons$42$ = list$42$;
 export let make$45$list = (n, ...v) => {
     v = vector$45$$62$list(v);
-    return truthy(null$63$(v)) ? truthy($61$(n, 0)) ? null : cons(null, make$45$list($45$(n, 1))) : cons(car(v), apply(make$45$list, n, cdr(v)));
+    return truthy(null$63$(v)) ? truthy($61$(n, make_number(0))) ? null : cons(null, make$45$list($45$(n, make_number(1)))) : cons(car(v), apply(make$45$list, n, cdr(v)));
 };
-export let list$45$tabulate = (n, init$45$proc) => truthy($61$(n, 0)) ? null : cons(init$45$proc($45$(n, 1)), list$45$tabulate($45$(n, 1), init$45$proc));
+export let list$45$tabulate = (n, init$45$proc) => truthy($61$(n, make_number(0))) ? null : cons(init$45$proc($45$(n, make_number(1))), list$45$tabulate($45$(n, make_number(1)), init$45$proc));
 export let list$45$copy = xs => filter(x => true, xs);
 export let circular$45$list = (...elems) => {
     elems = vector$45$$62$list(elems);
@@ -50,15 +64,15 @@ export let circular$45$list = (...elems) => {
         return xs;
     })(apply(list, elems));
 };
-export let list$45$tail = (xs, k) => truthy($61$(k, 0)) ? xs : list$45$tail(cdr(xs), $45$(k, 1));
+export let list$45$tail = (xs, k) => truthy($61$(k, make_number(0))) ? xs : list$45$tail(cdr(xs), $45$(k, make_number(1)));
 export let list$45$ref = (xs, k) => car(list$45$tail(xs, k));
 export let car = head;
 export let cdr = tail;
 export let take = (xs, i) => {
-    let take$45$helper = (xs, i, acc) => truthy(or(null$63$(xs), $61$(i, 0))) ? reverse(acc) : take$45$helper(cdr(xs), $45$(i, 1), cons(car(xs), acc));
+    let take$45$helper = (xs, i, acc) => truthy(or(null$63$(xs), $61$(i, make_number(0)))) ? reverse(acc) : take$45$helper(cdr(xs), $45$(i, make_number(1)), cons(car(xs), acc));
     return take$45$helper(xs, i, null);
 };
-export let drop = (xs, i) => truthy(or(null$63$(xs), $61$(i, 0))) ? xs : drop(cdr(xs), $45$(i, 1));
+export let drop = (xs, i) => truthy(or(null$63$(xs), $61$(i, make_number(0)))) ? xs : drop(cdr(xs), $45$(i, make_number(1)));
 export let last = xs => truthy(null$63$(xs)) ? error('last: empty list') : truthy(null$63$(cdr(xs))) ? car(xs) : last(cdr(xs));
 export let last$45$pair = xs => truthy(null$63$(xs)) ? error('last-pair: empty list') : truthy(null$63$(cdr(xs))) ? xs : last$45$pair(cdr(xs));
 export let first = car;
@@ -153,12 +167,12 @@ export let list$61$ = (elt$61$, ...rest) => {
     };
     return truthy(null$63$(rest)) ? true : truthy(not(length$45$helper(rest))) ? false : apply(list$61$helper, elt$61$, rest);
 };
-export let any = (pred, xs) => $62$(length(filter(pred, xs)), 0);
-export let length = xs => fold((x, y) => $43$(1, y), 0, xs);
-export let length$43$ = xs => truthy(circular$45$list$63$(xs)) ? false : fold((x, y) => $43$(1, y), 0, xs);
+export let any = (pred, xs) => $62$(length(filter(pred, xs)), make_number(0));
+export let length = xs => fold((x, y) => $43$(make_number(1), y), make_number(0), xs);
+export let length$43$ = xs => truthy(circular$45$list$63$(xs)) ? false : fold((x, y) => $43$(make_number(1), y), make_number(0), xs);
 export let append = (...xss) => {
     xss = vector$45$$62$list(xss);
-    return truthy(null$63$(xss)) ? null : truthy($60$(length(xss), 2)) ? car(xss) : truthy(null$63$(car(xss))) ? apply(append, cdr(xss)) : cons(caar(xxs), apply(append, cons(cdar(xss), cdr(xss))));
+    return truthy(null$63$(xss)) ? null : truthy($60$(length(xss), make_number(2))) ? car(xss) : truthy(null$63$(car(xss))) ? apply(append, cdr(xss)) : cons(caar(xxs), apply(append, cons(cdar(xss), cdr(xss))));
 };
 export let concatenate = xss => apply(append, xss);
 export let reverse = xs => fold((x, y) => cons(x, y), null, xs);

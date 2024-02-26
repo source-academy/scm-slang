@@ -9,5 +9,5 @@
 // forces evaluation of a thunk.
 // also used for delayed evaluation.
 export function force(thunk) {
-    return thunk();
+  return thunk();
 }

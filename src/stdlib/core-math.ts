@@ -25,19 +25,22 @@ export let make_number = (value: number): SchemeNumber => {
     return SchemeInteger.build(value);
   }
   return SchemeReal.build(value > 0, Math.abs(value), 0);
-}
+};
 
 class SchemeInteger {
   readonly numberType = 1;
   private readonly value: bigint;
 
   private constructor(value: bigint) {
-      this.value = value;
+    this.value = value;
   }
 
   // Factory method for creating a new SchemeInteger instance.
   // Force prevents automatic downcasting to a lower type.
-  static build(value: number | string | bigint, force: boolean = false): SchemeInteger {
+  static build(
+    value: number | string | bigint,
+    force: boolean = false,
+  ): SchemeInteger {
     return new SchemeInteger(BigInt(value));
   }
 
@@ -48,7 +51,7 @@ class SchemeInteger {
   equals(other: SchemeInteger): boolean {
     return this.value === other.value;
   }
-  
+
   greaterThan(other: SchemeInteger): boolean {
     return this.value > other.value;
   }
@@ -59,7 +62,7 @@ class SchemeInteger {
 
   multiplicativeInverse(): SchemeInteger | SchemeRational {
     if (this.value === 0n) {
-      throw new Error('Division by zero');
+      throw new Error("Division by zero");
     }
     return SchemeRational.build(1n, this.value, false);
   }
@@ -89,11 +92,23 @@ class SchemeRational {
 
   // Builds a rational number.
   // Force prevents automatic downcasting to a lower type.
-  static build(numerator: number | string | bigint, denominator: number | string | bigint, force: boolean = false): SchemeRational | SchemeInteger {
-    return SchemeRational.simplify(BigInt(numerator), BigInt(denominator), force);
+  static build(
+    numerator: number | string | bigint,
+    denominator: number | string | bigint,
+    force: boolean = false,
+  ): SchemeRational | SchemeInteger {
+    return SchemeRational.simplify(
+      BigInt(numerator),
+      BigInt(denominator),
+      force,
+    );
   }
 
-  private static simplify(numerator: bigint, denominator: bigint, force: boolean = false): SchemeRational | SchemeInteger {
+  private static simplify(
+    numerator: bigint,
+    denominator: bigint,
+    force: boolean = false,
+  ): SchemeRational | SchemeInteger {
     const gcd = (a: bigint, b: bigint): bigint => {
       if (b === 0n) {
         return a;
@@ -112,7 +127,10 @@ class SchemeRational {
     if (denominator === 1n && !force) {
       return SchemeInteger.build(sign * numerator);
     }
-    return new SchemeRational(sign * numerator / divisor, denominator / divisor);
+    return new SchemeRational(
+      (sign * numerator) / divisor,
+      denominator / divisor,
+    );
   }
 
   promote(): SchemeReal {
@@ -141,30 +159,39 @@ class SchemeRational {
       mantissa *= 10;
       exponent--;
     }
-    return SchemeReal.build((sign > 0), mantissa, exponent, true);
+    return SchemeReal.build(sign > 0, mantissa, exponent, true);
   }
 
   equals(other: SchemeRational): boolean {
-    return this.numerator === other.numerator && this.denominator === other.denominator;
+    return (
+      this.numerator === other.numerator &&
+      this.denominator === other.denominator
+    );
   }
 
   greaterThan(other: SchemeRational): boolean {
-    return this.numerator * other.denominator > other.numerator * this.denominator;
+    return (
+      this.numerator * other.denominator > other.numerator * this.denominator
+    );
   }
 
   negate(): SchemeRational {
-    return SchemeRational.build(-this.numerator, this.denominator) as SchemeRational;
+    return SchemeRational.build(
+      -this.numerator,
+      this.denominator,
+    ) as SchemeRational;
   }
 
   multiplicativeInverse(): SchemeInteger | SchemeRational {
     if (this.numerator === 0n) {
-      throw new Error('Division by zero');
+      throw new Error("Division by zero");
     }
     return SchemeRational.build(this.denominator, this.numerator);
   }
 
   add(other: SchemeRational): SchemeInteger | SchemeRational {
-    const newNumerator = this.numerator * other.denominator + other.numerator * this.denominator;
+    const newNumerator =
+      this.numerator * other.denominator + other.numerator * this.denominator;
     const newDenominator = this.denominator * other.denominator;
     return SchemeRational.build(newNumerator, newDenominator);
   }
@@ -188,7 +215,12 @@ class SchemeReal {
   private static readonly epsilon = 1e-10;
   private static readonly ZERO = new SchemeReal(true, 0, 0n);
 
-  static build(positive: boolean, mantissa: number, exponent: number | string | bigint, force:boolean = false): SchemeReal {
+  static build(
+    positive: boolean,
+    mantissa: number,
+    exponent: number | string | bigint,
+    force: boolean = false,
+  ): SchemeReal {
     if (mantissa === 0) {
       return SchemeReal.ZERO;
     }
@@ -216,9 +248,11 @@ class SchemeReal {
   }
 
   equals(other: SchemeReal): boolean {
-    return this.positive === other.positive 
-        && this.exponent === other.exponent 
-        && Math.abs(this.mantissa - other.mantissa) < SchemeReal.epsilon;
+    return (
+      this.positive === other.positive &&
+      this.exponent === other.exponent &&
+      Math.abs(this.mantissa - other.mantissa) < SchemeReal.epsilon
+    );
   }
 
   greaterThan(other: SchemeReal): boolean {
@@ -240,7 +274,7 @@ class SchemeReal {
 
   multiplicativeInverse(): SchemeReal {
     if (this === SchemeReal.ZERO) {
-      throw new Error('Division by zero');
+      throw new Error("Division by zero");
     }
     return SchemeReal.build(this.positive, 1 / this.mantissa, -this.exponent);
   }
@@ -250,9 +284,13 @@ class SchemeReal {
     const sign = this.positive === other.positive ? 1 : -1;
     let newMantissa;
     if (exponentDifference > 0) {
-      newMantissa = this.mantissa + sign * other.mantissa * 10 ** Number(exponentDifference);
+      newMantissa =
+        this.mantissa +
+        sign * other.mantissa * 10 ** Number(exponentDifference);
     } else {
-      newMantissa = sign * this.mantissa * 10 ** Number(-exponentDifference) + other.mantissa;
+      newMantissa =
+        sign * this.mantissa * 10 ** Number(-exponentDifference) +
+        other.mantissa;
     }
     if (newMantissa === 0) {
       return SchemeReal.ZERO;
@@ -266,7 +304,11 @@ class SchemeReal {
     if (newMantissa === 0) {
       return SchemeReal.ZERO;
     }
-    return SchemeReal.build(this.positive === other.positive, newMantissa, newExponent);
+    return SchemeReal.build(
+      this.positive === other.positive,
+      newMantissa,
+      newExponent,
+    );
   }
 
   toString(): string {
@@ -281,14 +323,18 @@ class SchemeComplex {
   readonly numberType = 4;
   private readonly real: SchemeReal;
   private readonly imaginary: SchemeReal;
-  
-  static build(real: SchemeReal, imaginary: SchemeReal, force: boolean = false): SchemeComplex {
+
+  static build(
+    real: SchemeReal,
+    imaginary: SchemeReal,
+    force: boolean = false,
+  ): SchemeComplex {
     return new SchemeComplex(real, imaginary);
   }
 
   private constructor(real: SchemeReal, imaginary: SchemeReal) {
-    this.real = real
-    this.imaginary = imaginary
+    this.real = real;
+    this.imaginary = imaginary;
   }
 
   promote(): SchemeComplex {
@@ -300,31 +346,45 @@ class SchemeComplex {
   }
 
   equals(other: SchemeComplex): boolean {
-    return this.real.equals(other.real) && this.imaginary.equals(other.imaginary);
+    return (
+      this.real.equals(other.real) && this.imaginary.equals(other.imaginary)
+    );
   }
 
   greaterThan(other: SchemeComplex): boolean {
-    return this.real.greaterThan(other.real) && this.imaginary.greaterThan(other.imaginary);
+    return (
+      this.real.greaterThan(other.real) &&
+      this.imaginary.greaterThan(other.imaginary)
+    );
   }
 
   multiplicativeInverse(): SchemeComplex {
     // inverse of a + bi = a - bi / a^2 + b^2
     // in this case, we use a / a^2 + b^2 and -b / a^2 + b^2 as the new values required
-    const denominator = this.real.multiply(this.real)
+    const denominator = this.real
+      .multiply(this.real)
       .add(this.imaginary.multiply(this.imaginary));
     return SchemeComplex.build(
-      denominator.multiplicativeInverse().multiply(this.real), 
-      denominator.multiplicativeInverse().multiply(this.imaginary.negate()));
+      denominator.multiplicativeInverse().multiply(this.real),
+      denominator.multiplicativeInverse().multiply(this.imaginary.negate()),
+    );
   }
 
   add(other: SchemeComplex): SchemeComplex {
-    return SchemeComplex.build(this.real.add(other.real), this.imaginary.add(other.imaginary));
+    return SchemeComplex.build(
+      this.real.add(other.real),
+      this.imaginary.add(other.imaginary),
+    );
   }
 
   multiply(other: SchemeComplex): SchemeComplex {
     // (a + bi) * (c + di) = (ac - bd) + (ad + bc)i
-    const realPart = this.real.multiply(other.real).add(this.imaginary.multiply(other.imaginary).negate());
-    const imaginaryPart = this.real.multiply(other.imaginary).add(this.imaginary.multiply(other.real));
+    const realPart = this.real
+      .multiply(other.real)
+      .add(this.imaginary.multiply(other.imaginary).negate());
+    const imaginaryPart = this.real
+      .multiply(other.imaginary)
+      .add(this.imaginary.multiply(other.real));
     return SchemeComplex.build(realPart, imaginaryPart);
   }
 
@@ -335,7 +395,7 @@ class SchemeComplex {
 
 // these functions deal with checking the type of a number.
 export function is_number(a: any): boolean {
-  return a.numberType !== undefined; 
+  return a.numberType !== undefined;
 }
 
 export function is_integer(a: any): boolean {
@@ -359,7 +419,10 @@ export function is_complex(a: any): boolean {
 /**
  * This function takes two numbers and brings them to the same level.
  */
-function equalify(a: SchemeNumber, b: SchemeNumber): [SchemeNumber, SchemeNumber] {
+function equalify(
+  a: SchemeNumber,
+  b: SchemeNumber,
+): [SchemeNumber, SchemeNumber] {
   if (a.numberType > b.numberType) {
     return equalify(a, b.promote());
   } else if (a.numberType < b.numberType) {
@@ -386,7 +449,10 @@ export function atomic_less_than(a: SchemeNumber, b: SchemeNumber): boolean {
   return !atomic_greater_than(a, b) && !atomic_equals(a, b);
 }
 
-export function atomic_less_than_or_equals(a: SchemeNumber, b: SchemeNumber): boolean {
+export function atomic_less_than_or_equals(
+  a: SchemeNumber,
+  b: SchemeNumber,
+): boolean {
   return !atomic_greater_than(a, b);
 }
 
@@ -396,7 +462,10 @@ export function atomic_greater_than(a: SchemeNumber, b: SchemeNumber): boolean {
   return newA.greaterThan(newB as any);
 }
 
-export function atomic_greater_than_or_equals(a: SchemeNumber, b: SchemeNumber): boolean {
+export function atomic_greater_than_or_equals(
+  a: SchemeNumber,
+  b: SchemeNumber,
+): boolean {
   return atomic_greater_than(a, b) || atomic_equals(a, b);
 }
 
@@ -406,17 +475,22 @@ export function atomic_add(a: SchemeNumber, b: SchemeNumber): SchemeNumber {
   return newA.add(newB as any);
 }
 
-export function atomic_multiply(a: SchemeNumber, b: SchemeNumber): SchemeNumber {
+export function atomic_multiply(
+  a: SchemeNumber,
+  b: SchemeNumber,
+): SchemeNumber {
   const [newA, newB] = equalify(a, b);
   // safe to cast as we are assured they are of the same type
   return newA.multiply(newB as any);
 }
 
-export function atomic_subtract(a: SchemeNumber, b: SchemeNumber): SchemeNumber {
+export function atomic_subtract(
+  a: SchemeNumber,
+  b: SchemeNumber,
+): SchemeNumber {
   return atomic_add(a, atomic_negate(b));
 }
 
 export function atomic_divide(a: SchemeNumber, b: SchemeNumber): SchemeNumber {
   return atomic_multiply(a, atomic_inverse(b));
 }
-

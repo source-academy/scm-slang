@@ -91,9 +91,9 @@ export let $62$$61$ = (...ns) => {
         return res;
     }, true, ns_no_a))(last(ns), reverse(cdr(reverse(ns))));
 };
-export let zero$63$ = n => $61$(n, 0);
-export let positive$63$ = n => $62$(n, 0);
-export let negative$63$ = n => $60$(n, 0);
+export let zero$63$ = n => $61$(n, make_number(0));
+export let positive$63$ = n => $62$(n, make_number(0));
+export let negative$63$ = n => $60$(n, make_number(0));
 export let max = (...ns) => {
     ns = vector$45$$62$list(ns);
     return fold((curr, max) => truthy(atomic_greater_than(curr, max)) ? curr : max, car(ns), cdr(ns));
@@ -104,11 +104,11 @@ export let min = (...ns) => {
 };
 export let $43$ = (...ns) => {
     ns = vector$45$$62$list(ns);
-    return fold(atomic_add, 0, ns);
+    return fold(atomic_add, make_number(0), ns);
 };
 export let $42$ = (...ns) => {
     ns = vector$45$$62$list(ns);
-    return fold(atomic_multiply, 1, ns);
+    return fold(atomic_multiply, make_number(1), ns);
 };
 export let $45$ = (n, ...ns) => {
     ns = vector$45$$62$list(ns);

@@ -6,6 +6,9 @@ list-core implements SRFI-1, which is the core list library for scheme.
 
 ;; these imports are required to support variadic functions and truthy values.
 (import "./core" (truthy vector->list force))
+(import "./core" (apply))
+(import "./base" (compose))
+(import "./base" (< = + -))
 
 ;; Define the constructors
 (export (define cons pair))

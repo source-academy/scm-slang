@@ -94,8 +94,17 @@ export class Transpiler implements Visitor {
   }
 
   // literals
-  visitNumericLiteral(node: Atomic.NumericLiteral): [es.Literal] {
-    return [estreeBuilder.makeLiteral(node.value, node.location)];
+  visitNumericLiteral(node: Atomic.NumericLiteral): [es.CallExpression] {
+    // we need to wrap the number in a call to make-number
+    const makeNumber = estreeBuilder.makeIdentifier(
+      "make_number",
+      node.location,
+    );
+    // we turn the number into a literal
+    const number = estreeBuilder.makeLiteral(node.value, node.location);
+    return [
+      estreeBuilder.makeCallExpression(makeNumber, [number], node.location),
+    ];
   }
 
   visitBooleanLiteral(node: Atomic.BooleanLiteral): [es.Literal] {
