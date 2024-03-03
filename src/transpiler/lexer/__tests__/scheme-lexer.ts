@@ -31,9 +31,9 @@ test("SchemeLexer parses extended identifiers correctly", () => {
   // tokens should be 2: hello-world, EOF
   expect(tokens.length).toBe(2);
   expect(tokens[0].type).toBe(TokenType.IDENTIFIER);
-  expect(tokens[0].lexeme).toBe(`你好世界 this is one identifier!
+  expect(tokens[0].lexeme).toBe(`|你好世界 this is one identifier!
 
-`);
+|`);
 });
 
 test("SchemeLexer parses integer numbers correctly", () => {
@@ -189,9 +189,9 @@ test("SchemeLexer throws EOF error when it encounters undelimited strings", () =
 
 test("SchemeLexer throws EOF error when it encounters undelimited comments", () => {
   const source = `#| hello world
-  
-  
-  
+
+
+
   still not done`;
   const lexer = new SchemeLexer(source);
   expect(() => lexer.scanTokens()).toThrow(UnexpectedEOFError);

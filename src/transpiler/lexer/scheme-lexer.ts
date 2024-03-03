@@ -208,8 +208,8 @@ export class SchemeLexer implements Lexer {
 
   private identifierTokenLoose(): void {
     // this is a special case for identifiers
-    // ignore the pipe character
-    this.jump();
+    // add the first |
+    this.advance();
     while (this.peek() != "|" && !this.isAtEnd()) {
       if (this.peek() === "\n") {
         this.line++;
@@ -221,9 +221,11 @@ export class SchemeLexer implements Lexer {
     if (this.isAtEnd()) {
       throw new LexerError.UnexpectedEOFError(this.line, this.col);
     }
+
+    // add the last |
+    this.advance();
+
     this.addToken(this.checkKeyword());
-    // ignore the closing pipe character
-    this.jump();
   }
 
   private identifierNumberToken(): void {
@@ -274,10 +276,6 @@ export class SchemeLexer implements Lexer {
 
   private checkKeyword(): TokenType {
     var text = this.source.substring(this.start, this.current);
-    if (text[0] === "|") {
-      // trim text first
-      text = this.source.substring(this.start + 1, this.current - 1);
-    }
     if (keywords.has(text)) {
       return keywords.get(text) as TokenType;
     }
