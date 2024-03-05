@@ -8,6 +8,6 @@
 
 // forces evaluation of a thunk.
 // also used for delayed evaluation.
-export function force(thunk) {
+export function force(thunk: Function): any {
   return thunk();
 }

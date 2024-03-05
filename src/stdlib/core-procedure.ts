@@ -7,7 +7,7 @@
 
 import { head, tail, is_list, error } from "sicp";
 
-export function apply(fun, ...args) {
+export function apply(fun: Function, ...args: any[]): any {
   // the last argument must be a list.
   // we need to convert it into an array,
   const lastList = args.pop();
