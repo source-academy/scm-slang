@@ -44,7 +44,7 @@ export function schemeToString(x: any): string {
       p = base.cdr(p);
     }
     str = `${str}. ${schemeToString(p)})`;
-  } else if /*(base.vectorQ(x))*/ (x instanceof Array) {
+  } else if (/*(base.vectorQ(x))*/ x instanceof Array) {
     str = "#(";
     let v = x;
     for (let i = 0; i < v.length; i++) {
@@ -54,11 +54,11 @@ export function schemeToString(x: any): string {
       }
     }
     str += ")";
-  } else if /*(base.procedureQ(x))*/ (typeof x === "function") {
+  } else if (/*(base.procedureQ(x))*/ typeof x === "function") {
     str = `#<procedure (${$args(x)
       .reduce((a, b) => `${a} ${b.replace("...", ". ")}`, "")
       .trimStart()})>`;
-  } else if (base.boolean$63$(x)) {
+  } else if (base.boolean$62$(x)) {
     str = x ? "#t" : "#f";
   } else {
     str = x.toString();
