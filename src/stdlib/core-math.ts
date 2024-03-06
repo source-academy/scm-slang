@@ -7,7 +7,11 @@
 // required for arithmetic to work.
 // which includes the numeric tower.
 
-type SchemeNumber = SchemeInteger | SchemeRational | SchemeReal | SchemeComplex;
+export type SchemeNumber =
+  | SchemeInteger
+  | SchemeRational
+  | SchemeReal
+  | SchemeComplex;
 
 // Each class has a numberType property that is used to determine the type of the number.
 // If another instance's numbertype is higher in an operation, it will "promote" itself to the higher type.
@@ -73,6 +77,10 @@ class SchemeInteger {
 
   multiply(other: SchemeInteger): SchemeInteger {
     return SchemeInteger.build(this.value * other.value);
+  }
+
+  coerce(): number {
+    return Number(this.value);
   }
 
   toString(): string {
@@ -202,6 +210,10 @@ class SchemeRational {
     return SchemeRational.build(newNumerator, newDenominator);
   }
 
+  coerce(): number {
+    throw new Error("Cannot coerce a rational number to a javascript number");
+  }
+
   toString(): string {
     return `${this.numerator}/${this.denominator}`;
   }
@@ -311,6 +323,10 @@ class SchemeReal {
     );
   }
 
+  coerce(): number {
+    throw new Error("Cannot coerce a real number to a javascript number");
+  }
+
   toString(): string {
     if (this.exponent === 0n) {
       return `${this.mantissa}`;
@@ -388,9 +404,19 @@ class SchemeComplex {
     return SchemeComplex.build(realPart, imaginaryPart);
   }
 
+  coerce(): number {
+    throw new Error("Cannot coerce a complex number to a javascript number");
+  }
+
   toString(): string {
     return `${this.real}+${this.imaginary}i`;
   }
+}
+
+// these functions are used to convert a number to a javascript number.
+// it should only be limited to numbers used for indexing, integers.
+export function coerce_to_number(a: SchemeNumber): number {
+  return a.coerce();
 }
 
 // these functions deal with checking the type of a number.
