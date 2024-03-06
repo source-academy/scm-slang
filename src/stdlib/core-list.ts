@@ -7,14 +7,14 @@
 // required for lists to work.
 import { pair } from "sicp";
 
-// internal types required for list operations.
 export type Pair = [any, any];
-export type List = Pair | null;
+// a loose definition of a list.
+export type List = null | Pair;
 
 // converts a vector to a list.
 // needed because of the way rest parameters
 // are handled in javascript.
-export function vector$45$$62$list(v: any[]): List {
+export function vector$45$$62$list(v: any[]) {
   if (v.length === 0) {
     return null;
   }

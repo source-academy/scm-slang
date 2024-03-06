@@ -17,12 +17,12 @@ export function atomic_or(a: any, b: any): boolean {
   return truthy(a) || truthy(b);
 }
 
-export function atomic_and(a: any, b: any): boolean{
+export function atomic_and(a: any, b: any): boolean {
   return truthy(a) && truthy(b);
 }
 
-export function atomic_not(a: any): boolean{
-  return !(truthy(a));
+export function atomic_not(a: any): boolean {
+  return !truthy(a);
 }
 
 export function is_boolean(x: any): boolean {
