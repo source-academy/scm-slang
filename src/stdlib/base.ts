@@ -194,9 +194,9 @@ export const set$45$car$33$: Function = (p: core.Pair | core.List, v: any) => {
 };
 export const set$45$cdr$33$: Function = (p: core.Pair | core.List, v: any) => {
   if (pair$63$(p)) {
-    (p as core.Pair)[0] = v;
+    (p as core.Pair)[1] = v;
   }
-  error("car: expected pair");
+  error("cdr: expected pair");
 };
 
 // cxr operations
@@ -207,7 +207,7 @@ export const car: (p: core.Pair | core.List) => any = (
   if (pair$63$(p)) {
     return (p as core.Pair)[0];
   }
-  return error("car: expected pair");
+  error("car: expected pair");
 };
 export const cdr: (p: core.Pair | core.List) => any = (
   p: core.Pair | core.List,
@@ -215,7 +215,7 @@ export const cdr: (p: core.Pair | core.List) => any = (
   if (pair$63$(p)) {
     return (p as core.Pair)[1];
   }
-  return error("cdr: expected pair");
+  error("cdr: expected pair");
 };
 export const caar: Function = compose(car, car);
 export const cadr: Function = compose(car, cdr);
