@@ -238,11 +238,11 @@ class SchemeReal {
     }
     let newMantissa = mantissa;
     let newExponent = BigInt(exponent);
-    while (mantissa > 10) {
+    while (newMantissa > 10) {
       newMantissa /= 10;
       newExponent++;
     }
-    while (mantissa < 1) {
+    while (newMantissa < 1) {
       newMantissa *= 10;
       newExponent--;
     }
