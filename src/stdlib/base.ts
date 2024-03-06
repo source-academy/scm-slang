@@ -15,6 +15,9 @@ import {
 // export core functions straight from sicp
 export const error: Function = SICP_error;
 
+// delay operation
+export const force: Function = core.force;
+
 // procedural operations
 
 const identity: Function = (x: any) => x;
