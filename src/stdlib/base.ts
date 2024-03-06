@@ -53,7 +53,7 @@ export const real$63$: Function = core.is_real;
 export const complex$63$: Function = core.is_complex;
 export const exact$63$: Function = (n: core.SchemeNumber) =>
   or(rational$63$(n), integer$63$(n));
-export const inexact$63: Function = (n: core.SchemeNumber) =>
+export const inexact$63$: Function = (n: core.SchemeNumber) =>
   or(real$63$(n), complex$63$(n));
 const atomic_negate: Function = core.atomic_negate;
 const atomic_inverse: Function = core.atomic_inverse;
@@ -551,17 +551,19 @@ export class _Symbol {
   }
 }
 
-export let symbol$63$ = function (s: any): boolean {
+export const symbol$63$ = function (s: any): boolean {
   return s instanceof _Symbol;
 };
 
-export let symbol$61$$63$ = function (s1: any, s2: any): boolean {
+export const symbol$61$$63$ = function (s1: any, s2: any): boolean {
   return s1 instanceof _Symbol && s2 instanceof _Symbol && s1.equals(s2);
 };
 
+export const string$45$$62$symbol = (s: string) => new _Symbol(s);
+
 // equality predicates
 
-export let eq$63$ = function (x: any, y: any): boolean {
+export const eq$63$ = function (x: any, y: any): boolean {
   if (symbol$63$(x) && symbol$63$(y)) {
     return x.sym === y.sym;
   } else if (number$63$(x) && number$63$(y)) {
@@ -571,9 +573,9 @@ export let eq$63$ = function (x: any, y: any): boolean {
   }
 };
 
-export let eqv$63$ = eq$63$;
+export const eqv$63$ = eq$63$;
 
-export let equal$63$ = function (x: any, y: any): boolean {
+export const equal$63$ = function (x: any, y: any): boolean {
   if (x === y) {
     return true;
   } else if (number$63$(x) && number$63$(y)) {
