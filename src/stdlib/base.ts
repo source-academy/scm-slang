@@ -189,14 +189,16 @@ export const not$45$pair$63$: Function = compose(not, pair$63$);
 export const set$45$car$33$: Function = (p: core.Pair | core.List, v: any) => {
   if (pair$63$(p)) {
     (p as core.Pair)[0] = v;
+    return;
   }
-  error("car: expected pair");
+  error("set-car!: expected pair");
 };
 export const set$45$cdr$33$: Function = (p: core.Pair | core.List, v: any) => {
   if (pair$63$(p)) {
     (p as core.Pair)[1] = v;
+    return;
   }
-  error("cdr: expected pair");
+  error("set-cdr!: expected pair");
 };
 
 // cxr operations
