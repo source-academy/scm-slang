@@ -22,6 +22,7 @@ export const compose: Function = (...fs: Function[]) => {
   return fs.reduce((f, g) => (x: any) => f(g(x)), identity);
 };
 export const apply: Function = core.apply;
+export const procedure$63$: Function = (p: any) => typeof p === "function";
 
 // boolean operations
 
