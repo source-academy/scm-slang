@@ -451,6 +451,37 @@ export const drop$45$right: Function = (
   return reverse(drop(reversed_list, i));
 };
 
+// splice resolution
+
+class SpliceMarker {
+  value: core.List;
+  constructor(value: core.List) {
+    this.value = value;
+  }
+}
+
+export const $36$make$45$splice: Function = (xs: core.List) =>
+  new SpliceMarker(xs);
+
+// at runtime, splices the list into the parent list.
+export const $36$resolve$45$splice: Function = (xs: core.List) => {
+  if (null$63$(xs)) {
+    return null;
+  }
+
+  const first = car(xs);
+  const rest = cdr(xs);
+
+  if (first instanceof SpliceMarker) {
+    if (!list$63$(first.value)) {
+      error("splice: expected list");
+    }
+    return append(first.value, $36$resolve$45$splice(rest));
+  } else {
+    return cons(first, $36$resolve$45$splice(rest));
+  }
+};
+
 // vectors (SRFI-133)
 
 export const make$45$vector: Function = (
