@@ -5,11 +5,14 @@
 
 // This file contains the minimum subset
 // required for lists to work.
-import { pair } from "sicp";
 
 export type Pair = [any, any];
 // a loose definition of a list.
 export type List = null | Pair;
+
+export function pair(car: any, cdr: any): Pair {
+  return [car, cdr];
+}
 
 // converts a vector to a list.
 // needed because of the way rest parameters

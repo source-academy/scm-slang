@@ -1,19 +1,12 @@
 import * as core from "./core";
-import {
-  pair,
-  head,
-  tail,
-  set_head,
-  set_tail,
-  is_pair,
-  list as SICP_list,
-  is_list,
-  is_null,
-  error as SICP_error,
-} from "sicp";
+import { schemeToString } from "./source-scheme-library";
 
-// export core functions straight from sicp
-export const error: Function = SICP_error;
+// error definition follows sicp package
+export const error: Function = (value: any, ...strs: string[]) => {
+  const output =
+    (strs[0] === undefined ? "" : strs[0] + "") + schemeToString(value);
+  throw new Error(output);
+};
 
 // delay and force operations
 export const force: Function = core.force;
@@ -27,7 +20,25 @@ const identity: Function = (x: any) => x;
 export const compose: Function = (...fs: Function[]) => {
   return fs.reduce((f, g) => (x: any) => f(g(x)), identity);
 };
-export const apply: Function = core.apply;
+export const apply: Function = (fun: Function, ...args: any[]): any => {
+  // the last argument must be a list.
+  // we need to convert it into an array,
+  const lastList = args.pop();
+  if (!list$63$(lastList)) {
+    error("apply: last argument must be a list");
+  }
+  // convert the list into an array.
+  const lastArray: any[] = [];
+  let current = lastList;
+  while (current !== null) {
+    lastArray.push(car(current));
+    current = cdr(current);
+  }
+  // append the array to the rest of the arguments.
+  const allArgs = args.concat(lastArray);
+  fun(...allArgs);
+};
+
 export const procedure$63$: Function = (p: any) => typeof p === "function";
 
 // boolean operations
@@ -162,17 +173,50 @@ export const abs: Function = (n: core.SchemeNumber[]) =>
 
 // pair operations
 
-export const cons: Function = pair;
-export const xcons: Function = (x: any, y: any) => pair(y, x);
-export const pair$63$: Function = is_pair;
+export const cons: Function = core.pair;
+export const xcons: Function = (x: any, y: any) => core.pair(y, x);
+
+// low level, but it works.
+// follows SICP's implementation.
+const array_test: Function = (p: any) => {
+  if (Array.isArray === undefined) {
+    return p instanceof Array;
+  }
+  return Array.isArray(p);
+};
+export const pair$63$: Function = (p: any) => array_test(p) && p.length === 2;
 export const not$45$pair$63$: Function = compose(not, pair$63$);
-export const set$45$car$33$: Function = set_head;
-export const set$45$cdr$33$: Function = set_tail;
+export const set$45$car$33$: Function = (p: core.Pair | core.List, v: any) => {
+  if (pair$63$(p)) {
+    (p as core.Pair)[0] = v;
+  }
+  error("car: expected pair");
+};
+export const set$45$cdr$33$: Function = (p: core.Pair | core.List, v: any) => {
+  if (pair$63$(p)) {
+    (p as core.Pair)[0] = v;
+  }
+  error("car: expected pair");
+};
 
 // cxr operations
 
-export const car: (p: core.Pair | core.List) => any = head;
-export const cdr: (p: core.Pair | core.List) => any = tail;
+export const car: (p: core.Pair | core.List) => any = (
+  p: core.Pair | core.List,
+) => {
+  if (pair$63$(p)) {
+    return (p as core.Pair)[0];
+  }
+  return error("car: expected pair");
+};
+export const cdr: (p: core.Pair | core.List) => any = (
+  p: core.Pair | core.List,
+) => {
+  if (pair$63$(p)) {
+    return (p as core.Pair)[1];
+  }
+  return error("cdr: expected pair");
+};
 export const caar: Function = compose(car, car);
 export const cadr: Function = compose(car, cdr);
 export const cdar: Function = compose(cdr, car);
@@ -204,8 +248,13 @@ export const cddddr: Function = compose(cdr, cadddr);
 
 // list operations (SRFI-1)
 
-export const list: Function = SICP_list;
-export const null$63$: Function = is_null;
+export const list: Function = (...args: any[]) => {
+  if (args.length === 0) {
+    return null;
+  }
+  return cons(args[0], list(...args.slice(1)));
+};
+export const null$63$: Function = (xs: core.List) => xs === null;
 export const list$42$: Function = (curr: any, ...rest: any[]) =>
   rest.length === 0 ? curr : cons(curr, list$42$(...rest));
 export const cons$42$: Function = list$42$;
@@ -298,9 +347,18 @@ export const circular$45$list$63$: Function = (cxs: any) => {
   return c_list_helper(cxs, cdr(cxs));
 };
 
-export const proper$45$list$63$: Function = (pxs: any) =>
-  !circular$45$list$63$(pxs) && is_list(pxs);
-
+export const proper$45$list$63$: Function = (pxs: any) => {
+  function is_list(xs: core.List): boolean {
+    if (null$63$(xs)) {
+      return true;
+    }
+    if (not$45$pair$63$(xs)) {
+      return false;
+    }
+    return is_list(cdr(xs));
+  }
+  return !circular$45$list$63$(pxs) && is_list(pxs);
+};
 export const dotted$45$list$63$: Function = (dxs: any) =>
   !proper$45$list$63$(dxs) && !circular$45$list$63$(dxs);
 
