@@ -249,6 +249,7 @@ export const circular$45$list: Function = (...args: any[]) => {
   }
   // else set the last pair to the list
   set$45$cdr$33$(last$45$pair(normal_list), normal_list);
+  return normal_list;
 };
 
 export const first: Function = car;
