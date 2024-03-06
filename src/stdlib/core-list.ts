@@ -14,7 +14,7 @@ export type List = null | Pair;
 // converts a vector to a list.
 // needed because of the way rest parameters
 // are handled in javascript.
-export function vector$45$$62$list(v: any[]) {
+export function vector$45$$62$list(v: any[]): List {
   if (v.length === 0) {
     return null;
   }

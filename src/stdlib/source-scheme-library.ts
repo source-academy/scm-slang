@@ -34,7 +34,7 @@ export function schemeToString(x: any): string {
       }
     } while (p !== x);
     str.trimEnd();
-    str += "..."; 
+    str += "...";
   } else if (base.proper$45$list$63$(x)) {
     str = "(";
     let p = x;

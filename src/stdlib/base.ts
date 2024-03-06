@@ -263,7 +263,7 @@ export const list$45$set$33$: Function = (
 ) => set$45$car$33$(list$45$tail(xs, k), v);
 
 export const circular$45$list$63$: Function = (cxs: any) => {
-  function c_list_helper(xs: core.List, ys: core.List) {
+  function c_list_helper(xs: core.List, ys: core.List): boolean {
     // we shall do this with the fast and slow pointer method
     if (null$63$(xs) || null$63$(ys)) {
       return false;
@@ -354,13 +354,16 @@ export const fold$45$right: Function = (
     : f(...all_elements, fold$45$right(f, acc, ...all_tails));
 };
 
-export const reduce: Function = (f: Function, ridentity: any, xs) =>
+export const reduce: Function = (f: Function, ridentity: any, xs: core.List) =>
   null$63$(xs) ? ridentity : fold(f, car(xs), cdr(xs));
 
 export const reduce$45$left: Function = reduce;
 
-export const reduce$45$right: Function = (f: Function, ridentity: any, xs) =>
-  null$63$(xs) ? ridentity : fold$45$right(f, car(xs), cdr(xs));
+export const reduce$45$right: Function = (
+  f: Function,
+  ridentity: any,
+  xs: core.List,
+) => (null$63$(xs) ? ridentity : fold$45$right(f, car(xs), cdr(xs)));
 
 export const list$61$: Function = (
   elt: (x: any, y: any) => boolean,
