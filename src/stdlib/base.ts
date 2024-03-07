@@ -92,39 +92,67 @@ const atomic_divide: (
   b: core.SchemeNumber,
 ) => core.SchemeNumber = core.atomic_divide;
 
-export const $61$: Function = (...args: core.SchemeNumber[]) =>
-  args.reduce(
-    (is_equal, current, index, array) =>
-      and(is_equal, atomic_equals(current, array[0])),
-    true,
+export const $61$: Function = (
+  first: core.SchemeNumber,
+  second: core.SchemeNumber,
+  ...rest: core.SchemeNumber[]
+) => {
+  if (rest.length === 0) {
+    return atomic_equals(first, second);
+  }
+
+  return atomic_equals(first, second) && $61$(second, ...rest);
+};
+
+export const $60$: Function = (
+  first: core.SchemeNumber,
+  second: core.SchemeNumber,
+  ...rest: core.SchemeNumber[]
+) => {
+  if (rest.length === 0) {
+    return atomic_less_than(first, second);
+  }
+
+  return atomic_less_than(first, second) && $60$(second, ...rest);
+};
+
+export const $60$$61$: Function = (
+  first: core.SchemeNumber,
+  second: core.SchemeNumber,
+  ...rest: core.SchemeNumber[]
+) => {
+  if (rest.length === 0) {
+    return atomic_less_than_or_equals(first, second);
+  }
+
+  return atomic_less_than_or_equals(first, second) && $60$$61$(second, ...rest);
+};
+
+export const $62$: Function = (
+  first: core.SchemeNumber,
+  second: core.SchemeNumber,
+  ...rest: core.SchemeNumber[]
+) => {
+  if (rest.length === 0) {
+    return atomic_greater_than(first, second);
+  }
+
+  return atomic_greater_than(first, second) && $62$(second, ...rest);
+};
+
+export const $62$$61$: Function = (
+  first: core.SchemeNumber,
+  second: core.SchemeNumber,
+  ...rest: core.SchemeNumber[]
+) => {
+  if (rest.length === 0) {
+    return atomic_greater_than_or_equals(first, second);
+  }
+
+  return (
+    atomic_greater_than_or_equals(first, second) && $62$$61$(second, ...rest)
   );
-export const $60$: Function = (...args: core.SchemeNumber[]) =>
-  args.reduce(
-    (less_than, current, index, array) =>
-      and(less_than, atomic_less_than(current, array[index + 1])),
-    true,
-  );
-export const $60$$61$: Function = (...args: core.SchemeNumber[]) =>
-  args.reduce(
-    (less_than_eq, current, index, array) =>
-      and(less_than_eq, atomic_less_than_or_equals(current, array[index + 1])),
-    true,
-  );
-export const $62$: Function = (...args: core.SchemeNumber[]) =>
-  args.reduce(
-    (greater_than, current, index, array) =>
-      and(greater_than, atomic_greater_than(current, array[index + 1])),
-    true,
-  );
-export const $62$$61$: Function = (...args: core.SchemeNumber[]) =>
-  args.reduce(
-    (greater_than_eq, current, index, array) =>
-      and(
-        greater_than_eq,
-        atomic_greater_than_or_equals(current, array[index + 1]),
-      ),
-    true,
-  );
+};
 
 export const zero$63$: Function = (n: core.SchemeNumber) =>
   $61$(n, make_number(0));
