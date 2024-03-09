@@ -6,6 +6,7 @@
 // Crafting Interpreters: https://craftinginterpreters.com/
 // py-slang: https://github.com/source-academy/py-slang
 
+import { stringIsSchemeNumber } from "../../stdlib/core-math";
 import { Token } from "../types/tokens/token";
 import { TokenType } from "../types/tokens/token-type";
 import { Lexer } from "./lexer";
@@ -169,7 +170,14 @@ export class SchemeLexer implements Lexer {
         // Deviates slightly from the original lexer.
         // Scheme allows for identifiers to start with a digit
         // or include a specific set of symbols.
-        if (this.isDigit(c) || c === "-" || c === ".") {
+        if (
+          this.isDigit(c) ||
+          c === "-" ||
+          c === "+" ||
+          c === "." ||
+          c === "i" || // inf
+          c === "n" // nan
+        ) {
           // may or may not be a number
           this.identifierNumberToken();
         } else if (this.isValidIdentifier(c)) {
@@ -229,49 +237,16 @@ export class SchemeLexer implements Lexer {
   }
 
   private identifierNumberToken(): void {
-    // only executes when the first digit was already found to be a number.
-    // we treat this as a number UNTIL we find it no longer behaves like one.
-    var first = this.peekPrev();
-    var validNumber: boolean = true;
-    var hasDot: boolean = first === "." ? true : false;
+    // we first obtain the entire identifier
     while (this.isValidIdentifier(this.peek())) {
-      var c = this.peek();
-      if (!this.isDigit(c)) {
-        if (c === ".") {
-          // still can be a number
-          if (hasDot) {
-            validNumber = false;
-          } else if (
-            this.isDigit(this.peekNext()) ||
-            this.isWhitespace(this.peekNext())
-          ) {
-            hasDot = true;
-          } else {
-            validNumber = false;
-          }
-        } else {
-          validNumber = false;
-        }
-      }
       this.advance();
     }
-    // if the number is a single dot, single - or just "-.", it is not a number.
-    let lexeme = this.source.substring(this.start, this.current);
-    switch (lexeme) {
-      case ".":
-      case "-":
-      case "-.":
-        validNumber = false;
-        break;
-      default:
-        // do nothing
-        break;
+    const lexeme = this.source.substring(this.start, this.current);
+    if (stringIsSchemeNumber(lexeme)) {
+      this.addToken(TokenType.NUMBER, lexeme);
+      return;
     }
-    if (validNumber) {
-      this.addToken(TokenType.NUMBER, parseFloat(lexeme));
-    } else {
-      this.addToken(this.checkKeyword());
-    }
+    this.addToken(this.checkKeyword());
   }
 
   private checkKeyword(): TokenType {

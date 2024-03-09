@@ -55,8 +55,8 @@ export namespace Atomic {
    */
   export class NumericLiteral implements Literal {
     location: Location;
-    value: number;
-    constructor(location: Location, value: number) {
+    value: string;
+    constructor(location: Location, value: string) {
       this.location = location;
       this.value = value;
     }
