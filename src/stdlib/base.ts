@@ -65,7 +65,7 @@ export const complex$63$: Function = core.is_complex;
 export const exact$63$: Function = (n: core.SchemeNumber) =>
   or(rational$63$(n), integer$63$(n));
 export const inexact$63$: Function = (n: core.SchemeNumber) =>
-  or(real$63$(n), complex$63$(n));
+  or(complex$63$(n), real$63$(n));
 const atomic_negate: Function = core.atomic_negate;
 const atomic_inverse: Function = core.atomic_inverse;
 const atomic_less_than: Function = core.atomic_less_than;

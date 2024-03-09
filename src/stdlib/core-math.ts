@@ -1,17 +1,295 @@
 // The core library of scm-slang,
 // different from the base library,
 // this library contains all methods required
-// for the language to function properly.n
+// for the language to function properly.
 
 // This file contains the minimum subset
 // required for arithmetic to work.
-// which includes the numeric tower.
+// which includes the numeric tower,
+// as well as the regex forms used to detect numbers.
 
 export type SchemeNumber =
   | SchemeInteger
   | SchemeRational
   | SchemeReal
   | SchemeComplex;
+
+// define here the functions used to check and split the number into its parts
+
+export enum NumberType {
+  INTEGER = 1,
+  RATIONAL = 2,
+  REAL = 3,
+  COMPLEX = 4,
+}
+
+export abstract class Match {
+  constructor(public result: boolean) {}
+}
+
+class IntegerMatch extends Match {
+  constructor(
+    public result: boolean,
+    public value?: string,
+  ) {
+    super(result);
+  }
+
+  isSigned(): boolean {
+    return this.result
+      ? this.value![0] === "+" || this.value![0] === "-"
+      : false;
+  }
+}
+
+class RationalMatch extends Match {
+  constructor(
+    public result: boolean,
+    public numerator?: string,
+    public denominator?: string,
+  ) {
+    super(result);
+  }
+}
+
+class RealMatch extends Match {
+  constructor(
+    public result: boolean,
+    public integer?: string,
+    public decimal?: string,
+    public exponent?: Match,
+  ) {
+    super(result);
+  }
+}
+
+class ComplexMatch extends Match {
+  constructor(
+    public result: boolean,
+    public real?: Match,
+    public sign?: string,
+    public imaginary?: Match,
+  ) {
+    super(result);
+  }
+}
+
+// these are used to determine the type of the number and to separate it into its parts as well
+export function isInteger(value: string): IntegerMatch {
+  // <integer> = [+-]?<digit>+
+  // check if the value is an integer. if it is, return true and the value.
+  // if not, return false and an empty array.
+  const integerRegex = new RegExp(`^([+-]?)(\\d+)$`);
+  const match = integerRegex.exec(value);
+  if (match) {
+    return new IntegerMatch(true, match[0]);
+  }
+  return new IntegerMatch(false);
+}
+
+export function isRational(value: string): RationalMatch {
+  // <rational> = <integer>/<integer>
+  // both sides of the rational should parse as integers
+  // we can split the rational into two parts and check if both are integers
+  // make sure there is a /
+  const count = (value.match(/\//g) || []).length;
+  if (count !== 1) {
+    return new RationalMatch(false);
+  }
+  const parts = value.split("/");
+  if (parts.length !== 2) {
+    return new RationalMatch(false);
+  }
+  const [numerator, denominator] = parts;
+  const numeratorMatch = isInteger(numerator);
+  const denominatorMatch = isInteger(denominator);
+
+  if (!(numeratorMatch.result && denominatorMatch.result)) {
+    return new RationalMatch(false);
+  }
+
+  return new RationalMatch(true, numerator, denominator);
+}
+
+export function isReal(value: string): RealMatch {
+  // <real> = <basic> | <extended>
+  // <basic>: [+-]?a.b | [+-]?a | [+-]?.b | [+-]?a.
+  // <extended>: <basic>[eE]<integer | rational | real>
+  // where a = <digit>+ | inf | nan
+  //       b = <digit>+
+  //
+  // keep in mind that the value matches an integer too! but
+  // by the point of time this is called, we have already checked for an integer
+  function checkBasicReal(value: string): RealMatch {
+    function isSpecialNumber(value: string): boolean {
+      const specialRegex = new RegExp(`^([+-]?)(inf|nan)$`);
+      const match = specialRegex.exec(value);
+      return match !== null;
+    }
+    // check for the presence of a dot
+    const count = (value.match(/\./g) || []).length;
+    if (count > 1) {
+      return new RealMatch(false);
+    }
+
+    if (count === 0) {
+      // check for a special number
+      if (isSpecialNumber(value)) {
+        return new RealMatch(true, value);
+      }
+
+      // check for a default integer
+      const result = isInteger(value);
+      return new RealMatch(result.result, result.value);
+    }
+
+    // check for a basic real number
+    const [integerPart, decimalPart] = value.split(".");
+    const integerMatch = isInteger(integerPart);
+    const decimalMatch = isInteger(decimalPart);
+
+    const properInteger = integerMatch.result || integerPart === "";
+    const properDecimal = decimalMatch.result || decimalPart === "";
+
+    // if the integer part is a special number, the decimal part should be 0
+    if (isSpecialNumber(integerPart)) {
+      if (decimalPart !== "0") {
+        return new RealMatch(false);
+      }
+      return new RealMatch(true, value);
+    }
+
+    // at least one of the parts should be non-empty
+    if (
+      !(
+        (integerMatch.result && properDecimal) ||
+        (properInteger && decimalMatch.result)
+      )
+    ) {
+      return new RealMatch(false);
+    }
+
+    // if there is a decimal match, there should have no sign
+    if (decimalMatch.result && decimalMatch.isSigned()) {
+      return new RealMatch(false);
+    }
+
+    return new RealMatch(true, integerMatch.value, decimalMatch.value);
+  }
+
+  function checkExtendedReal(value: string): RealMatch {
+    // split the value into two parts by e/E
+    const parts = value.split(/[eE]/, 2);
+    console.log(parts);
+    if (parts.length !== 2) {
+      return new RealMatch(false);
+    }
+    const [basicRealPart, exponentPart] = parts;
+
+    // parse each part
+    const basicRealMatch = checkBasicReal(basicRealPart);
+
+    if (!basicRealMatch.result) {
+      return new RealMatch(false);
+    }
+
+    // match the exponent part across types up to real
+    const exponentMatch = universalMatch(exponentPart, NumberType.REAL);
+    if (!exponentMatch.result) {
+      return new RealMatch(false);
+    }
+
+    return new RealMatch(
+      true,
+      basicRealMatch.integer,
+      basicRealMatch.decimal,
+      exponentMatch,
+    );
+  }
+
+  // check for the presence of e/E
+  const count = (value.match(/[eE]/g) || []).length;
+
+  if (count === 0) {
+    // check for a basic real number
+    return checkBasicReal(value);
+  }
+
+  // check for an extended real number
+  return checkExtendedReal(value);
+}
+
+export function isComplex(value: string): ComplexMatch {
+  // <basic-num> = <integer> | <rational> | <real>
+  // <complex> = <basic-num>[+-]<basic-num>i
+  // check if the value is a complex number. if it is, return true and the value.
+  // if not, return a failed match.
+  const count = (value.match(/i/g) || []).length;
+  if (count !== 1) {
+    return new ComplexMatch(false);
+  }
+
+  if (value[value.length - 1] !== "i") {
+    return new ComplexMatch(false);
+  }
+
+  // find the first + or - that is not at the start of the string
+  // this is the split point
+  const splitPoint = value.search(/(?<!^)[+-]/);
+
+  // if no such point was found,
+  if (splitPoint === -1) {
+    // the value may be purely imaginary
+
+    const imaginaryPart = value.split("i")[0];
+    const imaginaryMatch = universalMatch(imaginaryPart, NumberType.REAL);
+
+    if (imaginaryMatch.result) {
+      return new ComplexMatch(true, undefined, undefined, imaginaryMatch);
+    }
+
+    return new ComplexMatch(false);
+  }
+
+  const realPart = value.slice(0, splitPoint);
+  const imaginaryPart = value.slice(splitPoint + 1, -1);
+  const realMatch = universalMatch(realPart, NumberType.REAL);
+  const imaginaryMatch = universalMatch(imaginaryPart, NumberType.REAL);
+
+  if (!(realMatch.result && imaginaryMatch.result)) {
+    return new ComplexMatch(false);
+  }
+
+  return new ComplexMatch(true, realMatch, value[splitPoint], imaginaryMatch);
+}
+
+// tests the value across all possible types
+// only limited by the finalWillingType of
+function universalMatch(value: string, finalWillingType: NumberType): Match {
+  const integerMatch = isInteger(value);
+  if (integerMatch.result && finalWillingType >= NumberType.INTEGER) {
+    return integerMatch;
+  }
+  const rationalMatch = isRational(value);
+  if (rationalMatch.result && finalWillingType >= NumberType.RATIONAL) {
+    return rationalMatch;
+  }
+  const realMatch = isReal(value);
+  if (realMatch.result && finalWillingType >= NumberType.REAL) {
+    return realMatch;
+  }
+  const complexMatch = isComplex(value);
+  if (complexMatch.result && finalWillingType >= NumberType.COMPLEX) {
+    return complexMatch;
+  }
+  return new IntegerMatch(false) as Match;
+}
+
+// for the lexer.
+export function stringIsSchemeNumber(value: string): boolean {
+  const match = universalMatch(value, NumberType.COMPLEX);
+  return match.result;
+}
 
 // Each class has a numberType property that is used to determine the type of the number.
 // If another instance's numbertype is higher in an operation, it will "promote" itself to the higher type.
@@ -32,7 +310,7 @@ export let make_number = (value: number): SchemeNumber => {
 };
 
 class SchemeInteger {
-  readonly numberType = 1;
+  readonly numberType = NumberType.INTEGER;
   private readonly value: bigint;
 
   private constructor(value: bigint) {
@@ -52,8 +330,8 @@ class SchemeInteger {
     return SchemeRational.build(this.value, 1n, true) as SchemeRational;
   }
 
-  equals(other: SchemeInteger): boolean {
-    return this.value === other.value;
+  equals(other: any): boolean {
+    return other instanceof SchemeInteger && this.value === other.value;
   }
 
   greaterThan(other: SchemeInteger): boolean {
@@ -89,7 +367,7 @@ class SchemeInteger {
 }
 
 class SchemeRational {
-  readonly numberType = 2;
+  readonly numberType = NumberType.RATIONAL;
   private readonly numerator: bigint;
   private readonly denominator: bigint;
 
@@ -170,8 +448,9 @@ class SchemeRational {
     return SchemeReal.build(sign > 0, mantissa, exponent, true);
   }
 
-  equals(other: SchemeRational): boolean {
+  equals(other: any): boolean {
     return (
+      other instanceof SchemeRational &&
       this.numerator === other.numerator &&
       this.denominator === other.denominator
     );
@@ -220,7 +499,7 @@ class SchemeRational {
 }
 
 class SchemeReal {
-  readonly numberType = 3;
+  readonly numberType = NumberType.REAL;
   private readonly positive: boolean;
   private readonly mantissa: number;
   private readonly exponent: bigint;
@@ -259,8 +538,9 @@ class SchemeReal {
     return SchemeComplex.build(this, SchemeReal.ZERO, true) as SchemeComplex;
   }
 
-  equals(other: SchemeReal): boolean {
+  equals(other: any): boolean {
     return (
+      other instanceof SchemeReal &&
       this.positive === other.positive &&
       this.exponent === other.exponent &&
       Math.abs(this.mantissa - other.mantissa) < SchemeReal.epsilon
@@ -336,19 +616,22 @@ class SchemeReal {
 }
 
 class SchemeComplex {
-  readonly numberType = 4;
-  private readonly real: SchemeReal;
-  private readonly imaginary: SchemeReal;
+  readonly numberType = NumberType.COMPLEX;
+  private readonly real: SchemeInteger | SchemeRational | SchemeReal;
+  private readonly imaginary: SchemeInteger | SchemeRational | SchemeReal;
 
   static build(
-    real: SchemeReal,
-    imaginary: SchemeReal,
+    real: SchemeReal | SchemeRational | SchemeInteger,
+    imaginary: SchemeReal | SchemeRational | SchemeInteger,
     force: boolean = false,
   ): SchemeComplex {
     return new SchemeComplex(real, imaginary);
   }
 
-  private constructor(real: SchemeReal, imaginary: SchemeReal) {
+  private constructor(
+    real: SchemeReal | SchemeRational | SchemeInteger,
+    imaginary: SchemeReal | SchemeRational | SchemeInteger,
+  ) {
     this.real = real;
     this.imaginary = imaginary;
   }
@@ -363,44 +646,60 @@ class SchemeComplex {
 
   equals(other: SchemeComplex): boolean {
     return (
-      this.real.equals(other.real) && this.imaginary.equals(other.imaginary)
+      atomic_equals(this.real, other.real) &&
+      atomic_equals(this.imaginary, other.imaginary)
     );
   }
 
   greaterThan(other: SchemeComplex): boolean {
     return (
-      this.real.greaterThan(other.real) &&
-      this.imaginary.greaterThan(other.imaginary)
+      atomic_greater_than(this.real, other.real) &&
+      atomic_greater_than(this.imaginary, other.imaginary)
     );
   }
 
   multiplicativeInverse(): SchemeComplex {
     // inverse of a + bi = a - bi / a^2 + b^2
     // in this case, we use a / a^2 + b^2 and -b / a^2 + b^2 as the new values required
-    const denominator = this.real
-      .multiply(this.real)
-      .add(this.imaginary.multiply(this.imaginary));
+    const denominator = atomic_add(
+      atomic_multiply(this.real, this.real),
+      atomic_multiply(this.imaginary, this.imaginary),
+    ) as SchemeInteger | SchemeRational | SchemeReal;
     return SchemeComplex.build(
-      denominator.multiplicativeInverse().multiply(this.real),
-      denominator.multiplicativeInverse().multiply(this.imaginary.negate()),
+      atomic_multiply(denominator.multiplicativeInverse(), this.real) as
+        | SchemeInteger
+        | SchemeRational
+        | SchemeReal,
+      atomic_multiply(
+        denominator.multiplicativeInverse(),
+        this.imaginary.negate(),
+      ) as SchemeInteger | SchemeRational | SchemeReal,
     );
   }
 
   add(other: SchemeComplex): SchemeComplex {
     return SchemeComplex.build(
-      this.real.add(other.real),
-      this.imaginary.add(other.imaginary),
+      atomic_add(this.real, other.real) as
+        | SchemeInteger
+        | SchemeRational
+        | SchemeReal,
+      atomic_add(this.imaginary, other.imaginary) as
+        | SchemeInteger
+        | SchemeRational
+        | SchemeReal,
     );
   }
 
   multiply(other: SchemeComplex): SchemeComplex {
     // (a + bi) * (c + di) = (ac - bd) + (ad + bc)i
-    const realPart = this.real
-      .multiply(other.real)
-      .add(this.imaginary.multiply(other.imaginary).negate());
-    const imaginaryPart = this.real
-      .multiply(other.imaginary)
-      .add(this.imaginary.multiply(other.real));
+    const realPart = atomic_subtract(
+      atomic_multiply(this.real, other.real),
+      atomic_multiply(this.imaginary, other.imaginary),
+    ) as SchemeInteger | SchemeRational | SchemeReal;
+    const imaginaryPart = atomic_add(
+      atomic_multiply(this.real, other.imaginary),
+      atomic_multiply(this.imaginary, other.real),
+    ) as SchemeInteger | SchemeRational | SchemeReal;
     return SchemeComplex.build(realPart, imaginaryPart);
   }
 
@@ -421,23 +720,26 @@ export function coerce_to_number(a: SchemeNumber): number {
 
 // these functions deal with checking the type of a number.
 export function is_number(a: any): boolean {
-  return a.numberType !== undefined;
+  return (
+    a.numberType !== undefined &&
+    Object.values(NumberType).includes(a.numberType)
+  );
 }
 
 export function is_integer(a: any): boolean {
-  return a.numberType === 1;
+  return is_number(a) && a.numberType <= 1;
 }
 
 export function is_rational(a: any): boolean {
-  return a.numberType === 2;
+  return is_number(a) && a.numberType <= 2;
 }
 
 export function is_real(a: any): boolean {
-  return a.numberType === 3;
+  return is_number(a) && a.numberType <= 3;
 }
 
 export function is_complex(a: any): boolean {
-  return a.numberType === 4;
+  return is_number(a) && a.numberType <= 4;
 }
 
 // the functions below are used to perform operations on numbers
