@@ -598,7 +598,34 @@ export class SchemeRational {
   }
 
   coerce(): number {
-    throw new Error("Cannot coerce a rational number to a javascript number");
+    const workingNumerator =
+      this.numerator < 0 ? -this.numerator : this.numerator;
+    let converterDenominator = this.denominator;
+
+    // we can take the whole part directly
+    const wholePart = workingNumerator / converterDenominator;
+
+    if (wholePart > Number.MAX_VALUE) {
+      return this.numerator < 0 ? -Infinity : Infinity;
+    }
+    // remainder should be lossily converted below safe levels
+    let remainder = workingNumerator % converterDenominator;
+
+    // we lossily convert both values below safe number thresholds
+    while (
+      remainder > Number.MAX_SAFE_INTEGER ||
+      converterDenominator > Number.MAX_SAFE_INTEGER
+    ) {
+      remainder = remainder / 2n;
+      converterDenominator = converterDenominator / 2n;
+    }
+
+    // coerce the now safe parts into a remainder number
+    const remainderPart = Number(remainder) / Number(converterDenominator);
+
+    return this.numerator < 0
+      ? -(Number(wholePart) + remainderPart)
+      : Number(wholePart) + remainderPart;
   }
 
   toString(): string {
