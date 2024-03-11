@@ -7,7 +7,7 @@ import { SchemeParser } from "./parser";
 import { Expression } from "./types/nodes/scheme-node-types";
 import { Program } from "estree";
 
-import { Simplifier, Transpiler } from "./visitors";
+import { Simplifier, Transpiler, Redefiner } from "./visitors";
 
 export { LexerError } from "./lexer";
 export { ParserError } from "./parser";
@@ -37,8 +37,8 @@ export function schemeParse(source: string, chapter?: number): Program {
 
   // We instantiate all the visitors
   const simplifier = Simplifier.create();
+  const redefiner = Redefiner.create();
   const transpiler = Transpiler.create();
-
   // TODO: Then we macro-expand the AST
 
   // TODO: Then we verify the AST
@@ -46,8 +46,11 @@ export function schemeParse(source: string, chapter?: number): Program {
   // Then we simplify the AST
   const simplifiedAST: Expression[] = simplifier.simplify(firstAST);
 
+  // Then we redefine the AST
+  const redefinedAST: Expression[] = redefiner.redefine(simplifiedAST);
+
   // Finally we transpile the AST
-  const program: Program = transpiler.transpile(simplifiedAST);
+  const program: Program = transpiler.transpile(redefineAST);
 
   return program;
 }

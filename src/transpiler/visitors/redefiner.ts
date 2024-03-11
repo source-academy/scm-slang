@@ -1,20 +1,42 @@
 /**
- * A visitor that transforms all "extended AST" nodes into "atomic AST" nodes.
- * Except for everything inside a quote, which is left alone.
+ * A visitor that evaluates all definitions in a Scheme AST.
+ * If several redefinitions are made, they are converted to reassignments.
+ * Required to play nice with JavaScript's scoping rules.
  */
 
 import { Expression, Atomic, Extended } from "../types/nodes/scheme-node-types";
-import { Location } from "../types/location";
 import { Visitor } from ".";
 
-export class Simplifier implements Visitor {
-  // Factory method for creating a new Simplifier instance.
-  public static create(): Simplifier {
-    return new Simplifier();
+export class Redefiner implements Visitor {
+  // Factory method for creating a new Redefiner instance.
+  public static create(): Redefiner {
+    return new Redefiner();
   }
 
-  public simplify(node: Expression[]): Expression[] {
-    return node.map((expression) => expression.accept(this));
+  redefineScope(scope: Expression[]): Expression[] {
+    const names = new Set<string>();
+    const newScope = scope.map((expression) => {
+      if (expression instanceof Atomic.Definition) {
+        const exprName = expression.name.name;
+        if (names.has(exprName)) {
+          return new Atomic.Reassignment(
+            expression.location,
+            expression.name,
+            expression.value,
+          );
+        }
+        names.add(exprName);
+      }
+      return expression;
+    });
+    return newScope;
+  }
+
+  public redefine(nodes: Expression[]): Expression[] {
+    // recursivly redefine the scope of the nodes
+    // then work directly on the new nodes
+    const newNodes = nodes.map((node) => node.accept(this));
+    return this.redefineScope(newNodes);
   }
 
   // Atomic AST
@@ -23,7 +45,7 @@ export class Simplifier implements Visitor {
     const newExpressions = node.expressions.map((expression) =>
       expression.accept(this),
     );
-    return new Atomic.Sequence(location, newExpressions);
+    return new Atomic.Sequence(location, this.redefineScope(newExpressions));
   }
 
   visitNumericLiteral(node: Atomic.NumericLiteral): Atomic.NumericLiteral {
@@ -136,28 +158,32 @@ export class Simplifier implements Visitor {
   // Extended AST
   visitFunctionDefinition(
     node: Extended.FunctionDefinition,
-  ): Atomic.Definition {
+  ): Extended.FunctionDefinition {
     const location = node.location;
     const name = node.name;
     const params = node.params;
     const rest = node.rest;
     const newBody = node.body.accept(this);
 
-    const newLambda = new Atomic.Lambda(location, newBody, params, rest);
-    return new Atomic.Definition(location, name, newLambda);
+    return new Extended.FunctionDefinition(
+      location,
+      name,
+      newBody,
+      params,
+      rest,
+    );
   }
 
-  visitLet(node: Extended.Let): Atomic.Application {
+  visitLet(node: Extended.Let): Extended.Let {
     const location = node.location;
     const identifiers = node.identifiers;
     const newValues = node.values.map((value) => value.accept(this));
     const newBody = node.body.accept(this);
 
-    const newLambda = new Atomic.Lambda(location, newBody, identifiers);
-    return new Atomic.Application(location, newLambda, newValues);
+    return new Extended.Let(location, identifiers, newValues, newBody);
   }
 
-  visitCond(node: Extended.Cond): Expression {
+  visitCond(node: Extended.Cond): Extended.Cond {
     const location = node.location;
     const newPredicates = node.predicates.map((predicate) =>
       predicate.accept(this),
@@ -168,43 +194,15 @@ export class Simplifier implements Visitor {
     const newCatchall = node.catchall
       ? node.catchall.accept(this)
       : node.catchall;
-
-    if (newPredicates.length == 0) {
-      // Return catchall if there is no predicate
-      return new Atomic.Conditional(
-        location,
-        new Atomic.BooleanLiteral(location, false),
-        new Atomic.Nil(location),
-        node.catchall ? newCatchall : new Atomic.Nil(location),
-      );
-    }
-
-    newPredicates.reverse();
-    newConsequents.reverse();
-    const lastLocation = newPredicates[0].location;
-    let newConditional = newCatchall
-      ? newCatchall
-      : new Atomic.Nil(lastLocation);
-
-    for (let i = 0; i < newPredicates.length; i++) {
-      const predicate = newPredicates[i];
-      const consequent = newConsequents[i];
-      const predLocation = predicate.location;
-      const consLocation = consequent.location;
-      const newLocation = new Location(predLocation.start, consLocation.end);
-      newConditional = new Atomic.Conditional(
-        newLocation,
-        predicate,
-        consequent,
-        newConditional,
-      );
-    }
-
-    return newConditional;
+    return new Extended.Cond(
+      location,
+      newPredicates,
+      newConsequents,
+      newCatchall,
+    );
   }
 
-  // we will keep list as it is useful in its current state.
-  visitList(node: Extended.List): Expression {
+  visitList(node: Extended.List): Extended.List {
     const location = node.location;
     const newElements = node.elements.map((element) => element.accept(this));
     const newTerminator = node.terminator
@@ -213,26 +211,26 @@ export class Simplifier implements Visitor {
     return new Extended.List(location, newElements, newTerminator);
   }
 
-  visitBegin(node: Extended.Begin): Atomic.Sequence {
+  visitBegin(node: Extended.Begin): Extended.Begin {
     const location = node.location;
     const newExpressions = node.expressions.map((expression) =>
       expression.accept(this),
     );
 
-    return new Atomic.Sequence(location, newExpressions);
+    return new Extended.Begin(location, this.redefineScope(newExpressions));
   }
 
-  visitDelay(node: Extended.Delay): Atomic.Lambda {
+  visitDelay(node: Extended.Delay): Extended.Delay {
     const location = node.location;
     const newBody = node.expression.accept(this);
 
-    return new Atomic.Lambda(location, newBody, []);
+    return new Extended.Delay(location, newBody);
   }
 
-  visitForce(node: Extended.Force): Atomic.Application {
+  visitForce(node: Extended.Force): Extended.Force {
     const location = node.location;
     const NewExpression = node.expression.accept(this);
 
-    return new Atomic.Application(location, NewExpression, []);
+    return new Extended.Force(location, NewExpression);
   }
 }
