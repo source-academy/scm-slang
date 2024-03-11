@@ -44,18 +44,18 @@ test("SchemeLexer parses integer numbers correctly", () => {
   expect(tokens.length).toBe(2);
   expect(tokens[0].type).toBe(TokenType.NUMBER);
   expect(tokens[0].lexeme).toBe("123");
-  expect(tokens[0].literal).toBe(123);
+  expect(tokens[0].literal).toBe("123");
 });
 
-test("SchemeLexer parses floating point numbers correctly", () => {
-  const source = ".45";
+test("SchemeLexer parses positive integer numbers correctly", () => {
+  const source = "+123";
   const lexer = new SchemeLexer(source);
   const tokens = lexer.scanTokens();
-  // tokens should be 2: .45, EOF
+  // tokens should be 2: +123, EOF
   expect(tokens.length).toBe(2);
   expect(tokens[0].type).toBe(TokenType.NUMBER);
-  expect(tokens[0].lexeme).toBe(".45");
-  expect(tokens[0].literal).toBe(0.45);
+  expect(tokens[0].lexeme).toBe("+123");
+  expect(tokens[0].literal).toBe("+123");
 });
 
 test("SchemeLexer parses negative numbers correctly", () => {
@@ -66,7 +66,128 @@ test("SchemeLexer parses negative numbers correctly", () => {
   expect(tokens.length).toBe(2);
   expect(tokens[0].type).toBe(TokenType.NUMBER);
   expect(tokens[0].lexeme).toBe("-123");
-  expect(tokens[0].literal).toBe(-123);
+  expect(tokens[0].literal).toBe("-123");
+});
+
+test("SchemeLexer parses rational numbers correctly", () => {
+  const source = "123/456";
+  const lexer = new SchemeLexer(source);
+  const tokens = lexer.scanTokens();
+  // tokens should be 2: 123/456, EOF
+  expect(tokens.length).toBe(2);
+  expect(tokens[0].type).toBe(TokenType.NUMBER);
+  expect(tokens[0].lexeme).toBe("123/456");
+  expect(tokens[0].literal).toBe("123/456");
+});
+
+test("SchemeLexer parses positive rational numbers correctly", () => {
+  const source = "+123/456";
+  const lexer = new SchemeLexer(source);
+  const tokens = lexer.scanTokens();
+  // tokens should be 2: +123/456, EOF
+  expect(tokens.length).toBe(2);
+  expect(tokens[0].type).toBe(TokenType.NUMBER);
+  expect(tokens[0].lexeme).toBe("+123/456");
+  expect(tokens[0].literal).toBe("+123/456");
+});
+
+test("SchemeLexer parses negative rational numbers correctly", () => {
+  const source = "-123/456";
+  const lexer = new SchemeLexer(source);
+  const tokens = lexer.scanTokens();
+  // tokens should be 2: -123/456, EOF
+  expect(tokens.length).toBe(2);
+  expect(tokens[0].type).toBe(TokenType.NUMBER);
+  expect(tokens[0].lexeme).toBe("-123/456");
+  expect(tokens[0].literal).toBe("-123/456");
+});
+
+test("SchemeLexer parses rational numbers with all signs", () => {
+  const source = "+123/-456";
+  const lexer = new SchemeLexer(source);
+  const tokens = lexer.scanTokens();
+  // tokens should be 2: +123/-456, EOF
+  expect(tokens.length).toBe(2);
+  expect(tokens[0].type).toBe(TokenType.NUMBER);
+  expect(tokens[0].lexeme).toBe("+123/-456");
+  expect(tokens[0].literal).toBe("+123/-456");
+});
+
+test("SchemeLexer parses floating point numbers correctly", () => {
+  const source = ".45";
+  const lexer = new SchemeLexer(source);
+  const tokens = lexer.scanTokens();
+  // tokens should be 2: .45, EOF
+  expect(tokens.length).toBe(2);
+  expect(tokens[0].type).toBe(TokenType.NUMBER);
+  expect(tokens[0].lexeme).toBe(".45");
+  expect(tokens[0].literal).toBe(".45");
+});
+
+test("SchemeLexer parsses positive floating point numbers correctly", () => {
+  const source = "+.45";
+  const lexer = new SchemeLexer(source);
+  const tokens = lexer.scanTokens();
+  // tokens should be 2: +.45, EOF
+  expect(tokens.length).toBe(2);
+  expect(tokens[0].type).toBe(TokenType.NUMBER);
+  expect(tokens[0].lexeme).toBe("+.45");
+  expect(tokens[0].literal).toBe("+.45");
+});
+
+test("SchemeLexer parses negative floating point numbers correctly", () => {
+  const source = "-.45";
+  const lexer = new SchemeLexer(source);
+  const tokens = lexer.scanTokens();
+  // tokens should be 2: -.45, EOF
+  expect(tokens.length).toBe(2);
+  expect(tokens[0].type).toBe(TokenType.NUMBER);
+  expect(tokens[0].lexeme).toBe("-.45");
+  expect(tokens[0].literal).toBe("-.45");
+});
+
+test("SchemeLexer parses floating point numbers with exponents", () => {
+  const source = "123.45e1/2";
+  const lexer = new SchemeLexer(source);
+  const tokens = lexer.scanTokens();
+  // tokens should be 2: 123.45e1/2, EOF
+  expect(tokens.length).toBe(2);
+  expect(tokens[0].type).toBe(TokenType.NUMBER);
+  expect(tokens[0].lexeme).toBe("123.45e1/2");
+  expect(tokens[0].literal).toBe("123.45e1/2");
+});
+
+test("SchemeLexer parses special floating point numbers correctly", () => {
+  const source = "inf.0";
+  const lexer = new SchemeLexer(source);
+  const tokens = lexer.scanTokens();
+  // tokens should be 2: inf.0, EOF
+  expect(tokens.length).toBe(2);
+  expect(tokens[0].type).toBe(TokenType.NUMBER);
+  expect(tokens[0].lexeme).toBe("inf.0");
+  expect(tokens[0].literal).toBe("inf.0");
+});
+
+test("SchemeLexer parses complex numbers correctly", () => {
+  const source = "123+456i";
+  const lexer = new SchemeLexer(source);
+  const tokens = lexer.scanTokens();
+  // tokens should be 2: 123+456i, EOF
+  expect(tokens.length).toBe(2);
+  expect(tokens[0].type).toBe(TokenType.NUMBER);
+  expect(tokens[0].lexeme).toBe("123+456i");
+  expect(tokens[0].literal).toBe("123+456i");
+});
+
+test("SchemeLexer parses pure imaginary numbers correctly", () => {
+  const source = "1/2i";
+  const lexer = new SchemeLexer(source);
+  const tokens = lexer.scanTokens();
+  // tokens should be 2: 1/2i, EOF
+  expect(tokens.length).toBe(2);
+  expect(tokens[0].type).toBe(TokenType.NUMBER);
+  expect(tokens[0].lexeme).toBe("1/2i");
+  expect(tokens[0].literal).toBe("1/2i");
 });
 
 test("SchemeLexer treats poorly formatted numbers as identifiers", () => {
@@ -123,7 +244,7 @@ test("SchemeLexer can ignore comments", () => {
   // tokens should be 2: 123, EOF
   expect(tokens.length).toBe(2);
   expect(tokens[0].type).toBe(TokenType.NUMBER);
-  expect(tokens[0].literal).toBe(123);
+  expect(tokens[0].literal).toBe("123");
 });
 
 test("SchemeLexer can ignore comments at the end of a line", () => {
@@ -133,7 +254,7 @@ test("SchemeLexer can ignore comments at the end of a line", () => {
   // tokens should be 2: 123, EOF
   expect(tokens.length).toBe(2);
   expect(tokens[0].type).toBe(TokenType.NUMBER);
-  expect(tokens[0].literal).toBe(123);
+  expect(tokens[0].literal).toBe("123");
 });
 
 test("SchemeLexer can ignore multiline comments", () => {
@@ -145,9 +266,9 @@ test("SchemeLexer can ignore multiline comments", () => {
   // tokens should be 2: 456, 123, EOF
   expect(tokens.length).toBe(3);
   expect(tokens[0].type).toBe(TokenType.NUMBER);
-  expect(tokens[0].literal).toBe(456);
+  expect(tokens[0].literal).toBe("456");
   expect(tokens[1].type).toBe(TokenType.NUMBER);
-  expect(tokens[1].literal).toBe(123);
+  expect(tokens[1].literal).toBe("123");
 });
 
 test("SchemeLexer can properly detect all the double character tokens", () => {

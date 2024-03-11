@@ -73,7 +73,7 @@ export class SchemeParser implements Parser {
    */
   private destructureList(
     list: Datum[],
-    verifier = (x: any) => {},
+    verifier = (_x: any) => {},
   ): [Expression[], Expression | undefined] {
     // check if the list is an empty list
     if (list.length === 0) {
@@ -240,7 +240,7 @@ export class SchemeParser implements Parser {
       case TokenType.NUMBER:
         return new Atomic.NumericLiteral(
           this.toLocation(token),
-          token.literal as number,
+          token.literal as string,
         );
       case TokenType.BOOLEAN:
         return new Atomic.BooleanLiteral(

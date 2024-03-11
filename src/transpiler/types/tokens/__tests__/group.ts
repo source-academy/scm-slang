@@ -23,7 +23,7 @@ const rBracket = new Token(TokenType.RIGHT_BRACKET, "]", "]", 1, 1, 1, 1);
 // we are testing the group constructor itself.
 // we will test those scenarios later in these tests.
 
-const invalidEmptyElements = [];
+const invalidEmptyElements: any[] = [];
 const validEmptyElements = [lParen, rParen];
 
 const validNonParenElements = [dummyToken];

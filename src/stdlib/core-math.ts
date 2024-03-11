@@ -237,7 +237,6 @@ export function isReal(value: string): RealMatch {
   function checkExtendedReal(value: string): RealMatch {
     // split the value into two parts by e/E
     const parts = value.split(/[eE]/, 2);
-    console.log(parts);
     if (parts.length !== 2) {
       return new RealMatch(false);
     }
@@ -380,7 +379,7 @@ class SchemeInteger {
   // Force prevents automatic downcasting to a lower type.
   static build(
     value: number | string | bigint,
-    force: boolean = false,
+    _force: boolean = false,
   ): SchemeInteger {
     const val = BigInt(value);
     if (val === 0n) {
@@ -608,7 +607,7 @@ class SchemeReal {
   public static NAN = new SchemeReal(NaN);
   public static NEG_NAN = new SchemeReal(-NaN);
 
-  static build(value: number, force: boolean = false): SchemeReal {
+  static build(value: number, _force: boolean = false): SchemeReal {
     return new SchemeReal(value);
   }
 
@@ -671,7 +670,7 @@ class SchemeComplex {
   static build(
     real: SchemeReal | SchemeRational | SchemeInteger,
     imaginary: SchemeReal | SchemeRational | SchemeInteger,
-    force: boolean = false,
+    _force: boolean = false,
   ): SchemeComplex {
     return new SchemeComplex(real, imaginary);
   }
