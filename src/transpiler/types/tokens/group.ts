@@ -7,6 +7,7 @@ import { TokenType } from "./token-type";
 import { Location, Position } from "../location";
 import { Datum } from "./datum";
 import { isGroup, isToken } from ".";
+import { ExpectedFormError } from "../../parser/parser-error";
 
 export class Group {
   // Invariants:
@@ -61,9 +62,8 @@ export class Group {
     if (elements.length === 0) {
       // This should never happen.
       // If it does its the implementor's fault.
-      throw new Error("Empty group.");
+      throw new Error("Illegal empty group. This should never happen.");
     }
-
     // If the group is not parenthesized, the first case contains only one element.
     if (elements.length === 1) {
       const onlyElement: Datum = elements[0];
@@ -79,7 +79,7 @@ export class Group {
       if (!isDataType(onlyElement)) {
         // This should never happen.
         // If it does its the implementor's fault.
-        throw new Error("Invalid group.");
+        throw new ExpectedFormError("", onlyElement.pos, onlyElement, "<data>");
       }
 
       return new Group(elements);
@@ -108,7 +108,14 @@ export class Group {
       return new Group(elements);
     }
 
-    throw new Error("Invalid group.");
+    // This should never happen.
+    const wrongGroup = new Group(elements);
+    throw new ExpectedFormError(
+      "",
+      wrongGroup.location.start,
+      wrongGroup,
+      "matching parentheses",
+    );
   }
 
   // Get the first element of the group.
@@ -196,11 +203,9 @@ export class Group {
   }
 
   /**
-   * To aid in debugging.
-   * Groups are separated by pipes.
    * @returns A string representation of the group
    */
   toString(): string {
-    return " |> " + this.elements.map((e) => e.toString()).join(" ") + " <| ";
+    return this.elements.map((e) => e.toString()).join(" ");
   }
 }

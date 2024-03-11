@@ -1,3 +1,4 @@
+import { Datum } from "../types/tokens/datum";
 import { Token } from "../types/tokens/token";
 import { Position } from "estree";
 
@@ -50,37 +51,53 @@ export class UnexpectedEOFError extends ParserError {
   }
 }
 
-export class UnexpectedTokenError extends ParserError {
-  token: Token;
-  constructor(source: string, pos: Position, token: Token) {
+export class UnexpectedFormError extends ParserError {
+  form: Datum;
+  constructor(source: string, pos: Position, form: Datum) {
     super(
       extractLine(source, pos) +
         "\n" +
         showPoint(pos) +
         "\n" +
-        `Unexpected \'${token}\'`,
+        `Unexpected \'${form}\'`,
       pos,
     );
-    this.token = token;
+    this.form = form;
     this.name = "UnexpectedTokenError";
   }
 }
 
-export class ExpectedTokenError extends ParserError {
-  token: Token;
+export class ExpectedFormError extends ParserError {
+  form: Datum;
   expected: string;
-  constructor(source: string, pos: Position, token: Token, expected: string) {
+  constructor(source: string, pos: Position, form: Datum, expected: string) {
     super(
       extractLine(source, pos) +
         "\n" +
         showPoint(pos) +
         "\n" +
-        `Expected \'${expected}\' but got \'${token}\'`,
+        `Expected \'${expected}\' but got \'${form}\'`,
       pos,
     );
-    this.token = token;
+    this.form = form;
     this.expected = expected;
     this.name = "ExpectedTokenError";
+  }
+}
+
+export class MissingFormError extends ParserError {
+  expected: string;
+  constructor(source: string, pos: Position, expected: string) {
+    super(
+      extractLine(source, pos) +
+        "\n" +
+        showPoint(pos) +
+        "\n" +
+        `Expected \'${expected}\'`,
+      pos,
+    );
+    this.expected = expected;
+    this.name = "MissingTokenError";
   }
 }
 

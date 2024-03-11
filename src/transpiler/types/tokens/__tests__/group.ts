@@ -37,7 +37,7 @@ const validParenElements = [lParen, dummyToken, dummyToken, rParen];
 const invalidParenElements = [lParen, dummyToken, dummyToken, rBracket];
 
 test("Group.build() should reject empty elements", () => {
-  expect(() => Group.build(invalidEmptyElements)).toThrow("Empty group.");
+  expect(() => Group.build(invalidEmptyElements)).toThrow();
 });
 
 test("Group.build() should accept an empty list", () => {
@@ -49,11 +49,11 @@ test("Group can be of singular unparenthesized element", () => {
 });
 
 test("Group of 1 singular element must be of data type", () => {
-  expect(() => Group.build(invalidSingleElement)).toThrow("Invalid group.");
+  expect(() => Group.build(invalidSingleElement)).toThrow();
 });
 
 test("Group cannot be larger than 1 element if not parenthesized and not affector group", () => {
-  expect(() => Group.build(invalidNonParenElements)).toThrow("Invalid group.");
+  expect(() => Group.build(invalidNonParenElements)).toThrow();
 });
 
 test("Group can be of 2 elements if the first is an affector", () => {
@@ -61,15 +61,11 @@ test("Group can be of 2 elements if the first is an affector", () => {
 });
 
 test("Group cannot be of more than 2 elements if affector group", () => {
-  expect(() => Group.build(invalidAffectorMoreElements)).toThrow(
-    "Invalid group.",
-  );
+  expect(() => Group.build(invalidAffectorMoreElements)).toThrow();
 });
 
 test("Group cannot be of less than 2 elements if affector group", () => {
-  expect(() => Group.build(invalidAffectorLessElements)).toThrow(
-    "Invalid group.",
-  );
+  expect(() => Group.build(invalidAffectorLessElements)).toThrow();
 });
 
 test("Group can be of more than 2 elements if parenthesized", () => {
@@ -77,7 +73,7 @@ test("Group can be of more than 2 elements if parenthesized", () => {
 });
 
 test("Parenthesized group must have matching parentheses", () => {
-  expect(() => Group.build(invalidParenElements)).toThrow("Invalid group.");
+  expect(() => Group.build(invalidParenElements)).toThrow();
 });
 
 test("Group.build() should avoid nested singular groups", () => {

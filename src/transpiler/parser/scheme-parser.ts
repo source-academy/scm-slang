@@ -136,7 +136,7 @@ export class SchemeParser implements Parser {
         case TokenType.RIGHT_PAREN:
         case TokenType.RIGHT_BRACKET:
           if (!inList) {
-            throw new ParserError.UnexpectedTokenError(this.source, c.pos, c);
+            throw new ParserError.UnexpectedFormError(this.source, c.pos, c);
           }
           // add the parenthesis to the current group
           elements.push(c);
@@ -192,13 +192,26 @@ export class SchemeParser implements Parser {
           // file without its corresponding delemiter, we can reach this point.
           throw new ParserError.UnexpectedEOFError(this.source, c.pos);
         default:
-          throw new ParserError.UnexpectedTokenError(this.source, c.pos, c);
+          throw new ParserError.UnexpectedFormError(this.source, c.pos, c);
       }
     } while (inList);
     if (elements.length === 0) {
       return;
     }
-    return Group.build(elements);
+
+    try {
+      return Group.build(elements);
+    } catch (e) {
+      if (e instanceof ParserError.ExpectedFormError) {
+        throw new ParserError.ExpectedFormError(
+          this.source,
+          e.loc,
+          e.form,
+          e.expected,
+        );
+      }
+      throw e;
+    }
   }
 
   /**
@@ -257,7 +270,7 @@ export class SchemeParser implements Parser {
         if (this.quoteMode !== QuoteMode.NONE) {
           return new Atomic.Symbol(this.toLocation(token), token.lexeme);
         }
-        throw new ParserError.UnexpectedTokenError(
+        throw new ParserError.UnexpectedFormError(
           this.source,
           token.pos,
           token,
@@ -358,15 +371,10 @@ export class SchemeParser implements Parser {
       case TokenType.UNQUOTE_SPLICING:
         // Unquote-splicing will be evaluated at runtime,
         // Proper unquote splicing will be dealt with in semester 2.
-        throw new ParserError.UnsupportedTokenError(
-          this.source,
-          (<Token>affector).pos,
-          <Token>affector,
-        );
 
         let preUnquoteSplicingMode = this.quoteMode;
         if (preUnquoteSplicingMode === QuoteMode.NONE) {
-          throw new ParserError.UnexpectedTokenError(
+          throw new ParserError.UnexpectedFormError(
             this.source,
             (<Token>affector).pos,
             <Token>affector,
@@ -383,6 +391,11 @@ export class SchemeParser implements Parser {
           // wrap the entire expression in a list
           return new Extended.List(newLocation, [newSymbol, innerGroup]);
         }
+        throw new ParserError.UnsupportedTokenError(
+          this.source,
+          (<Token>affector).pos,
+          <Token>affector,
+        );
         this.quoteMode = QuoteMode.NONE;
         const unquoteSplicedExpression = this.parseExpression(target);
         this.quoteMode = preUnquoteSplicingMode;
@@ -398,7 +411,7 @@ export class SchemeParser implements Parser {
         this.quoteMode = preVectorQuoteMode;
         return vector;
       default:
-        throw new ParserError.UnexpectedTokenError(
+        throw new ParserError.UnexpectedFormError(
           this.source,
           (<Token>affector).pos,
           <Token>affector,
@@ -409,7 +422,12 @@ export class SchemeParser implements Parser {
   private parseNormalGroup(group: Group): Expression {
     // it is an error if the group is empty in a normal context
     if (group.length() === 0) {
-      throw new Error("unexpected syntax in form ()");
+      throw new ParserError.ExpectedFormError(
+        this.source,
+        group.location.start,
+        group,
+        "non-empty group",
+      );
     }
 
     // get the first element
@@ -513,14 +531,15 @@ export class SchemeParser implements Parser {
    * @returns
    */
   private parseLambda(group: Group): Atomic.Lambda {
-    // Form: (lambda <formals> <body>)
-    //     | (lambda <formals> <body> <body>*)
+    // Form: (lambda (<identifier>*) <body>+)
+    //     | (lambda (<identifier>* . <rest-identifier>) <body>+)
     // ensure that the group has at least 3 elements
     if (group.length() < 3) {
-      throw new ParserError.UnexpectedTokenError(
+      throw new ParserError.ExpectedFormError(
         this.source,
-        group.firstToken().pos,
-        group.firstToken(),
+        group.location.start,
+        group,
+        "(lambda (<identifier>* . <rest-identifier>?) <body>+) | (lambda <rest-identifer> <body>+)",
       );
     }
     const elements = group.unwrap();
@@ -533,10 +552,11 @@ export class SchemeParser implements Parser {
     let convertedRest: Atomic.Identifier | undefined = undefined;
     if (isToken(formals)) {
       if (formals.type !== TokenType.IDENTIFIER) {
-        throw new ParserError.UnexpectedTokenError(
+        throw new ParserError.ExpectedFormError(
           this.source,
           formals.pos,
           formals,
+          "<rest-identifier>",
         );
       }
       convertedRest = new Atomic.Identifier(
@@ -551,13 +571,19 @@ export class SchemeParser implements Parser {
         // pass in a verifier that checks if the elements are identifiers
         (formal) => {
           if (!isToken(formal)) {
-            throw new Error("unexpected syntax in formals");
-          }
-          if (formal.type !== TokenType.IDENTIFIER) {
-            throw new ParserError.UnexpectedTokenError(
+            throw new ParserError.ExpectedFormError(
               this.source,
               formal.pos,
               formal,
+              "<identifier>",
+            );
+          }
+          if (formal.type !== TokenType.IDENTIFIER) {
+            throw new ParserError.ExpectedFormError(
+              this.source,
+              formal.pos,
+              formal,
+              "<identifier>",
             );
           }
         },
@@ -571,7 +597,12 @@ export class SchemeParser implements Parser {
 
     // assert that body is not empty
     if (convertedBody.length < 1) {
-      throw new Error("body cannot be empty");
+      throw new ParserError.ExpectedFormError(
+        this.source,
+        group.location.start,
+        group,
+        "(lambda ... <body>+)",
+      );
     }
 
     if (convertedBody.length === 1) {
@@ -608,10 +639,11 @@ export class SchemeParser implements Parser {
     //     | (define (<identifier> <formals>) <body> <body>*)
     // ensure that the group has at least 3 elements
     if (group.length() < 3) {
-      throw new ParserError.UnexpectedTokenError(
+      throw new ParserError.ExpectedFormError(
         this.source,
-        group.firstToken().pos,
-        group.firstToken(),
+        group.location.start,
+        group,
+        "(define <identifier> <expr>) | (define (<identifier> <formals>) <body>+)",
       );
     }
     const elements = group.unwrap();
@@ -633,17 +665,19 @@ export class SchemeParser implements Parser {
 
       // verify that the first element is an identifier
       if (!isToken(functionName)) {
-        throw new ParserError.UnexpectedTokenError(
+        throw new ParserError.ExpectedFormError(
           this.source,
-          functionName.firstToken().pos,
-          functionName.firstToken(),
+          functionName.location.start,
+          functionName,
+          "<identifier>",
         );
       }
       if (functionName.type !== TokenType.IDENTIFIER) {
-        throw new ParserError.UnexpectedTokenError(
+        throw new ParserError.ExpectedFormError(
           this.source,
           functionName.pos,
           functionName,
+          "<identifier>",
         );
       }
 
@@ -658,22 +692,29 @@ export class SchemeParser implements Parser {
         formals,
         (formal) => {
           if (!isToken(formal)) {
-            throw new Error("unexpected syntax in formals");
-          }
-          if (formal.type !== TokenType.IDENTIFIER) {
-            throw new ParserError.UnexpectedTokenError(
+            throw new ParserError.ExpectedFormError(
               this.source,
               formal.pos,
               formal,
+              "<identifier>",
+            );
+          }
+          if (formal.type !== TokenType.IDENTIFIER) {
+            throw new ParserError.ExpectedFormError(
+              this.source,
+              formal.pos,
+              formal,
+              "<identifier>",
             );
           }
         },
       ) as [Atomic.Identifier[], Atomic.Identifier | undefined];
     } else if (identifier.type !== TokenType.IDENTIFIER) {
-      throw new ParserError.UnexpectedTokenError(
+      throw new ParserError.ExpectedFormError(
         this.source,
         identifier.pos,
         identifier,
+        "<identifier>",
       );
     } else {
       // its a normal definition
@@ -686,7 +727,12 @@ export class SchemeParser implements Parser {
 
     // expr cannot be empty
     if (expr.length < 1) {
-      throw new Error("expr cannot be empty");
+      throw new ParserError.ExpectedFormError(
+        this.source,
+        group.location.start,
+        group,
+        "(define ... <body>+)",
+      );
     }
 
     if (isFunctionDefinition) {
@@ -721,6 +767,15 @@ export class SchemeParser implements Parser {
 
     // its a normal definition
 
+    if (expr.length > 1) {
+      throw new ParserError.ExpectedFormError(
+        this.source,
+        group.location.start,
+        group,
+        "(define <identifier> <expr>)",
+      );
+    }
+
     // Expr is treated as a single expression
     const convertedExpr = this.parseExpression(expr[0]);
 
@@ -737,15 +792,16 @@ export class SchemeParser implements Parser {
    * @returns
    */
   private parseConditional(group: Group): Atomic.Conditional {
-    // Form: (if <expr> <expr> <expr>)
-    //     | (if <expr> <expr>)
+    // Form: (if <pred> <cons> <alt>)
+    //     | (if <pred> <cons>)
 
     // ensure that the group has 3 or 4 elements
     if (group.length() < 3 || group.length() > 4) {
-      throw new ParserError.UnexpectedTokenError(
+      throw new ParserError.ExpectedFormError(
         this.source,
-        group.firstToken().pos,
-        group.firstToken(),
+        group.location.start,
+        group,
+        "(if <pred> <cons> <alt>?)",
       );
     }
     const elements = group.unwrap();
@@ -777,13 +833,14 @@ export class SchemeParser implements Parser {
    * Parse an application expression.
    */
   private parseApplication(group: Group): Atomic.Application {
-    // Form: (<expr> <expr>*)
+    // Form: (<func> <args>*)
     // ensure that the group has at least 1 element
     if (group.length() < 1) {
-      throw new ParserError.UnexpectedTokenError(
+      throw new ParserError.ExpectedFormError(
         this.source,
-        group.firstToken().pos,
-        group.firstToken(),
+        group.location.start,
+        group,
+        "(<func> <args>*)",
       );
     }
     const elements = group.unwrap();
@@ -812,13 +869,14 @@ export class SchemeParser implements Parser {
    * @returns
    */
   private parseLet(group: Group): Extended.Let {
-    // Form: (let (<binding>*) <body>)
+    // Form: (let ((<identifier> <value>)*) <body>+)
     // ensure that the group has at least 3 elements
     if (group.length() < 3) {
-      throw new ParserError.UnexpectedTokenError(
+      throw new ParserError.ExpectedFormError(
         this.source,
-        group.firstToken().pos,
-        group.firstToken(),
+        group.location.start,
+        group,
+        "(let ((<identifier> <value>)*) <body>+)",
       );
     }
     const elements = group.unwrap();
@@ -827,10 +885,11 @@ export class SchemeParser implements Parser {
 
     // Verify bindings is a group
     if (!isGroup(bindings)) {
-      throw new ParserError.UnexpectedTokenError(
+      throw new ParserError.ExpectedFormError(
         this.source,
         bindings.pos,
         bindings,
+        "((<identifier> <value>)*)",
       );
     }
 
@@ -842,17 +901,19 @@ export class SchemeParser implements Parser {
     for (const bindingElement of bindingElements) {
       // Verify bindingElement is a group of size 2
       if (!isGroup(bindingElement)) {
-        throw new ParserError.UnexpectedTokenError(
+        throw new ParserError.ExpectedFormError(
           this.source,
           bindingElement.pos,
           bindingElement,
+          "(<identifier> <value>)",
         );
       }
       if (bindingElement.length() !== 2) {
-        throw new ParserError.UnexpectedTokenError(
+        throw new ParserError.ExpectedFormError(
           this.source,
-          bindingElement.firstToken().pos,
-          bindingElement.firstToken(),
+          bindingElement.location.start,
+          bindingElement,
+          "(<identifier> <value>)",
         );
       }
 
@@ -860,13 +921,19 @@ export class SchemeParser implements Parser {
 
       // Verify identifier is a token and an identifier
       if (!isToken(identifier)) {
-        throw new Error("unexpected syntax in let");
+        throw new ParserError.ExpectedFormError(
+          this.source,
+          identifier.location.start,
+          identifier,
+          "<identifier>",
+        );
       }
       if (identifier.type !== TokenType.IDENTIFIER) {
-        throw new ParserError.UnexpectedTokenError(
+        throw new ParserError.ExpectedFormError(
           this.source,
           identifier.pos,
           identifier,
+          "<identifier>",
         );
       }
       convertedIdentifiers.push(
@@ -882,7 +949,12 @@ export class SchemeParser implements Parser {
 
     // assert that body is not empty
     if (convertedBody.length < 1) {
-      throw new Error("let body cannot be empty");
+      throw new ParserError.ExpectedFormError(
+        this.source,
+        group.location.start,
+        group,
+        "(let ... <body>+)",
+      );
     }
 
     if (convertedBody.length === 1) {
@@ -913,14 +985,15 @@ export class SchemeParser implements Parser {
    * @returns
    */
   private parseExtendedCond(group: Group): Extended.Cond {
-    // Form: (cond (<expr> <sequence>)*)
-    //     | (cond (<expr> <sequence>)* (else <sequence>*))
+    // Form: (cond (<pred> <body>)*)
+    //     | (cond (<pred> <body>)* (else <val>))
     // ensure that the group has at least 2 elements
     if (group.length() < 2) {
-      throw new ParserError.UnexpectedTokenError(
+      throw new ParserError.ExpectedFormError(
         this.source,
-        group.firstToken().pos,
-        group.firstToken(),
+        group.location.start,
+        group,
+        "(cond (<pred> <body>*)* (else <val>)?)",
       );
     }
     const elements = group.unwrap();
@@ -929,24 +1002,26 @@ export class SchemeParser implements Parser {
     const lastClause = <Datum>clauses.pop();
 
     // Clauses are treated as a group of groups of expressions
-    // Form: (<expr> <sequence>*)
+    // Form: (<pred> <body>*)
     const convertedClauses: Expression[] = [];
     const convertedConsequents: Expression[] = [];
 
     for (const clause of clauses) {
       // Verify clause is a group with size no less than 1
       if (!isGroup(clause)) {
-        throw new ParserError.UnexpectedTokenError(
+        throw new ParserError.ExpectedFormError(
           this.source,
           clause.pos,
           clause,
+          "(<pred> <body>*)",
         );
       }
       if (clause.length() < 1) {
-        throw new ParserError.UnexpectedTokenError(
+        throw new ParserError.ExpectedFormError(
           this.source,
           clause.firstToken().pos,
           clause.firstToken(),
+          "(<pred> <body>*)",
         );
       }
 
@@ -954,7 +1029,12 @@ export class SchemeParser implements Parser {
 
       // verify that test is NOT an else token
       if (isToken(test) && test.type === TokenType.ELSE) {
-        throw new ParserError.UnexpectedTokenError(this.source, test.pos, test);
+        throw new ParserError.ExpectedFormError(
+          this.source,
+          test.pos,
+          test,
+          "<predicate>",
+        );
       }
 
       // Test is treated as a single expression
@@ -988,18 +1068,20 @@ export class SchemeParser implements Parser {
     // Check last clause
     // Verify lastClause is a group with size at least 2
     if (!isGroup(lastClause)) {
-      throw new ParserError.UnexpectedTokenError(
+      throw new ParserError.ExpectedFormError(
         this.source,
         lastClause.pos,
         lastClause,
+        "(<pred> <body>+) | (else <val>)",
       );
     }
 
     if (lastClause.length() < 2) {
-      throw new ParserError.UnexpectedTokenError(
+      throw new ParserError.ExpectedFormError(
         this.source,
         lastClause.firstToken().pos,
         lastClause.firstToken(),
+        "(<pred> <body>+) | (else <val>)",
       );
     }
 
@@ -1011,14 +1093,24 @@ export class SchemeParser implements Parser {
     if (isToken(test) && test.type === TokenType.ELSE) {
       isElse = true;
       // verify that consequent is of length 1
-      if (consequent.length != 1) {
-        throw new Error("else consequent must be of length 1");
+      if (consequent.length !== 1) {
+        throw new ParserError.ExpectedFormError(
+          this.source,
+          lastClause.location.start,
+          lastClause,
+          "(else <val>)",
+        );
       }
     }
 
     // verify that consequent is at least 1 expression
     if (consequent.length < 1) {
-      throw new Error("consequent cannot be empty");
+      throw new ParserError.ExpectedFormError(
+        this.source,
+        lastClause.location.start,
+        lastClause,
+        "(<pred> <body>+)",
+      );
     }
 
     // Consequent is treated as a group of expressions
@@ -1067,10 +1159,11 @@ export class SchemeParser implements Parser {
     // Form: (set! <identifier> <expr>)
     // ensure that the group has 3 elements
     if (group.length() !== 3) {
-      throw new ParserError.UnexpectedTokenError(
+      throw new ParserError.ExpectedFormError(
         this.source,
-        group.firstToken().pos,
-        group.firstToken(),
+        group.location.start,
+        group,
+        "(set! <identifier> <expr>)",
       );
     }
     const elements = group.unwrap();
@@ -1079,13 +1172,19 @@ export class SchemeParser implements Parser {
 
     // Identifier is treated as a single identifier
     if (isGroup(identifier)) {
-      throw new Error("unexpected syntax in set!");
+      throw new ParserError.ExpectedFormError(
+        this.source,
+        identifier.location.start,
+        identifier,
+        "<identifier>",
+      );
     }
     if (identifier.type !== TokenType.IDENTIFIER) {
-      throw new ParserError.UnexpectedTokenError(
+      throw new ParserError.ExpectedFormError(
         this.source,
         identifier.pos,
         identifier,
+        "<identifier>",
       );
     }
     const convertedIdentifier = new Atomic.Identifier(
@@ -1106,13 +1205,14 @@ export class SchemeParser implements Parser {
    * @returns
    */
   private parseBegin(group: Group): Extended.Begin {
-    // Form: (begin <sequence>)
+    // Form: (begin <body>+)
     // ensure that the group has 2 or more elements
     if (group.length() < 2) {
-      throw new ParserError.UnexpectedTokenError(
+      throw new ParserError.ExpectedFormError(
         this.source,
-        group.firstToken().pos,
-        group.firstToken(),
+        group.location.start,
+        group,
+        "(begin <body>+)",
       );
     }
     const sequence = group.unwrap();
@@ -1133,10 +1233,11 @@ export class SchemeParser implements Parser {
     // Form: (delay <expr>)
     // ensure that the group has 2 elements
     if (group.length() !== 2) {
-      throw new ParserError.UnexpectedTokenError(
+      throw new ParserError.ExpectedFormError(
         this.source,
-        group.firstToken().pos,
-        group.firstToken(),
+        group.location.start,
+        group,
+        "(delay <expr>)",
       );
     }
     const elements = group.unwrap();
@@ -1156,13 +1257,14 @@ export class SchemeParser implements Parser {
    * @returns
    */
   private parseImport(group: Group): Atomic.Import {
-    // Form: (import <source> (<identifier>*))
+    // Form: (import "<source>" (<identifier>*))
     // ensure that the group has 3 elements
     if (group.length() !== 3) {
-      throw new ParserError.UnexpectedTokenError(
+      throw new ParserError.ExpectedFormError(
         this.source,
         group.firstToken().pos,
         group.firstToken(),
+        '(import "<source>" (<identifier>*))',
       );
     }
     const elements = group.unwrap();
@@ -1171,43 +1273,48 @@ export class SchemeParser implements Parser {
 
     // source is treated as a single string
     if (!isToken(source)) {
-      throw new ParserError.UnexpectedTokenError(
+      throw new ParserError.ExpectedFormError(
         this.source,
-        source.firstToken().pos,
-        source.firstToken(),
+        source.location.start,
+        source,
+        '"<source>"',
       );
     }
     if (source.type !== TokenType.STRING) {
-      throw new ParserError.UnexpectedTokenError(
+      throw new ParserError.ExpectedFormError(
         this.source,
         source.pos,
         source,
+        '"<source>"',
       );
     }
 
     // Identifiers are treated as a group of identifiers
     if (!isGroup(identifiers)) {
-      throw new ParserError.UnexpectedTokenError(
+      throw new ParserError.ExpectedFormError(
         this.source,
         identifiers.pos,
         identifiers,
+        "(<identifier>*)",
       );
     }
     const identifierElements = identifiers.unwrap();
     const convertedIdentifiers: Atomic.Identifier[] = [];
     for (const identifierElement of identifierElements) {
       if (!isToken(identifierElement)) {
-        throw new ParserError.UnexpectedTokenError(
+        throw new ParserError.ExpectedFormError(
           this.source,
-          identifierElement.firstToken().pos,
-          identifierElement.firstToken(),
+          identifierElement.location.start,
+          identifierElement,
+          "<identifier>",
         );
       }
       if (identifierElement.type !== TokenType.IDENTIFIER) {
-        throw new ParserError.UnexpectedTokenError(
+        throw new ParserError.ExpectedFormError(
           this.source,
           identifierElement.pos,
           identifierElement,
+          "<identifier>",
         );
       }
       convertedIdentifiers.push(
@@ -1237,10 +1344,11 @@ export class SchemeParser implements Parser {
     // Form: (export (<definition>))
     // ensure that the group has 2 elements
     if (group.length() !== 2) {
-      throw new ParserError.UnexpectedTokenError(
+      throw new ParserError.ExpectedFormError(
         this.source,
         group.firstToken().pos,
         group.firstToken(),
+        "(export (<definition>))",
       );
     }
     const elements = group.unwrap();
@@ -1248,10 +1356,11 @@ export class SchemeParser implements Parser {
 
     // assert that definition is a group
     if (!isGroup(definition)) {
-      throw new ParserError.UnexpectedTokenError(
+      throw new ParserError.ExpectedFormError(
         this.source,
         definition.pos,
         definition,
+        "(<definition>)",
       );
     }
 
@@ -1263,10 +1372,11 @@ export class SchemeParser implements Parser {
         convertedDefinition instanceof Extended.FunctionDefinition
       )
     ) {
-      throw new ParserError.UnexpectedTokenError(
+      throw new ParserError.ExpectedFormError(
         this.source,
-        definition.firstToken().pos,
-        definition.firstToken(),
+        definition.location.start,
+        definition,
+        "(<definition>)",
       );
     }
 
@@ -1295,8 +1405,7 @@ export class SchemeParser implements Parser {
 
   // ___________________________________________________
 
-  /**
-   * Parses a sequence of tokens into an AST.
+  /** Parses a sequence of tokens into an AST.
    *
    * @param group A group of tokens.
    * @returns An AST.

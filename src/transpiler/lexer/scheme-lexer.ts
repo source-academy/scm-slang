@@ -185,7 +185,6 @@ export class SchemeLexer implements Lexer {
           // these are definitely identifiers
           this.identifierToken();
         } else {
-          // error
           throw new LexerError.UnexpectedCharacterError(this.line, this.col, c);
         }
         break;
