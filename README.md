@@ -4,7 +4,7 @@
 
 `scm-slang` is an **experimental** implementation of the [Scheme](https://www.scheme.org/) programming language designed for compatibiity with the online learning environment of [Source Academy](https://sourceacademy.org/). It aims to be faithful to the original *Structure and Interpretation of Computer Programs* (SICP) book whilst maintaining compatibility with modules designed for use with [`js-slang`](https://github.com/source-academy/js-slang), a subset of JavaScript intended for use with the SICP JS book in Source Academy.
 
-`scm-slang` provides a special Scheme parser that is able to parse Scheme code.
+`scm-slang` provides a special Scheme parser that is able to parse Scheme code. It also supports standard Scheme data structures such as Lists, Vectors and the Numeric tower.
 
 ## How does it work?
 
@@ -12,21 +12,17 @@
 
 ## Comparison with Revised⁷ Report on the Algorithmic Language Scheme
 
-`scm-slang` is designed following the [R7RS language specification](https://small.r7rs.org/) of Scheme. However, there are several key deviations that differentiate `scm-slang` from a complete implementation of R7RS Scheme:
+`scm-slang` ultimately follows the [R7RS language specification](https://small.r7rs.org/) of Scheme. However, there are several key deviations that differentiate `scm-slang` from a complete implementation of R7RS Scheme:
 
-- Continuations: Continuations do not currently have first-class status in Source. Hence, procedures such as `call/cc`, which operate on continuations, are not yet implemented. Subject to change, with the implementation of the Explict Control Evaluator in js-slang.
+- Continuations: The parser itself does not support continuations, but in conjunction with the Source Academy Explicit Control Evaluator, continuations are supported within the Source Academy ecosystem.
 
-- Macros: Not implemented. Subject to change with the future refactoring of scm-slang to use an intermediate AST before final estree translation.
+- Macros: Not implemented at the moment. Set for completion in Autumn-Fall 2024.
 
-- Defines of same variable in same scope: Not allowed at the moment. Subject to change with the future refactoring of scm-slang to use an intermediate AST before final estree translation.
-
-- Types: `scm-slang` does not support complex numbers or characters.
+- Types: `scm-slang` does not support characters or bytevectors at the moment.
 
 - Parentheses: `scm-slang` supports the use of square brackets (i.e. []) interchangably with parentheses in order to enhance the visual representation of Scheme code, similar to [Racket](https://racket-lang.org/) or [Guile Scheme](https://www.gnu.org/software/guile/). [See relevant discussion here](http://community.schemewiki.org/?scheme-faq-language)
 
-- Named let is not supported. Subject to change with the future refactoring of scm-slang to use an intermediate AST before final estree translation.
-
-- Variadic functions: `scm-slang` does not currently support variadic functions with usage of the `.` operator or the `case-lambda` syntax. 
+- Named let is not supported.
 
 - Import/Export: `scm-slang` follows a specialised import/export system that deviates from any standard Scheme implementation. It follows more closely to JavaScript syntax so as to maintain compatibility with current Source Academy modules.
 
@@ -44,7 +40,7 @@
 
 # Requirements
 
-- `node`: known working version: v16.19.0
+- `node`: known working version: v20.11.0
 
 # Usage
 
