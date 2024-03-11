@@ -1,6 +1,6 @@
 {
   "name": "scm-slang",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": "Apache-2.0",
   "description": "Scheme-based implementations of Source, written in Typescript",
   "keywords": [

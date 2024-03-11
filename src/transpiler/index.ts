@@ -50,7 +50,7 @@ export function schemeParse(source: string, chapter?: number): Program {
   const redefinedAST: Expression[] = redefiner.redefine(simplifiedAST);
 
   // Finally we transpile the AST
-  const program: Program = transpiler.transpile(redefineAST);
+  const program: Program = transpiler.transpile(redefinedAST);
 
   return program;
 }
