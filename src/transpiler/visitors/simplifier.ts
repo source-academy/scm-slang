@@ -1,11 +1,30 @@
 /**
  * A visitor that transforms all "extended AST" nodes into "atomic AST" nodes.
  * Except for everything inside a quote, which is left alone.
+ *
+ * It also does double work by "flattening" begin nodes whenever possible, to allow definitions
+ * to be visible outside the begin structure (since begins don't have their own scope).
  */
 
 import { Expression, Atomic, Extended } from "../types/nodes/scheme-node-types";
 import { Location } from "../types/location";
 import { Visitor } from ".";
+
+// a function that takes an expression and returns an array of expressions
+// we will use this to "remove" the begin node whenever possible by returning its expressions
+// this is useful when the begin is in a sequence, to allow its side effects to be visible
+// outside the begin block
+function flattenBegin(ex: Expression): Expression[] {
+  if (!(ex instanceof Extended.Begin)) {
+    return [ex];
+  }
+
+  const beginExpressions = ex.expressions;
+
+  // these expressions may themselves contain begin nodes
+  // that need to be flattened
+  return beginExpressions.flatMap(flattenBegin);
+}
 
 export class Simplifier implements Visitor {
   // Factory method for creating a new Simplifier instance.
@@ -14,13 +33,15 @@ export class Simplifier implements Visitor {
   }
 
   public simplify(node: Expression[]): Expression[] {
-    return node.map((expression) => expression.accept(this));
+    const flattenedExpressions = node.flatMap(flattenBegin);
+    return flattenedExpressions.map((expression) => expression.accept(this));
   }
 
   // Atomic AST
   visitSequence(node: Atomic.Sequence): Atomic.Sequence {
     const location = node.location;
-    const newExpressions = node.expressions.map((expression) =>
+    const flattenedExpressions = node.expressions.flatMap(flattenBegin);
+    const newExpressions = flattenedExpressions.map((expression) =>
       expression.accept(this),
     );
     return new Atomic.Sequence(location, newExpressions);
@@ -213,9 +234,13 @@ export class Simplifier implements Visitor {
     return new Extended.List(location, newElements, newTerminator);
   }
 
+  // these begins are not located at the top level, or in sequences,
+  // so they have been left alone
+  // they are used as ways to sequence expressions locally instead
   visitBegin(node: Extended.Begin): Atomic.Sequence {
     const location = node.location;
-    const newExpressions = node.expressions.map((expression) =>
+    const flattenedExpressions = node.expressions.flatMap(flattenBegin);
+    const newExpressions = flattenedExpressions.map((expression) =>
       expression.accept(this),
     );
 
