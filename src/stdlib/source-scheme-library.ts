@@ -1,6 +1,8 @@
 import * as base from "./base";
 
 export * from "./base";
+export { infinity, nan } from "./core-math";
+
 // Extracts the arguments from a function as a string array.
 // Taken from https://stackoverflow.com/questions/1007981/how-to-get-function-parameter-names-values-dynamically-from-javascript
 // Adapted to work on both arrow functions and default functions.
