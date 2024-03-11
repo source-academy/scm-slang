@@ -158,14 +158,14 @@ test("SchemeLexer parses floating point numbers with exponents", () => {
 });
 
 test("SchemeLexer parses special floating point numbers correctly", () => {
-  const source = "inf.0";
+  const source = "+inf.0";
   const lexer = new SchemeLexer(source);
   const tokens = lexer.scanTokens();
   // tokens should be 2: inf.0, EOF
   expect(tokens.length).toBe(2);
   expect(tokens[0].type).toBe(TokenType.NUMBER);
-  expect(tokens[0].lexeme).toBe("inf.0");
-  expect(tokens[0].literal).toBe("inf.0");
+  expect(tokens[0].lexeme).toBe("+inf.0");
+  expect(tokens[0].literal).toBe("+inf.0");
 });
 
 test("SchemeLexer parses complex numbers correctly", () => {

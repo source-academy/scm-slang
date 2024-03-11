@@ -79,7 +79,7 @@ class RealMatch extends Match {
     }
 
     if (this.integer?.includes("nan")) {
-      return this.integer!.includes("-") ? SchemeReal.NEG_NAN : SchemeReal.NAN;
+      return SchemeReal.NAN;
     }
 
     // recursively build the exponent
@@ -174,11 +174,21 @@ export function isReal(value: string): RealMatch {
   // keep in mind that the value matches an integer too! but
   // by the point of time this is called, we have already checked for an integer
   function checkBasicReal(value: string): RealMatch {
+    // checks if the value is one of the 4 forms of special numbers
     function isSpecialNumber(value: string): boolean {
-      const specialRegex = new RegExp(`^([+-]?)(inf|nan)$`);
-      const match = specialRegex.exec(value);
-      return match !== null;
+      return (
+        value === "+inf.0" ||
+        value === "-inf.0" ||
+        value === "+nan.0" ||
+        value === "-nan.0"
+      );
     }
+
+    // check if the value is a special number
+    if (isSpecialNumber(value)) {
+      return new RealMatch(true, value);
+    }
+
     // check for the presence of a dot
     const count = (value.match(/\./g) || []).length;
     if (count > 1) {
@@ -186,12 +196,6 @@ export function isReal(value: string): RealMatch {
     }
 
     if (count === 0) {
-      // check for a special number
-      if (isSpecialNumber(value)) {
-        return new RealMatch(true, value);
-      }
-
-      // check for a default integer
       const result = isInteger(value);
       return new RealMatch(result.result, result.value);
     }
@@ -203,14 +207,6 @@ export function isReal(value: string): RealMatch {
 
     const properInteger = integerMatch.result || integerPart === "";
     const properDecimal = decimalMatch.result || decimalPart === "";
-
-    // if the integer part is a special number, the decimal part should be 0
-    if (isSpecialNumber(integerPart)) {
-      if (decimalPart !== "0") {
-        return new RealMatch(false);
-      }
-      return new RealMatch(true, integerPart);
-    }
 
     // if the integer part is just a sign, the decimal part should be non-empty
     if (integerPart === "+" || integerPart === "-") {
@@ -295,7 +291,7 @@ export function isComplex(value: string): ComplexMatch {
   // check if the value is a complex number. if it is, return true and the value.
   // if not, return a failed match.
   const count = (value.match(/i/g) || []).length;
-  if (count !== 1) {
+  if (count < 1) {
     return new ComplexMatch(false);
   }
 
@@ -409,12 +405,7 @@ export class SchemeInteger {
       case NumberType.RATIONAL:
         return SchemeRational.build(this.value, 1n, true);
       case NumberType.REAL:
-        if (this.value > Number.MAX_VALUE || this.value < Number.MIN_VALUE) {
-          return this.value >= 0
-            ? SchemeReal.INFINITY
-            : SchemeReal.NEG_INFINITY;
-        }
-        return SchemeReal.build(Number(this.value), true);
+        return SchemeReal.build(this.coerce(), true);
       case NumberType.COMPLEX:
         return SchemeComplex.build(this, SchemeInteger.EXACT_ZERO);
     }
@@ -631,9 +622,19 @@ export class SchemeReal {
   public static INFINITY = new SchemeReal(Infinity);
   public static NEG_INFINITY = new SchemeReal(-Infinity);
   public static NAN = new SchemeReal(NaN);
-  public static NEG_NAN = new SchemeReal(-NaN);
 
   static build(value: number, _force: boolean = false): SchemeReal {
+    if (value === Infinity) {
+      return SchemeReal.INFINITY;
+    } else if (value === -Infinity) {
+      return SchemeReal.NEG_INFINITY;
+    } else if (isNaN(value)) {
+      return SchemeReal.NAN;
+    } else if (value === 0) {
+      return SchemeReal.INEXACT_ZERO;
+    } else if (value === -0) {
+      return SchemeReal.INEXACT_NEG_ZERO;
+    }
     return new SchemeReal(value);
   }
 
