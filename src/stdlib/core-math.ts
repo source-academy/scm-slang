@@ -402,8 +402,22 @@ export class SchemeInteger {
     return new SchemeInteger(val);
   }
 
-  promote(): SchemeRational {
-    return SchemeRational.build(this.value, 1n, true) as SchemeRational;
+  promote(nType: NumberType): SchemeNumber {
+    switch (nType) {
+      case NumberType.INTEGER:
+        return this;
+      case NumberType.RATIONAL:
+        return SchemeRational.build(this.value, 1n, true);
+      case NumberType.REAL:
+        if (this.value > Number.MAX_VALUE || this.value < Number.MIN_VALUE) {
+          return this.value >= 0
+            ? SchemeReal.INFINITY
+            : SchemeReal.NEG_INFINITY;
+        }
+        return SchemeReal.build(Number(this.value), true);
+      case NumberType.COMPLEX:
+        return SchemeComplex.build(this, SchemeInteger.EXACT_ZERO);
+    }
   }
 
   equals(other: any): boolean {
@@ -514,46 +528,17 @@ export class SchemeRational {
     return this.denominator;
   }
 
-  promote(): SchemeReal {
-    const sign = this.numerator < 0n ? -1n : 1n;
-    // remove the sign from the numerator
-    let numerator = this.numerator * sign;
-    let denominator = this.denominator;
-    let exponent: any = SchemeInteger.EXACT_ZERO;
-    // bring both values to the safe range of a javascript number
-    while (numerator > Number.MAX_SAFE_INTEGER) {
-      numerator /= 10n;
-      exponent = atomic_add(exponent, SchemeInteger.build(1));
+  promote(nType: NumberType): SchemeNumber {
+    switch (nType) {
+      case NumberType.RATIONAL:
+        return this;
+      case NumberType.REAL:
+        return SchemeReal.build(this.coerce(), true);
+      case NumberType.COMPLEX:
+        return SchemeComplex.build(this, SchemeInteger.EXACT_ZERO);
+      default:
+        throw new Error("Unable to demote rational");
     }
-    while (denominator > Number.MAX_SAFE_INTEGER) {
-      denominator /= 10n;
-      exponent = atomic_subtract(exponent, SchemeInteger.build(1));
-    }
-    // now we can safely create the mantissa
-    let mantissa = Number(numerator / denominator);
-    // we need to normalize the mantissa
-    while (mantissa > 10) {
-      mantissa /= 10;
-      exponent = atomic_add(exponent, SchemeInteger.build(1));
-    }
-    while (mantissa < 1) {
-      mantissa *= 10;
-      exponent = atomic_subtract(exponent, SchemeInteger.build(1));
-    }
-
-    // check whether this is within the range of a javascript number
-
-    if (exponent > 305) {
-      return sign > 0 ? SchemeReal.INFINITY : SchemeReal.NEG_INFINITY;
-    }
-
-    if (exponent < -320) {
-      return sign > 0 ? SchemeReal.INEXACT_ZERO : SchemeReal.INEXACT_NEG_ZERO;
-    }
-
-    const finalValue = Number(sign) * mantissa * Math.pow(10, Number(exponent));
-
-    return SchemeReal.build(finalValue);
   }
 
   equals(other: any): boolean {
@@ -599,14 +584,14 @@ export class SchemeRational {
 
   coerce(): number {
     const workingNumerator =
-      this.numerator < 0 ? -this.numerator : this.numerator;
+      this.numerator < 0n ? -this.numerator : this.numerator;
     let converterDenominator = this.denominator;
 
     // we can take the whole part directly
-    const wholePart = workingNumerator / converterDenominator;
+    const wholePart = Number(workingNumerator / converterDenominator);
 
     if (wholePart > Number.MAX_VALUE) {
-      return this.numerator < 0 ? -Infinity : Infinity;
+      return this.numerator < 0n ? -Infinity : Infinity;
     }
     // remainder should be lossily converted below safe levels
     let remainder = workingNumerator % converterDenominator;
@@ -623,9 +608,9 @@ export class SchemeRational {
     // coerce the now safe parts into a remainder number
     const remainderPart = Number(remainder) / Number(converterDenominator);
 
-    return this.numerator < 0
-      ? -(Number(wholePart) + remainderPart)
-      : Number(wholePart) + remainderPart;
+    return this.numerator < 0n
+      ? -(wholePart + remainderPart)
+      : wholePart + remainderPart;
   }
 
   toString(): string {
@@ -656,12 +641,15 @@ export class SchemeReal {
     this.value = value;
   }
 
-  promote(): SchemeComplex {
-    return SchemeComplex.build(
-      this,
-      SchemeInteger.EXACT_ZERO,
-      true,
-    ) as SchemeComplex;
+  promote(nType: NumberType): SchemeNumber {
+    switch (nType) {
+      case NumberType.REAL:
+        return this;
+      case NumberType.COMPLEX:
+        return SchemeComplex.build(this, SchemeInteger.EXACT_ZERO);
+      default:
+        throw new Error("Unable to demote real");
+    }
   }
 
   equals(other: any): boolean {
@@ -724,8 +712,13 @@ export class SchemeComplex {
     this.imaginary = imaginary;
   }
 
-  promote(): SchemeComplex {
-    return this;
+  promote(nType: NumberType): SchemeNumber {
+    switch (nType) {
+      case NumberType.COMPLEX:
+        return this;
+      default:
+        throw new Error("Unable to demote complex");
+    }
   }
 
   negate(): SchemeComplex {
@@ -851,9 +844,9 @@ function equalify(
   b: SchemeNumber,
 ): [SchemeNumber, SchemeNumber] {
   if (a.numberType > b.numberType) {
-    return equalify(a, b.promote());
+    return [a, b.promote(a.numberType)];
   } else if (a.numberType < b.numberType) {
-    return equalify(a.promote(), b);
+    return [a.promote(b.numberType), b];
   }
   return [a, b];
 }
