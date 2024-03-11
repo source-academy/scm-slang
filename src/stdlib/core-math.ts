@@ -86,6 +86,7 @@ class RealMatch extends Match {
     let exponent = (
       this.exponent ? this.exponent.build() : SchemeReal.INEXACT_ZERO
     ).coerce();
+
     let value = Number(
       this.integer! + "." + (this.decimal ? this.decimal : "0"),
     );
@@ -236,11 +237,21 @@ export function isReal(value: string): RealMatch {
 
   function checkExtendedReal(value: string): RealMatch {
     // split the value into two parts by e/E
-    const parts = value.split(/[eE]/, 2);
-    if (parts.length !== 2) {
+    const first_e_index = value.indexOf("e");
+    const first_E_index = value.indexOf("E");
+    if (first_e_index === -1 && first_E_index === -1) {
       return new RealMatch(false);
     }
-    const [basicRealPart, exponentPart] = parts;
+
+    const exponentIndex = first_e_index === -1 ? first_E_index : first_e_index;
+
+    const basicRealPart = value.substring(0, exponentIndex);
+    const exponentPart = value.substring(exponentIndex + 1);
+
+    // both should not be empty
+    if (basicRealPart === "" || exponentPart == "") {
+      return new RealMatch(false);
+    }
 
     // parse each part
     const basicRealMatch = checkBasicReal(basicRealPart);
@@ -366,7 +377,7 @@ export let make_number = (value: string): SchemeNumber => {
   return match.build();
 };
 
-class SchemeInteger {
+export class SchemeInteger {
   readonly numberType = NumberType.INTEGER;
   private readonly value: bigint;
   static readonly EXACT_ZERO = new SchemeInteger(0n);
@@ -439,7 +450,7 @@ class SchemeInteger {
   }
 }
 
-class SchemeRational {
+export class SchemeRational {
   readonly numberType = NumberType.RATIONAL;
   private readonly numerator: bigint;
   private readonly denominator: bigint;
@@ -596,7 +607,7 @@ class SchemeRational {
 // float/double representation, and so we shall do that.
 // the current schemeReal implementation is fully based
 // on JavaScript numbers.
-class SchemeReal {
+export class SchemeReal {
   readonly numberType = NumberType.REAL;
   private readonly value: number;
 
@@ -662,7 +673,7 @@ class SchemeReal {
   }
 }
 
-class SchemeComplex {
+export class SchemeComplex {
   readonly numberType = NumberType.COMPLEX;
   private readonly real: SchemeInteger | SchemeRational | SchemeReal;
   private readonly imaginary: SchemeInteger | SchemeRational | SchemeReal;

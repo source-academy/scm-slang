@@ -127,3 +127,47 @@ batchNumberTypeTest("complex", math.isComplex, [
   { test: "12+1e2i", expected: true },
   { test: "12", expected: false },
 ]);
+
+// make_number tests
+test("make_number should parse integers", () => {
+  const match = math.make_number("123");
+  expect(math.atomic_equals(match, math.SchemeInteger.build(123n))).toBe(true);
+});
+
+test("make_number should parse rationals", () => {
+  const match = math.make_number("123/234");
+  expect(math.atomic_equals(match, math.SchemeRational.build(123n, 234n))).toBe(
+    true,
+  );
+});
+
+test("make_number should parse reals", () => {
+  const match = math.make_number("123.123");
+  expect(math.atomic_equals(match, math.SchemeReal.build(123.123))).toBe(true);
+});
+
+//stress test the exponent part of make_number
+test("make_number should parse reals with exponents", () => {
+  const match = math.make_number("123.123e123");
+  expect(math.atomic_equals(match, math.SchemeReal.build(123.123e123))).toBe(
+    true,
+  );
+});
+
+test("make_number should parse reals with nested exponents", () => {
+  const match = math.make_number("1e1e1");
+  expect(math.atomic_equals(match, math.SchemeReal.build(1e10))).toBe(true);
+});
+
+test("make_number should parse complex numbers", () => {
+  const match = math.make_number("123+123i");
+  expect(
+    math.atomic_equals(
+      match,
+      math.SchemeComplex.build(
+        math.SchemeInteger.build(123n),
+        math.SchemeInteger.build(123n),
+      ),
+    ),
+  ).toBe(true);
+});
