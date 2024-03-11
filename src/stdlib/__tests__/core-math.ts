@@ -125,6 +125,10 @@ batchNumberTypeTest("complex", math.isComplex, [
   { test: "12+1/2i", expected: true },
   { test: "12+1.2i", expected: true },
   { test: "12+1e2i", expected: true },
+  { test: "+inf.0i", expected: true },
+  { test: "inf.0i", expected: false },
+  { test: "1+inf.0i", expected: true },
+  { test: "1-inf.0i", expected: true },
   { test: "12", expected: false },
 ]);
 

@@ -307,7 +307,8 @@ export function isComplex(value: string): ComplexMatch {
   if (splitPoint === -1) {
     // the value may be purely imaginary
 
-    const imaginaryPart = value.split("i")[0];
+    let imaginaryPart = value.slice(0, -1);
+
     const imaginaryMatch = universalMatch(imaginaryPart, NumberType.REAL);
 
     if (imaginaryMatch.result) {
@@ -318,7 +319,14 @@ export function isComplex(value: string): ComplexMatch {
   }
 
   const realPart = value.slice(0, splitPoint);
-  const imaginaryPart = value.slice(splitPoint + 1, -1);
+  let imaginaryPart = value.slice(splitPoint + 1, -1);
+
+  // if imaginaryPart doesn't start with a sign, add one
+  // this lets us properly parse expressions such as 1+inf.0i
+  // even if the + belongs to the complex number
+  if (imaginaryPart[0] !== "+" && imaginaryPart[0] !== "-") {
+    imaginaryPart = "+" + imaginaryPart;
+  }
   const realMatch = universalMatch(realPart, NumberType.REAL);
   const imaginaryMatch = universalMatch(imaginaryPart, NumberType.REAL);
 
