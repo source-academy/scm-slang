@@ -760,7 +760,10 @@ class SchemeComplex {
   }
 }
 
-// these functions are used to convert a number to a javascript number.
+export const infinity = SchemeReal.INFINITY;
+export const nan = SchemeReal.NAN;
+
+// this function is used to convert a number to a javascript number.
 // it should only be limited to numbers used for indexing, integers.
 export function coerce_to_number(a: SchemeNumber): number {
   return a.coerce();
