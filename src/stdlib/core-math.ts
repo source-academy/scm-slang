@@ -72,13 +72,13 @@ class RealMatch extends Match {
   }
 
   build(): SchemeReal {
-    if (this.integer!.includes("inf")) {
+    if (this.integer?.includes("inf")) {
       return this.integer!.includes("-")
         ? SchemeReal.NEG_INFINITY
         : SchemeReal.INFINITY;
     }
 
-    if (this.integer!.includes("nan")) {
+    if (this.integer?.includes("nan")) {
       return this.integer!.includes("-") ? SchemeReal.NEG_NAN : SchemeReal.NAN;
     }
 
@@ -87,8 +87,11 @@ class RealMatch extends Match {
       this.exponent ? this.exponent.build() : SchemeReal.INEXACT_ZERO
     ).coerce();
 
+    // we are assured that either part exists
     let value = Number(
-      this.integer! + "." + (this.decimal ? this.decimal : "0"),
+      (this.integer ? this.integer : "0") +
+        "." +
+        (this.decimal ? this.decimal : "0"),
     );
 
     // apply the exponent
