@@ -78,6 +78,8 @@ batchNumberTypeTest("real", math.isReal, [
   { test: "123.123.123", expected: false },
   { test: ".", expected: false },
   { test: ".45", expected: true },
+  { test: "+.45", expected: true },
+  { test: "-.45", expected: true },
   { test: "-123.45", expected: true },
   { test: "+123.45", expected: true },
   { test: "123.+4567", expected: false },

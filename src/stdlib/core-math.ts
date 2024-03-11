@@ -25,6 +25,7 @@ export enum NumberType {
 
 export abstract class Match {
   constructor(public result: boolean) {}
+  abstract build(): SchemeNumber;
 }
 
 class IntegerMatch extends Match {
@@ -40,6 +41,10 @@ class IntegerMatch extends Match {
       ? this.value![0] === "+" || this.value![0] === "-"
       : false;
   }
+
+  build(): SchemeInteger {
+    return SchemeInteger.build(this.value!);
+  }
 }
 
 class RationalMatch extends Match {
@@ -49,6 +54,10 @@ class RationalMatch extends Match {
     public denominator?: string,
   ) {
     super(result);
+  }
+
+  build(): SchemeInteger | SchemeRational {
+    return SchemeRational.build(this.numerator!, this.denominator!);
   }
 }
 
@@ -61,6 +70,31 @@ class RealMatch extends Match {
   ) {
     super(result);
   }
+
+  build(): SchemeReal {
+    if (this.integer!.includes("inf")) {
+      return this.integer!.includes("-")
+        ? SchemeReal.NEG_INFINITY
+        : SchemeReal.INFINITY;
+    }
+
+    if (this.integer!.includes("nan")) {
+      return this.integer!.includes("-") ? SchemeReal.NEG_NAN : SchemeReal.NAN;
+    }
+
+    // recursively build the exponent
+    let exponent = (
+      this.exponent ? this.exponent.build() : SchemeReal.INEXACT_ZERO
+    ).coerce();
+    let value = Number(
+      this.integer! + "." + (this.decimal ? this.decimal : "0"),
+    );
+
+    // apply the exponent
+    value *= Math.pow(10, exponent);
+
+    return SchemeReal.build(value);
+  }
 }
 
 class ComplexMatch extends Match {
@@ -71,6 +105,21 @@ class ComplexMatch extends Match {
     public imaginary?: Match,
   ) {
     super(result);
+  }
+  build(): SchemeComplex {
+    const real = this.real
+      ? (this.real.build() as SchemeInteger | SchemeRational | SchemeReal)
+      : SchemeInteger.EXACT_ZERO;
+    const imaginary = this.imaginary!.build() as
+      | SchemeInteger
+      | SchemeRational
+      | SchemeReal;
+
+    if (this.sign && this.sign === "-") {
+      return SchemeComplex.build(real, imaginary.negate());
+    }
+
+    return SchemeComplex.build(real, imaginary);
   }
 }
 
@@ -156,7 +205,15 @@ export function isReal(value: string): RealMatch {
       if (decimalPart !== "0") {
         return new RealMatch(false);
       }
-      return new RealMatch(true, value);
+      return new RealMatch(true, integerPart);
+    }
+
+    // if the integer part is just a sign, the decimal part should be non-empty
+    if (integerPart === "+" || integerPart === "-") {
+      if (decimalPart === "") {
+        return new RealMatch(false);
+      }
+      return new RealMatch(true, `${integerPart}0`, value);
     }
 
     // at least one of the parts should be non-empty
@@ -301,17 +358,19 @@ export function stringIsSchemeNumber(value: string): boolean {
 
 // If a simplified rational number has a denominator of 1, it will convert to an integer.
 
-// for now, either a integer or real.
-export let make_number = (value: number): SchemeNumber => {
-  if (Number.isInteger(value)) {
-    return SchemeInteger.build(value);
+// We are assured that the string passed to this function is a valid number.
+export let make_number = (value: string): SchemeNumber => {
+  const match = universalMatch(value, NumberType.COMPLEX);
+  if (!match.result) {
+    throw new Error("Invalid number");
   }
-  return SchemeReal.build(value > 0, Math.abs(value), 0);
+  return match.build();
 };
 
 class SchemeInteger {
   readonly numberType = NumberType.INTEGER;
   private readonly value: bigint;
+  static readonly EXACT_ZERO = new SchemeInteger(0n);
 
   private constructor(value: bigint) {
     this.value = value;
@@ -323,7 +382,11 @@ class SchemeInteger {
     value: number | string | bigint,
     force: boolean = false,
   ): SchemeInteger {
-    return new SchemeInteger(BigInt(value));
+    const val = BigInt(value);
+    if (val === 0n) {
+      return SchemeInteger.EXACT_ZERO;
+    }
+    return new SchemeInteger(val);
   }
 
   promote(): SchemeRational {
@@ -339,11 +402,14 @@ class SchemeInteger {
   }
 
   negate(): SchemeInteger {
+    if (this === SchemeInteger.EXACT_ZERO) {
+      return this;
+    }
     return SchemeInteger.build(-this.value);
   }
 
   multiplicativeInverse(): SchemeInteger | SchemeRational {
-    if (this.value === 0n) {
+    if (this === SchemeInteger.EXACT_ZERO) {
       throw new Error("Division by zero");
     }
     return SchemeRational.build(1n, this.value, false);
@@ -358,6 +424,14 @@ class SchemeInteger {
   }
 
   coerce(): number {
+    if (this.value > Number.MAX_SAFE_INTEGER) {
+      return Infinity;
+    }
+
+    if (this.value < Number.MIN_SAFE_INTEGER) {
+      return -Infinity;
+    }
+
     return Number(this.value);
   }
 
@@ -419,33 +493,54 @@ class SchemeRational {
     );
   }
 
+  getNumerator(): bigint {
+    return this.numerator;
+  }
+
+  getDenominator(): bigint {
+    return this.denominator;
+  }
+
   promote(): SchemeReal {
     const sign = this.numerator < 0n ? -1n : 1n;
     // remove the sign from the numerator
     let numerator = this.numerator * sign;
     let denominator = this.denominator;
-    let exponent = 0n;
+    let exponent: any = SchemeInteger.EXACT_ZERO;
     // bring both values to the safe range of a javascript number
     while (numerator > Number.MAX_SAFE_INTEGER) {
       numerator /= 10n;
-      exponent++;
+      exponent = atomic_add(exponent, SchemeInteger.build(1));
     }
     while (denominator > Number.MAX_SAFE_INTEGER) {
       denominator /= 10n;
-      exponent--;
+      exponent = atomic_subtract(exponent, SchemeInteger.build(1));
     }
     // now we can safely create the mantissa
     let mantissa = Number(numerator / denominator);
     // we need to normalize the mantissa
     while (mantissa > 10) {
       mantissa /= 10;
-      exponent++;
+      exponent = atomic_add(exponent, SchemeInteger.build(1));
     }
     while (mantissa < 1) {
       mantissa *= 10;
-      exponent--;
+      exponent = atomic_subtract(exponent, SchemeInteger.build(1));
     }
-    return SchemeReal.build(sign > 0, mantissa, exponent, true);
+
+    // check whether this is within the range of a javascript number
+
+    if (exponent > 305) {
+      return sign > 0 ? SchemeReal.INFINITY : SchemeReal.NEG_INFINITY;
+    }
+
+    if (exponent < -320) {
+      return sign > 0 ? SchemeReal.INEXACT_ZERO : SchemeReal.INEXACT_NEG_ZERO;
+    }
+
+    const finalValue = Number(sign) * mantissa * Math.pow(10, Number(exponent));
+
+    return SchemeReal.build(finalValue);
   }
 
   equals(other: any): boolean {
@@ -498,120 +593,73 @@ class SchemeRational {
   }
 }
 
+// it is allowable to represent the Real number using
+// float/double representation, and so we shall do that.
+// the current schemeReal implementation is fully based
+// on JavaScript numbers.
 class SchemeReal {
   readonly numberType = NumberType.REAL;
-  private readonly positive: boolean;
-  private readonly mantissa: number;
-  private readonly exponent: bigint;
-  private static readonly epsilon = 1e-10;
-  private static readonly ZERO = new SchemeReal(true, 0, 0n);
+  private readonly value: number;
 
-  static build(
-    positive: boolean,
-    mantissa: number,
-    exponent: number | string | bigint,
-    force: boolean = false,
-  ): SchemeReal {
-    if (mantissa === 0) {
-      return SchemeReal.ZERO;
-    }
-    let newMantissa = mantissa;
-    let newExponent = BigInt(exponent);
-    while (newMantissa > 10) {
-      newMantissa /= 10;
-      newExponent++;
-    }
-    while (newMantissa < 1) {
-      newMantissa *= 10;
-      newExponent--;
-    }
-    return new SchemeReal(positive, newMantissa, newExponent);
+  public static INEXACT_ZERO = new SchemeReal(0);
+  public static INEXACT_NEG_ZERO = new SchemeReal(-0);
+  public static INFINITY = new SchemeReal(Infinity);
+  public static NEG_INFINITY = new SchemeReal(-Infinity);
+  public static NAN = new SchemeReal(NaN);
+  public static NEG_NAN = new SchemeReal(-NaN);
+
+  static build(value: number, force: boolean = false): SchemeReal {
+    return new SchemeReal(value);
   }
 
-  private constructor(positive: boolean, mantissa: number, exponent: bigint) {
-    this.positive = positive;
-    this.mantissa = mantissa;
-    this.exponent = exponent;
+  private constructor(value: number) {
+    this.value = value;
   }
 
   promote(): SchemeComplex {
-    return SchemeComplex.build(this, SchemeReal.ZERO, true) as SchemeComplex;
+    return SchemeComplex.build(
+      this,
+      SchemeInteger.EXACT_ZERO,
+      true,
+    ) as SchemeComplex;
   }
 
   equals(other: any): boolean {
-    return (
-      other instanceof SchemeReal &&
-      this.positive === other.positive &&
-      this.exponent === other.exponent &&
-      Math.abs(this.mantissa - other.mantissa) < SchemeReal.epsilon
-    );
+    return other instanceof SchemeReal && this.value === other.value;
   }
 
   greaterThan(other: SchemeReal): boolean {
-    if (this.positive !== other.positive) {
-      return this.positive;
-    }
-    if (this.exponent !== other.exponent) {
-      return this.exponent > other.exponent;
-    }
-    return this.mantissa > other.mantissa;
+    return this.value > other.value;
   }
 
   negate(): SchemeReal {
-    if (this === SchemeReal.ZERO) {
-      return SchemeReal.ZERO;
-    }
-    return SchemeReal.build(!this.positive, this.mantissa, this.exponent);
+    return SchemeReal.build(-this.value);
   }
 
   multiplicativeInverse(): SchemeReal {
-    if (this === SchemeReal.ZERO) {
+    if (
+      this === SchemeReal.INEXACT_ZERO ||
+      this === SchemeReal.INEXACT_NEG_ZERO
+    ) {
       throw new Error("Division by zero");
     }
-    return SchemeReal.build(this.positive, 1 / this.mantissa, -this.exponent);
+    return SchemeReal.build(1 / this.value);
   }
 
   add(other: SchemeReal): SchemeReal {
-    const exponentDifference = this.exponent - other.exponent;
-    const sign = this.positive === other.positive ? 1 : -1;
-    let newMantissa;
-    if (exponentDifference > 0) {
-      newMantissa =
-        this.mantissa +
-        sign * other.mantissa * 10 ** Number(exponentDifference);
-    } else {
-      newMantissa =
-        sign * this.mantissa * 10 ** Number(-exponentDifference) +
-        other.mantissa;
-    }
-    if (newMantissa === 0) {
-      return SchemeReal.ZERO;
-    }
-    return SchemeReal.build(this.positive, newMantissa, this.exponent);
+    return SchemeReal.build(this.value + other.value);
   }
 
   multiply(other: SchemeReal): SchemeReal {
-    const newMantissa = this.mantissa * other.mantissa;
-    const newExponent = this.exponent + other.exponent;
-    if (newMantissa === 0) {
-      return SchemeReal.ZERO;
-    }
-    return SchemeReal.build(
-      this.positive === other.positive,
-      newMantissa,
-      newExponent,
-    );
+    return SchemeReal.build(this.value * other.value);
   }
 
   coerce(): number {
-    throw new Error("Cannot coerce a real number to a javascript number");
+    return this.value;
   }
 
   toString(): string {
-    if (this.exponent === 0n) {
-      return `${this.mantissa}`;
-    }
-    return `${this.mantissa}e${this.exponent}`;
+    return this.value.toString();
   }
 }
 
@@ -740,6 +788,14 @@ export function is_real(a: any): boolean {
 
 export function is_complex(a: any): boolean {
   return is_number(a) && a.numberType <= 4;
+}
+
+export function is_exact(a: any): boolean {
+  return is_number(a) && a.numberType <= 2;
+}
+
+export function is_inexact(a: any): boolean {
+  return is_number(a) && a.numberType > 3;
 }
 
 // the functions below are used to perform operations on numbers
