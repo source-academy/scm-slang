@@ -181,9 +181,9 @@ export class SchemeParser implements Parser {
           break;
         case TokenType.HASH_SEMICOLON:
           // a datum comment
-          // get the next grouping
+          // get the next NON-EMPTY grouping
           // and ignore it
-          this.grouping();
+          while (!this.grouping()) {}
           break;
         case TokenType.EOF:
           // We should be unable to reach this point at top level as parse()

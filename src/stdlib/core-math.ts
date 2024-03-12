@@ -696,6 +696,15 @@ export class SchemeReal {
   }
 
   toString(): string {
+    if (this === SchemeReal.INFINITY) {
+      return "+inf.0";
+    }
+    if (this === SchemeReal.NEG_INFINITY) {
+      return "-inf.0";
+    }
+    if (this === SchemeReal.NAN) {
+      return "+nan.0";
+    }
     return this.value.toString();
   }
 }
