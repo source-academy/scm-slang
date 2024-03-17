@@ -226,11 +226,4 @@ export class Redefiner implements Visitor {
 
     return new Extended.Delay(location, newBody);
   }
-
-  visitForce(node: Extended.Force): Extended.Force {
-    const location = node.location;
-    const NewExpression = node.expression.accept(this);
-
-    return new Extended.Force(location, NewExpression);
-  }
 }

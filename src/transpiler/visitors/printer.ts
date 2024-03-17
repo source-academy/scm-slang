@@ -223,11 +223,4 @@ export class Printer implements Visitor {
     node.expression.accept(this.increment());
     this.display(") ");
   }
-
-  visitForce(node: Extended.Force): any {
-    // this.indent();
-    this.display("( force ");
-    node.expression.accept(this.increment());
-    this.display(") ");
-  }
 }

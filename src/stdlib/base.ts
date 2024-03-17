@@ -9,7 +9,41 @@ export const error: Function = (value: any, ...strs: string[]) => {
 };
 
 // delay and force operations
-export const force: Function = core.force;
+
+// in scm-slang, we will represent promises as a list, consisting of a promise tag
+// and a pair of whether the promise has already been evaluated and the thunk itself.
+// this is similar to the way promises are implemented in chibi-scheme.
+// the boolean will be used to check if the promise has previously been forced.
+
+export const make$45$promise: Function = (thunk: Function) => {
+  return list(cons(false, thunk), new _Symbol("promise"));
+};
+
+export const promise$63$: Function = (p: any) => {
+  return pair$63$(p) && cadr(p) === new _Symbol("promise");
+};
+
+export const force: Function = (p: any) => {
+  if (!promise$63$(p)) {
+    error("force: expected promise");
+  }
+
+  // get the pair of the promise
+  const promise_pair = car(p);
+
+  // if previously forced
+  if (car(promise_pair)) {
+    return cdr(promise_pair);
+  }
+
+  // else force the promise
+  const result = cdr(promise_pair)();
+
+  // and update the promise
+  set$45$car$33$(promise_pair, true);
+  set$45$cdr$33$(promise_pair, result);
+  return result;
+};
 
 export const promise$63$: Function = (p: any) =>
   typeof p === "function" && p.arity === 0;

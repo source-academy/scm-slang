@@ -410,7 +410,4 @@ export class Transpiler implements Visitor {
   visitDelay(node: Extended.Delay): [es.ArrowFunctionExpression] {
     throw new Error("The AST should be simplified!");
   }
-  visitForce(node: Extended.Force): [es.CallExpression] {
-    throw new Error("The AST should be simplified!");
-  }
 }

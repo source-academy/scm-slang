@@ -41,5 +41,4 @@ export interface Visitor {
 
   visitBegin(node: Extended.Begin): any;
   visitDelay(node: Extended.Delay): any;
-  visitForce(node: Extended.Force): any;
 }

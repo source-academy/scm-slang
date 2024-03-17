@@ -247,17 +247,12 @@ export class Simplifier implements Visitor {
     return new Atomic.Sequence(location, newExpressions);
   }
 
-  visitDelay(node: Extended.Delay): Atomic.Lambda {
+  // we transform delay into a call expression of "make-promise"
+  visitDelay(node: Extended.Delay): Atomic.Application {
     const location = node.location;
     const newBody = node.expression.accept(this);
-
-    return new Atomic.Lambda(location, newBody, []);
-  }
-
-  visitForce(node: Extended.Force): Atomic.Application {
-    const location = node.location;
-    const NewExpression = node.expression.accept(this);
-
-    return new Atomic.Application(location, NewExpression, []);
+    const delayedLambda = new Atomic.Lambda(location, newBody, []);
+    const makePromise = new Atomic.Identifier(location, "make-promise");
+    return new Atomic.Application(location, makePromise, [delayedLambda]);
   }
 }

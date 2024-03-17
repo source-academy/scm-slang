@@ -203,12 +203,6 @@ test("does not throw on parsing delay expressions", () => {
   expect(() => parse("(delay (lambda (x) x))")).not.toThrow();
 });
 
-test("does not throw on parsing force expressions", () => {
-  expect(() => parse("(force 1)")).not.toThrow();
-  expect(() => parse("(force (+ 1 2))")).not.toThrow();
-  expect(() => parse("(force (delay (+ 1 2)))")).not.toThrow();
-});
-
 test("does not throw on parsing datum comments", () => {
   expect(() => parse("#; (this-should-be-ignored)")).not.toThrow();
   expect(() =>

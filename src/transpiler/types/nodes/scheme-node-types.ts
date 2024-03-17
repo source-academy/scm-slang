@@ -487,21 +487,4 @@ export namespace Extended {
       return visitor.visitDelay(this);
     }
   }
-
-  /**
-   * A node representing a Scheme force expression.
-   * Returns the value of the promise.
-   * syntax: (force <expression>)
-   */
-  export class Force implements Expression {
-    location: Location;
-    expression: Delay;
-    constructor(location: Location, expression: Delay) {
-      this.location = location;
-      this.expression = expression;
-    }
-    accept(visitor: Visitor): any {
-      return visitor.visitForce(this);
-    }
-  }
 }
