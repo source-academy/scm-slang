@@ -1,10 +1,6 @@
 import { SchemeParser } from "../scheme-parser";
 import { SchemeLexer } from "../../lexer";
-import {
-  Expression,
-  Atomic,
-  Extended,
-} from "../../types/nodes/scheme-node-types";
+import { Expression } from "../../types/nodes/scheme-node-types";
 
 // Unfortunately, we are currently unable to test the parser in isolation from the
 // lexer, as the parser depends on the lexer to generate tokens. Generating the tokens
@@ -12,9 +8,9 @@ import {
 // As a result, we will have to test the parser in conjunction with the lexer.
 // We will avoid testing the more advanced features of the lexer here.
 
-function parse(input: string): Expression[] {
+function parse(input: string, chapter: number = Infinity): Expression[] {
   const lexer = new SchemeLexer(input);
-  const parser = new SchemeParser(input, lexer.scanTokens());
+  const parser = new SchemeParser(input, lexer.scanTokens(), chapter);
   return parser.parse();
 }
 
@@ -284,4 +280,8 @@ a\`
 (= #t true)
 `),
   ).not.toThrow();
+});
+
+test("rejects a program with lower chapter than expected", () => {
+  expect(() => parse("'(delay stack beside_n)", 1)).toThrow();
 });

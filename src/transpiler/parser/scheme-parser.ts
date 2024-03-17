@@ -24,6 +24,12 @@ export class SchemeParser implements Parser {
   private current: number = 0;
   private quoteMode: QuoteMode = QuoteMode.NONE;
 
+  // We can group syntactical elements by their chapter
+  private readonly BASIC_CHAPTER = 1;
+  private readonly QUOTING_CHAPTER = 2;
+  private readonly VECTOR_CHAPTER = 3;
+  private readonly MUTABLE_CHAPTER = 3;
+
   constructor(source: string, tokens: Token[], chapter: number = Infinity) {
     this.source = source;
     this.tokens = tokens;
@@ -310,6 +316,7 @@ export class SchemeParser implements Parser {
     switch ((<Token>affector).type) {
       case TokenType.APOSTROPHE:
       case TokenType.QUOTE:
+        this.validateChapter(<Token>affector, this.QUOTING_CHAPTER);
         if (this.quoteMode !== QuoteMode.NONE) {
           const innerGroup = this.parseExpression(target);
           const newSymbol = new Atomic.Symbol(
@@ -327,6 +334,7 @@ export class SchemeParser implements Parser {
         return quotedExpression;
       case TokenType.BACKTICK:
       case TokenType.QUASIQUOTE:
+        this.validateChapter(<Token>affector, this.QUOTING_CHAPTER);
         if (this.quoteMode !== QuoteMode.NONE) {
           const innerGroup = this.parseExpression(target);
           const newSymbol = new Atomic.Symbol(
@@ -344,6 +352,7 @@ export class SchemeParser implements Parser {
         return quasiquotedExpression;
       case TokenType.COMMA:
       case TokenType.UNQUOTE:
+        this.validateChapter(<Token>affector, this.QUOTING_CHAPTER);
         let preUnquoteMode = this.quoteMode;
         if (preUnquoteMode === QuoteMode.NONE) {
           throw new ParserError.UnsupportedTokenError(
@@ -372,6 +381,7 @@ export class SchemeParser implements Parser {
         // Unquote-splicing will be evaluated at runtime,
         // Proper unquote splicing will be dealt with in semester 2.
 
+        this.validateChapter(<Token>affector, this.QUOTING_CHAPTER);
         let preUnquoteSplicingMode = this.quoteMode;
         if (preUnquoteSplicingMode === QuoteMode.NONE) {
           throw new ParserError.UnexpectedFormError(
@@ -405,6 +415,7 @@ export class SchemeParser implements Parser {
         return new Atomic.SpliceMarker(newLocation, unquoteSplicedExpression);
       case TokenType.HASH_VECTOR:
         // vectors quote over all elements inside.
+        this.validateChapter(<Token>affector, this.VECTOR_CHAPTER);
         let preVectorQuoteMode = this.quoteMode;
         this.quoteMode = QuoteMode.QUOTE;
         const vector = this.parseVector(group);
@@ -438,19 +449,19 @@ export class SchemeParser implements Parser {
       switch (firstElement.type) {
         // Scheme chapter 1
         case TokenType.LAMBDA:
-          this.validateChapter(firstElement, 1);
+          this.validateChapter(firstElement, this.BASIC_CHAPTER);
           return this.parseLambda(group);
         case TokenType.DEFINE:
-          this.validateChapter(firstElement, 1);
+          this.validateChapter(firstElement, this.BASIC_CHAPTER);
           return this.parseDefinition(group);
         case TokenType.IF:
-          this.validateChapter(firstElement, 1);
+          this.validateChapter(firstElement, this.BASIC_CHAPTER);
           return this.parseConditional(group);
         case TokenType.LET:
-          this.validateChapter(firstElement, 1);
+          this.validateChapter(firstElement, this.BASIC_CHAPTER);
           return this.parseLet(group);
         case TokenType.COND:
-          this.validateChapter(firstElement, 1);
+          this.validateChapter(firstElement, this.BASIC_CHAPTER);
           return this.parseExtendedCond(group);
 
         // Scheme chapter 2
@@ -462,30 +473,30 @@ export class SchemeParser implements Parser {
         case TokenType.COMMA:
         case TokenType.UNQUOTE_SPLICING:
         case TokenType.COMMA_AT:
-          this.validateChapter(firstElement, 2);
+          this.validateChapter(firstElement, this.QUOTING_CHAPTER);
           // we can reuse the affector group method to control the quote mode
           return this.parseAffectorGroup(group);
 
         // Scheme chapter 3
         case TokenType.BEGIN:
-          this.validateChapter(firstElement, 3);
+          this.validateChapter(firstElement, this.MUTABLE_CHAPTER);
           return this.parseBegin(group);
         case TokenType.DELAY:
-          this.validateChapter(firstElement, 3);
+          this.validateChapter(firstElement, this.MUTABLE_CHAPTER);
           return this.parseDelay(group);
         case TokenType.SET:
-          this.validateChapter(firstElement, 3);
+          this.validateChapter(firstElement, this.MUTABLE_CHAPTER);
           return this.parseSet(group);
 
         // Scm-slang misc
         case TokenType.IMPORT:
-          this.validateChapter(firstElement, 1);
+          this.validateChapter(firstElement, this.BASIC_CHAPTER);
           return this.parseImport(group);
         case TokenType.EXPORT:
-          this.validateChapter(firstElement, 1);
+          this.validateChapter(firstElement, this.BASIC_CHAPTER);
           return this.parseExport(group);
         case TokenType.VECTOR:
-          this.validateChapter(firstElement, 1);
+          this.validateChapter(firstElement, this.VECTOR_CHAPTER);
           // same as above, this is an affector group
           return this.parseAffectorGroup(group);
 
