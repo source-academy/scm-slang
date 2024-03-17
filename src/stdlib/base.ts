@@ -20,7 +20,7 @@ export const make$45$promise: Function = (thunk: Function) => {
 };
 
 export const promise$63$: Function = (p: any) => {
-  return pair$63$(p) && cadr(p) === new _Symbol("promise");
+  return pair$63$(p) && symbol$61$$63$(cadr(p), new _Symbol("promise"));
 };
 
 export const force: Function = (p: any) => {
@@ -44,9 +44,6 @@ export const force: Function = (p: any) => {
   set$45$cdr$33$(promise_pair, result);
   return result;
 };
-
-export const promise$63$: Function = (p: any) =>
-  typeof p === "function" && p.arity === 0;
 
 // procedural operations
 
