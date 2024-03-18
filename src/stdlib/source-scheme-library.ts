@@ -23,6 +23,9 @@ export function schemeToString(x: any): string {
   let str: string = "";
   if (x === undefined) {
     str = "undefined";
+  } else if (base.promise$63$(x)) {
+    thunk = cadr;
+    str = `#<promise <${base.promise$45$forced$63$(x) ? "evaluated" : "non-evaluated"}>>`;
   } else if (base.circular$45$list$63$(x)) {
     // we should refactor this in the future to use a set to keep track of visited nodes
     // and be able to handle circular references, not just circular lists but perhaps in car position as well

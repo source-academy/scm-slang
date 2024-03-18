@@ -1,7 +1,6 @@
 import { Token } from "../token";
 import { TokenType } from "../token-type";
 import { Group } from "../group";
-import { Datum } from "../datum";
 
 // This test suite will test the Group class, in particular
 // the build method that preserves the invariants of the Group class.
