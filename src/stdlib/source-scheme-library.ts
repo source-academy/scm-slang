@@ -31,7 +31,7 @@ export function schemeToString(x: any): string {
     str = "(";
     let p = x;
     do {
-      str += schemeToString(base.250car(p));
+      str += schemeToString(base.car(p));
       p = base.cdr(p);
       if (p !== null) {
         str += " ";
