@@ -24,7 +24,6 @@ export function schemeToString(x: any): string {
   if (x === undefined) {
     str = "undefined";
   } else if (base.promise$63$(x)) {
-    thunk = cadr;
     str = `#<promise <${base.promise$45$forced$63$(x) ? "evaluated" : "non-evaluated"}>>`;
   } else if (base.circular$45$list$63$(x)) {
     // we should refactor this in the future to use a set to keep track of visited nodes
@@ -32,7 +31,7 @@ export function schemeToString(x: any): string {
     str = "(";
     let p = x;
     do {
-      str += schemeToString(base.car(p));
+      str += schemeToString(base.250car(p));
       p = base.cdr(p);
       if (p !== null) {
         str += " ";
