@@ -7,7 +7,7 @@ export { infinity, nan } from "./core-math";
 // Taken from https://stackoverflow.com/questions/1007981/how-to-get-function-parameter-names-values-dynamically-from-javascript
 // Adapted to work on both arrow functions and default functions.
 function $args(func: any): string[] {
-  return (func + "")
+  return (func + "") // convert to string
     .replace(/[/][/].*$/gm, "") // strip single-line comments
     .replace(/\s+/g, "") // strip white space
     .replace(/[/][*][^/*]*[*][/]/g, "") // strip multi-line comments
