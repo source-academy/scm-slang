@@ -2,7 +2,6 @@
  * The main entry point of the scheme transpiler.
  */
 
-import { encodeTree } from "../utils/encode-utils";
 import { SchemeLexer } from "./lexer";
 import { SchemeParser } from "./parser";
 import { Expression } from "./types/nodes/scheme-node-types";
@@ -20,11 +19,7 @@ export { ParserError } from "./parser";
  *                If not provided, defaults to the latest version.
  * @returns
  */
-export function schemeParse(
-  source: string,
-  chapter?: number,
-  encode?: boolean,
-): Program {
+export function schemeParse(source: string, chapter?: number): Program {
   // Instantiate the lexer
   const lexer = new SchemeLexer(source);
 
@@ -44,8 +39,9 @@ export function schemeParse(
   const simplifier = Simplifier.create();
   const redefiner = Redefiner.create();
   const transpiler = Transpiler.create();
-
   // TODO: Then we macro-expand the AST
+
+  // TODO: Then we verify the AST
 
   // Then we simplify the AST
   const simplifiedAST: Expression[] = simplifier.simplify(firstAST);
@@ -56,6 +52,5 @@ export function schemeParse(
   // Finally we transpile the AST
   const program: Program = transpiler.transpile(redefinedAST);
 
-  // Encode the AST if it was specified
-  return encode ? encodeTree(program) : program;
+  return program;
 }
