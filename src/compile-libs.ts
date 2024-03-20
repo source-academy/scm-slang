@@ -1,7 +1,7 @@
 import path from "path";
 import fs from "fs";
 import { schemeParse } from "./transpiler";
-import { estreeEncode } from "./utils/encoder-visitor";
+import { encodeTree } from "./utils/encode-utils";
 const escodegen = require("escodegen");
 
 function transpile(inputFilePath: string, outputFilePath: string) {
@@ -13,7 +13,7 @@ function transpile(inputFilePath: string, outputFilePath: string) {
 
     // we transpile the file
     const transpiledAST = schemeParse(data);
-    const encodedAST = estreeEncode(transpiledAST);
+    const encodedAST = encodeTree(transpiledAST);
     const transpiledProgram = escodegen.generate(encodedAST);
 
     fs.writeFile(outputFilePath, transpiledProgram, (err) => {
