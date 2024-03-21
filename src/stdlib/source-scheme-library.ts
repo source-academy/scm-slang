@@ -1,12 +1,7 @@
-import * as base from "./scheme-base";
-import * as list from "./scheme-list";
-//import * as lazy from "./scheme-lazy";
-//import * as cxr from "./scheme-cxr";
+import * as base from "./base";
 
-export * from "./scheme-base";
-export * from "./scheme-list";
-export * from "./scheme-lazy";
-export * from "./scheme-cxr";
+export * from "./base";
+export { infinity, nan } from "./core-math";
 
 // Extracts the arguments from a function as a string array.
 // Taken from https://stackoverflow.com/questions/1007981/how-to-get-function-parameter-names-values-dynamically-from-javascript
@@ -27,44 +22,60 @@ function $args(func: any): string[] {
 export function schemeToString(x: any): string {
   let str: string = "";
   if (x === undefined) {
-    str = 'undefined';
-  } else if (base.listQ(x)) {
+    str = "undefined";
+  } else if (base.promise$63$(x)) {
+    str = `#<promise <${base.promise$45$forced$63$(x) ? "evaluated" : "non-evaluated"}>>`;
+  } else if (base.circular$45$list$63$(x)) {
+    // we should refactor this in the future to use a set to keep track of visited nodes
+    // and be able to handle circular references, not just circular lists but perhaps in car position as well
     str = "(";
-    let p = x as base.Pair;
+    let p = x;
+    do {
+      str += schemeToString(base.car(p));
+      p = base.cdr(p);
+      if (p !== null) {
+        str += " ";
+      }
+    } while (p !== x);
+    str.trimEnd();
+    str += "...";
+  } else if (base.proper$45$list$63$(x)) {
+    str = "(";
+    let p = x;
     while (p !== null) {
-      str += schemeToString(p.car);
-      p = p.cdr;
+      str += schemeToString(base.car(p));
+      p = base.cdr(p);
       if (p !== null) {
         str += " ";
       }
     }
     str += ")";
-  } else if (list.dotted_listQ(x) && base.pairQ(x)) {
+  } else if (base.dotted$45$list$63$(x) && base.pair$63$(x)) {
     str = "(";
-    let p = x as base.Pair;
-    while (base.pairQ(p)) {
-      str = `${str}${schemeToString(p.car)} `;
-      p = p.cdr;
+    let p = x;
+    while (base.pair$63$(p)) {
+      str = `${str}${schemeToString(base.car(p))} `;
+      p = base.cdr(p);
     }
     str = `${str}. ${schemeToString(p)})`;
-  } else if (base.vectorQ(x)) {
+  } else if (base.vector$63$(x)) {
     str = "#(";
-    let v = x as base.Vector;
-    for (let i = 0; i < v.vec.length; i++) {
-      str += schemeToString(v.vec[i]);
-      if (i !== v.vec.length - 1) {
+    let v = x;
+    for (let i = 0; i < v.length; i++) {
+      str += schemeToString(v[i]);
+      if (i !== v.length - 1) {
         str += " ";
       }
     }
     str += ")";
-  } else if (base.procedureQ(x)) {
+  } else if (base.procedure$63$(x)) {
     str = `#<procedure (${$args(x)
-      .reduce((a, b) => `${a} ${b.replace('...', '. ')}`, "")
+      .reduce((a, b) => `${a} ${b.replace("...", ". ")}`, "")
       .trimStart()})>`;
-  } else if (base.booleanQ(x)) {
+  } else if (base.boolean$63$(x)) {
     str = x ? "#t" : "#f";
   } else {
     str = x.toString();
   }
   return str;
-};
+}

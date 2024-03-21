@@ -1,11 +1,9 @@
-import { Tokenizer } from "./tokenizer";
-import { Parser } from "./parser";
-import { Program } from "estree";
 import { encode as b64Encode, decode as b64Decode } from "js-base64";
 
-export * from "./prelude-visitor";
-export * as TokenizerError from "./tokenizer-error";
-export * as ParserError from "./parser-error";
+export * from "./utils/encoder-visitor";
+export { LexerError } from "./transpiler";
+export { ParserError } from "./transpiler";
+export { schemeParse } from "./transpiler";
 
 const JS_KEYWORDS: string[] = [
   "break",
@@ -66,13 +64,13 @@ export function encode(identifier: string): string {
       "$scheme_" +
       b64Encode(identifier).replace(
         /([^a-zA-Z0-9_])/g,
-        (match: string) => `\$${match.charCodeAt(0)}\$`
+        (match: string) => `\$${match.charCodeAt(0)}\$`,
       )
     );
   } else {
     return identifier.replace(
       /([^a-zA-Z0-9_])/g,
-      (match: string) => `\$${match.charCodeAt(0)}\$`
+      (match: string) => `\$${match.charCodeAt(0)}\$`,
     );
   }
 }
@@ -89,18 +87,12 @@ export function decode(identifier: string): string {
       identifier
         .slice(8)
         .replace(/\$([0-9]+)\$/g, (_, code: string) =>
-          String.fromCharCode(parseInt(code))
-        )
+          String.fromCharCode(parseInt(code)),
+        ),
     );
   } else {
     return identifier.replace(/\$([0-9]+)\$/g, (_, code: string) =>
-      String.fromCharCode(parseInt(code))
+      String.fromCharCode(parseInt(code)),
     );
   }
-}
-
-export function schemeParse(source: string, chapter?: number): Program {
-  const tokenizer = new Tokenizer(source);
-  const parser = new Parser(source, tokenizer.scanTokens(), chapter);
-  return parser.parse();
 }
