@@ -16,7 +16,7 @@ export function estreeEncode(ast: es.Program): es.Program {
     }
   });
   walk.full(ast, (node: es.Node) => {
-    node.encoded = undefined;
+    (node as any).encoded = undefined;
   });
   return ast;
 }
