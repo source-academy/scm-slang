@@ -8,6 +8,7 @@ import { Expression } from "./types/nodes/scheme-node-types";
 import { Program } from "estree";
 
 import { Simplifier, Transpiler, Redefiner } from "./visitors";
+import { estreeEncode } from "..";
 
 export { LexerError } from "./lexer";
 export { ParserError } from "./parser";
@@ -19,7 +20,7 @@ export { ParserError } from "./parser";
  *                If not provided, defaults to the latest version.
  * @returns
  */
-export function schemeParse(source: string, chapter?: number): Program {
+export function schemeParse(source: string, chapter?: number, encode?: boolean): Program {
   // Instantiate the lexer
   const lexer = new SchemeLexer(source);
 
@@ -41,8 +42,6 @@ export function schemeParse(source: string, chapter?: number): Program {
   const transpiler = Transpiler.create();
   // TODO: Then we macro-expand the AST
 
-  // TODO: Then we verify the AST
-
   // Then we simplify the AST
   const simplifiedAST: Expression[] = simplifier.simplify(firstAST);
 
@@ -52,5 +51,5 @@ export function schemeParse(source: string, chapter?: number): Program {
   // Finally we transpile the AST
   const program: Program = transpiler.transpile(redefinedAST);
 
-  return program;
+  return encode ? estreeEncode(program) : program;
 }
