@@ -1,0 +1,657 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`schemeParse 1`] = `
+{
+  "body": [
+    {
+      "declarations": [
+        {
+          "id": {
+            "loc": Location {
+              "end": Position {
+                "column": 22,
+                "line": 2,
+              },
+              "start": Position {
+                "column": 17,
+                "line": 2,
+              },
+            },
+            "name": "square",
+            "type": "Identifier",
+          },
+          "init": {
+            "async": false,
+            "body": {
+              "arguments": [
+                {
+                  "loc": Location {
+                    "end": Position {
+                      "column": 25,
+                      "line": 2,
+                    },
+                    "start": Position {
+                      "column": 25,
+                      "line": 2,
+                    },
+                  },
+                  "name": "x",
+                  "type": "Identifier",
+                },
+                {
+                  "loc": Location {
+                    "end": Position {
+                      "column": 27,
+                      "line": 2,
+                    },
+                    "start": Position {
+                      "column": 27,
+                      "line": 2,
+                    },
+                  },
+                  "name": "x",
+                  "type": "Identifier",
+                },
+              ],
+              "callee": {
+                "loc": Location {
+                  "end": Position {
+                    "column": 23,
+                    "line": 2,
+                  },
+                  "start": Position {
+                    "column": 23,
+                    "line": 2,
+                  },
+                },
+                "name": "*",
+                "type": "Identifier",
+              },
+              "loc": Location {
+                "end": Position {
+                  "column": 28,
+                  "line": 2,
+                },
+                "start": Position {
+                  "column": 22,
+                  "line": 2,
+                },
+              },
+              "optional": false,
+              "type": "CallExpression",
+            },
+            "expression": true,
+            "loc": Location {
+              "end": Position {
+                "column": 29,
+                "line": 2,
+              },
+              "start": Position {
+                "column": 3,
+                "line": 2,
+              },
+            },
+            "params": [
+              {
+                "loc": Location {
+                  "end": Position {
+                    "column": 19,
+                    "line": 2,
+                  },
+                  "start": Position {
+                    "column": 19,
+                    "line": 2,
+                  },
+                },
+                "name": "x",
+                "type": "Identifier",
+              },
+            ],
+            "type": "ArrowFunctionExpression",
+          },
+          "type": "VariableDeclarator",
+        },
+      ],
+      "kind": "let",
+      "loc": Location {
+        "end": Position {
+          "column": 29,
+          "line": 2,
+        },
+        "start": Position {
+          "column": 3,
+          "line": 2,
+        },
+      },
+      "type": "VariableDeclaration",
+    },
+    {
+      "expression": {
+        "arguments": [
+          {
+            "arguments": [
+              {
+                "loc": Location {
+                  "end": Position {
+                    "column": 15,
+                    "line": 3,
+                  },
+                  "start": Position {
+                    "column": 13,
+                    "line": 3,
+                  },
+                },
+                "raw": ""5/8"",
+                "type": "Literal",
+                "value": "5/8",
+              },
+            ],
+            "callee": {
+              "loc": Location {
+                "end": Position {
+                  "column": 15,
+                  "line": 3,
+                },
+                "start": Position {
+                  "column": 13,
+                  "line": 3,
+                },
+              },
+              "name": "make_number",
+              "type": "Identifier",
+            },
+            "loc": Location {
+              "end": Position {
+                "column": 15,
+                "line": 3,
+              },
+              "start": Position {
+                "column": 13,
+                "line": 3,
+              },
+            },
+            "optional": false,
+            "type": "CallExpression",
+          },
+        ],
+        "callee": {
+          "loc": Location {
+            "end": Position {
+              "column": 14,
+              "line": 3,
+            },
+            "start": Position {
+              "column": 9,
+              "line": 3,
+            },
+          },
+          "name": "square",
+          "type": "Identifier",
+        },
+        "loc": Location {
+          "end": Position {
+            "column": 14,
+            "line": 3,
+          },
+          "start": Position {
+            "column": 3,
+            "line": 3,
+          },
+        },
+        "optional": false,
+        "type": "CallExpression",
+      },
+      "loc": Location {
+        "end": Position {
+          "column": 14,
+          "line": 3,
+        },
+        "start": Position {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "type": "ExpressionStatement",
+    },
+    {
+      "declarations": [
+        {
+          "id": {
+            "loc": Location {
+              "end": Position {
+                "column": 18,
+                "line": 4,
+              },
+              "start": Position {
+                "column": 18,
+                "line": 4,
+              },
+            },
+            "name": "x",
+            "type": "Identifier",
+          },
+          "init": {
+            "arguments": [
+              {
+                "loc": Location {
+                  "end": Position {
+                    "column": 20,
+                    "line": 4,
+                  },
+                  "start": Position {
+                    "column": 20,
+                    "line": 4,
+                  },
+                },
+                "raw": ""5"",
+                "type": "Literal",
+                "value": "5",
+              },
+            ],
+            "callee": {
+              "loc": Location {
+                "end": Position {
+                  "column": 20,
+                  "line": 4,
+                },
+                "start": Position {
+                  "column": 20,
+                  "line": 4,
+                },
+              },
+              "name": "make_number",
+              "type": "Identifier",
+            },
+            "loc": Location {
+              "end": Position {
+                "column": 20,
+                "line": 4,
+              },
+              "start": Position {
+                "column": 20,
+                "line": 4,
+              },
+            },
+            "optional": false,
+            "type": "CallExpression",
+          },
+          "type": "VariableDeclarator",
+        },
+      ],
+      "kind": "let",
+      "loc": Location {
+        "end": Position {
+          "column": 21,
+          "line": 4,
+        },
+        "start": Position {
+          "column": 10,
+          "line": 4,
+        },
+      },
+      "type": "VariableDeclaration",
+    },
+    {
+      "expression": {
+        "left": {
+          "loc": Location {
+            "end": Position {
+              "column": 29,
+              "line": 4,
+            },
+            "start": Position {
+              "column": 29,
+              "line": 4,
+            },
+          },
+          "name": "x",
+          "type": "Identifier",
+        },
+        "loc": Location {
+          "end": Position {
+            "column": 33,
+            "line": 4,
+          },
+          "start": Position {
+            "column": 23,
+            "line": 4,
+          },
+        },
+        "operator": "=",
+        "right": {
+          "arguments": [
+            {
+              "loc": Location {
+                "end": Position {
+                  "column": 33,
+                  "line": 4,
+                },
+                "start": Position {
+                  "column": 32,
+                  "line": 4,
+                },
+              },
+              "raw": ""10"",
+              "type": "Literal",
+              "value": "10",
+            },
+          ],
+          "callee": {
+            "loc": Location {
+              "end": Position {
+                "column": 33,
+                "line": 4,
+              },
+              "start": Position {
+                "column": 32,
+                "line": 4,
+              },
+            },
+            "name": "make_number",
+            "type": "Identifier",
+          },
+          "loc": Location {
+            "end": Position {
+              "column": 33,
+              "line": 4,
+            },
+            "start": Position {
+              "column": 32,
+              "line": 4,
+            },
+          },
+          "optional": false,
+          "type": "CallExpression",
+        },
+        "type": "AssignmentExpression",
+      },
+      "loc": Location {
+        "end": Position {
+          "column": 33,
+          "line": 4,
+        },
+        "start": Position {
+          "column": 23,
+          "line": 4,
+        },
+      },
+      "type": "ExpressionStatement",
+    },
+    {
+      "expression": {
+        "loc": Location {
+          "end": Position {
+            "column": 35,
+            "line": 4,
+          },
+          "start": Position {
+            "column": 35,
+            "line": 4,
+          },
+        },
+        "name": "x",
+        "type": "Identifier",
+      },
+      "loc": Location {
+        "end": Position {
+          "column": 35,
+          "line": 4,
+        },
+        "start": Position {
+          "column": 35,
+          "line": 4,
+        },
+      },
+      "type": "ExpressionStatement",
+    },
+    {
+      "expression": {
+        "left": {
+          "loc": Location {
+            "end": Position {
+              "column": 22,
+              "line": 5,
+            },
+            "start": Position {
+              "column": 17,
+              "line": 5,
+            },
+          },
+          "name": "square",
+          "type": "Identifier",
+        },
+        "loc": Location {
+          "end": Position {
+            "column": 50,
+            "line": 5,
+          },
+          "start": Position {
+            "column": 3,
+            "line": 5,
+          },
+        },
+        "operator": "=",
+        "right": {
+          "async": false,
+          "body": {
+            "body": [
+              {
+                "declarations": [
+                  {
+                    "id": {
+                      "loc": Location {
+                        "end": Position {
+                          "column": 37,
+                          "line": 5,
+                        },
+                        "start": Position {
+                          "column": 37,
+                          "line": 5,
+                        },
+                      },
+                      "name": "x",
+                      "type": "Identifier",
+                    },
+                    "init": {
+                      "arguments": [
+                        {
+                          "loc": Location {
+                            "end": Position {
+                              "column": 39,
+                              "line": 5,
+                            },
+                            "start": Position {
+                              "column": 39,
+                              "line": 5,
+                            },
+                          },
+                          "raw": ""5"",
+                          "type": "Literal",
+                          "value": "5",
+                        },
+                      ],
+                      "callee": {
+                        "loc": Location {
+                          "end": Position {
+                            "column": 39,
+                            "line": 5,
+                          },
+                          "start": Position {
+                            "column": 39,
+                            "line": 5,
+                          },
+                        },
+                        "name": "make_number",
+                        "type": "Identifier",
+                      },
+                      "loc": Location {
+                        "end": Position {
+                          "column": 39,
+                          "line": 5,
+                        },
+                        "start": Position {
+                          "column": 39,
+                          "line": 5,
+                        },
+                      },
+                      "optional": false,
+                      "type": "CallExpression",
+                    },
+                    "type": "VariableDeclarator",
+                  },
+                ],
+                "kind": "let",
+                "loc": Location {
+                  "end": Position {
+                    "column": 40,
+                    "line": 5,
+                  },
+                  "start": Position {
+                    "column": 29,
+                    "line": 5,
+                  },
+                },
+                "type": "VariableDeclaration",
+              },
+              {
+                "argument": {
+                  "arguments": [
+                    {
+                      "loc": Location {
+                        "end": Position {
+                          "column": 45,
+                          "line": 5,
+                        },
+                        "start": Position {
+                          "column": 45,
+                          "line": 5,
+                        },
+                      },
+                      "name": "x",
+                      "type": "Identifier",
+                    },
+                    {
+                      "loc": Location {
+                        "end": Position {
+                          "column": 47,
+                          "line": 5,
+                        },
+                        "start": Position {
+                          "column": 47,
+                          "line": 5,
+                        },
+                      },
+                      "name": "x",
+                      "type": "Identifier",
+                    },
+                  ],
+                  "callee": {
+                    "loc": Location {
+                      "end": Position {
+                        "column": 43,
+                        "line": 5,
+                      },
+                      "start": Position {
+                        "column": 43,
+                        "line": 5,
+                      },
+                    },
+                    "name": "*",
+                    "type": "Identifier",
+                  },
+                  "loc": Location {
+                    "end": Position {
+                      "column": 48,
+                      "line": 5,
+                    },
+                    "start": Position {
+                      "column": 42,
+                      "line": 5,
+                    },
+                  },
+                  "optional": false,
+                  "type": "CallExpression",
+                },
+                "loc": Location {
+                  "end": Position {
+                    "column": 48,
+                    "line": 5,
+                  },
+                  "start": Position {
+                    "column": 42,
+                    "line": 5,
+                  },
+                },
+                "type": "ReturnStatement",
+              },
+            ],
+            "loc": {
+              "end": Position {
+                "column": 48,
+                "line": 5,
+              },
+              "start": Position {
+                "column": 29,
+                "line": 5,
+              },
+            },
+            "type": "BlockStatement",
+          },
+          "expression": false,
+          "loc": Location {
+            "end": Position {
+              "column": 50,
+              "line": 5,
+            },
+            "start": Position {
+              "column": 3,
+              "line": 5,
+            },
+          },
+          "params": [
+            {
+              "loc": Location {
+                "end": Position {
+                  "column": 19,
+                  "line": 5,
+                },
+                "start": Position {
+                  "column": 19,
+                  "line": 5,
+                },
+              },
+              "name": "x",
+              "type": "Identifier",
+            },
+          ],
+          "type": "ArrowFunctionExpression",
+        },
+        "type": "AssignmentExpression",
+      },
+      "loc": Location {
+        "end": Position {
+          "column": 50,
+          "line": 5,
+        },
+        "start": Position {
+          "column": 3,
+          "line": 5,
+        },
+      },
+      "type": "ExpressionStatement",
+    },
+  ],
+  "loc": {
+    "end": Position {
+      "column": 50,
+      "line": 5,
+    },
+    "start": Position {
+      "column": 3,
+      "line": 2,
+    },
+  },
+  "sourceType": "module",
+  "type": "Program",
+}
+`;
