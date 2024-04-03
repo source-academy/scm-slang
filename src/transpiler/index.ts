@@ -8,7 +8,7 @@ import { Expression } from "./types/nodes/scheme-node-types";
 import { Program } from "estree";
 
 import { Simplifier, Transpiler, Redefiner } from "./visitors";
-import { estreeEncode } from "..";
+import { estreeEncode, estreeDecode } from "..";
 
 export { LexerError } from "./lexer";
 export { ParserError } from "./parser";
