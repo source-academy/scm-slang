@@ -8,7 +8,7 @@ import { Expression } from "./types/nodes/scheme-node-types";
 import { Program } from "estree";
 
 import { Simplifier, Transpiler, Redefiner } from "./visitors";
-import { estreeEncode, estreeDecode } from "..";
+import { estreeEncode } from "..";
 
 export { LexerError } from "./lexer";
 export { ParserError } from "./parser";
@@ -51,5 +51,5 @@ export function schemeParse(source: string, chapter?: number, encode?: boolean):
   // Finally we transpile the AST
   const program: Program = transpiler.transpile(redefinedAST);
 
-  return encode ? estreeEncode(program) : program;
+  return encode ? estreeEncode(program) as Program : program;
 }
