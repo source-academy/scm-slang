@@ -253,7 +253,7 @@ const array_test: Function = (p: any) => {
   }
   return Array.isArray(p);
 };
-export const pair$63$: Function = (p: any) => array_test(p) && p.length === 2;
+export const pair$63$: Function = (p: any) => array_test(p) && p.length === 2 && p.pair === true;
 export const not$45$pair$63$: Function = compose(not, pair$63$);
 export const set$45$car$33$: Function = (p: core.Pair | core.List, v: any) => {
   if (pair$63$(p)) {
