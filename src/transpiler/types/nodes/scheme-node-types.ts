@@ -17,6 +17,7 @@ import { Location } from "../location";
 export interface Expression {
   location: Location;
   accept(visitor: Visitor): any;
+  equals(other: Expression): boolean;
 }
 
 /**
@@ -39,6 +40,20 @@ export namespace Atomic {
     }
     accept(visitor: Visitor): any {
       return visitor.visitSequence(this);
+    }
+    equals(other: Expression): boolean {
+      if (other instanceof Sequence) {
+        if (this.expressions.length !== other.expressions.length) {
+          return false;
+        }
+        for (let i = 0; i < this.expressions.length; i++) {
+          if (!this.expressions[i].equals(other.expressions[i])) {
+            return false;
+          }
+        }
+        return true;
+      }
+      return false;
     }
   }
 
@@ -63,6 +78,12 @@ export namespace Atomic {
     accept(visitor: Visitor): any {
       return visitor.visitNumericLiteral(this);
     }
+    equals(other: Expression): boolean {
+      if (other instanceof NumericLiteral) {
+        return this.value === other.value;
+      }
+      return false;
+    }
   }
 
   /**
@@ -78,6 +99,12 @@ export namespace Atomic {
     accept(visitor: Visitor): any {
       return visitor.visitBooleanLiteral(this);
     }
+    equals(other: Expression): boolean {
+      if (other instanceof BooleanLiteral) {
+        return this.value === other.value;
+      }
+      return false;
+    }
   }
 
   /**
@@ -92,6 +119,12 @@ export namespace Atomic {
     }
     accept(visitor: Visitor): any {
       return visitor.visitStringLiteral(this);
+    }
+    equals(other: Expression): boolean {
+      if (other instanceof StringLiteral) {
+        return this.value === other.value;
+      }
+      return false;
     }
   }
 
@@ -118,6 +151,27 @@ export namespace Atomic {
     accept(visitor: Visitor): any {
       return visitor.visitLambda(this);
     }
+    equals(other: Expression): boolean {
+      if (other instanceof Lambda) {
+        if (this.params.length !== other.params.length) {
+          return false;
+        }
+        for (let i = 0; i < this.params.length; i++) {
+          if (!this.params[i].equals(other.params[i])) {
+            return false;
+          }
+        }
+        if (this.rest && other.rest) {
+          if (!this.rest.equals(other.rest)) {
+            return false;
+          }
+        } else if (this.rest || other.rest) {
+          return false;
+        }
+        return this.body.equals(other.body);
+      }
+      return false;
+    }
   }
 
   /**
@@ -132,6 +186,12 @@ export namespace Atomic {
     }
     accept(visitor: Visitor): any {
       return visitor.visitIdentifier(this);
+    }
+    equals(other: Expression): boolean {
+      if (other instanceof Identifier) {
+        return this.name === other.name;
+      }
+      return false;
     }
   }
 
@@ -150,6 +210,12 @@ export namespace Atomic {
     }
     accept(visitor: Visitor): any {
       return visitor.visitDefinition(this);
+    }
+    equals(other: Expression): boolean {
+      if (other instanceof Definition) {
+        return this.name.equals(other.name) && this.value.equals(other.value);
+      }
+      return false;
     }
   }
 
@@ -171,6 +237,23 @@ export namespace Atomic {
     }
     accept(visitor: Visitor): any {
       return visitor.visitApplication(this);
+    }
+    equals(other: Expression): boolean {
+      if (other instanceof Application) {
+        if (!this.operator.equals(other.operator)) {
+          return false;
+        }
+        if (this.operands.length !== other.operands.length) {
+          return false;
+        }
+        for (let i = 0; i < this.operands.length; i++) {
+          if (!this.operands[i].equals(other.operands[i])) {
+            return false;
+          }
+        }
+        return true;
+      }
+      return false;
     }
   }
 
@@ -196,6 +279,16 @@ export namespace Atomic {
     accept(visitor: Visitor): any {
       return visitor.visitConditional(this);
     }
+    equals(other: Expression): boolean {
+      if (other instanceof Conditional) {
+        return (
+          this.test.equals(other.test) &&
+          this.consequent.equals(other.consequent) &&
+          this.alternate.equals(other.alternate)
+        );
+      }
+      return false;
+    }
   }
 
   // Scheme chapter 2
@@ -215,6 +308,12 @@ export namespace Atomic {
     accept(visitor: Visitor): any {
       return visitor.visitPair(this);
     }
+    equals(other: Expression): boolean {
+      if (other instanceof Pair) {
+        return this.car.equals(other.car) && this.cdr.equals(other.cdr);
+      }
+      return false;
+    }
   }
 
   /**
@@ -227,6 +326,9 @@ export namespace Atomic {
     }
     accept(visitor: Visitor): any {
       return visitor.visitNil(this);
+    }
+    equals(other: Expression): boolean {
+      return other instanceof Nil;
     }
   }
 
@@ -243,6 +345,12 @@ export namespace Atomic {
     accept(visitor: Visitor): any {
       return visitor.visitSymbol(this);
     }
+    equals(other: Expression): boolean {
+      if (other instanceof Symbol) {
+        return this.value === other.value;
+      }
+      return false;
+    }
   }
 
   /**
@@ -258,6 +366,12 @@ export namespace Atomic {
     }
     accept(visitor: Visitor): any {
       return visitor.visitSpliceMarker(this);
+    }
+    equals(other: Expression): boolean {
+      if (other instanceof SpliceMarker) {
+        return this.value.equals(other.value);
+      }
+      return false;
     }
   }
 
@@ -279,6 +393,12 @@ export namespace Atomic {
     }
     accept(visitor: Visitor): any {
       return visitor.visitReassignment(this);
+    }
+    equals(other: Expression): boolean {
+      if (other instanceof Reassignment) {
+        return this.name.equals(other.name) && this.value.equals(other.value);
+      }
+      return false;
     }
   }
 
@@ -305,6 +425,23 @@ export namespace Atomic {
     accept(visitor: Visitor): any {
       return visitor.visitImport(this);
     }
+    equals(other: Expression): boolean {
+      if (other instanceof Import) {
+        if (!this.source.equals(other.source)) {
+          return false;
+        }
+        if (this.identifiers.length !== other.identifiers.length) {
+          return false;
+        }
+        for (let i = 0; i < this.identifiers.length; i++) {
+          if (!this.identifiers[i].equals(other.identifiers[i])) {
+            return false;
+          }
+        }
+        return true;
+      }
+      return false;
+    }
   }
 
   /**
@@ -325,6 +462,12 @@ export namespace Atomic {
     accept(visitor: Visitor): any {
       return visitor.visitExport(this);
     }
+    equals(other: Expression): boolean {
+      if (other instanceof Export) {
+        return this.definition.equals(other.definition);
+      }
+      return false;
+    }
   }
 
   /**
@@ -339,6 +482,20 @@ export namespace Atomic {
     }
     accept(visitor: Visitor): any {
       return visitor.visitVector(this);
+    }
+    equals(other: Expression): boolean {
+      if (other instanceof Vector) {
+        if (this.elements.length !== other.elements.length) {
+          return false;
+        }
+        for (let i = 0; i < this.elements.length; i++) {
+          if (!this.elements[i].equals(other.elements[i])) {
+            return false;
+          }
+        }
+        return true;
+      }
+      return false;
     }
   }
 }
@@ -378,6 +535,27 @@ export namespace Extended {
     accept(visitor: Visitor): any {
       return visitor.visitFunctionDefinition(this);
     }
+    equals(other: Expression): boolean {
+      if (other instanceof FunctionDefinition) {
+        if (this.params.length !== other.params.length) {
+          return false;
+        }
+        for (let i = 0; i < this.params.length; i++) {
+          if (!this.params[i].equals(other.params[i])) {
+            return false;
+          }
+        }
+        if (this.rest && other.rest) {
+          if (!this.rest.equals(other.rest)) {
+            return false;
+          }
+        } else if (this.rest || other.rest) {
+          return false;
+        }
+        return this.body.equals(other.body);
+      }
+      return false;
+    }
   }
 
   /**
@@ -401,6 +579,28 @@ export namespace Extended {
     }
     accept(visitor: Visitor): any {
       return visitor.visitLet(this);
+    }
+    equals(other: Expression): boolean {
+      if (other instanceof Let) {
+        if (this.identifiers.length !== other.identifiers.length) {
+          return false;
+        }
+        for (let i = 0; i < this.identifiers.length; i++) {
+          if (!this.identifiers[i].equals(other.identifiers[i])) {
+            return false;
+          }
+        }
+        if (this.values.length !== other.values.length) {
+          return false;
+        }
+        for (let i = 0; i < this.values.length; i++) {
+          if (!this.values[i].equals(other.values[i])) {
+            return false;
+          }
+        }
+        return this.body.equals(other.body);
+      }
+      return false;
     }
   }
 
@@ -427,6 +627,33 @@ export namespace Extended {
     accept(visitor: Visitor): any {
       return visitor.visitCond(this);
     }
+    equals(other: Expression): boolean {
+      if (other instanceof Cond) {
+        if (this.predicates.length !== other.predicates.length) {
+          return false;
+        }
+        for (let i = 0; i < this.predicates.length; i++) {
+          if (!this.predicates[i].equals(other.predicates[i])) {
+            return false;
+          }
+        }
+        if (this.consequents.length !== other.consequents.length) {
+          return false;
+        }
+        for (let i = 0; i < this.consequents.length; i++) {
+          if (!this.consequents[i].equals(other.consequents[i])) {
+            return false;
+          }
+        }
+        if (this.catchall && other.catchall) {
+          return this.catchall.equals(other.catchall);
+        } else if (this.catchall || other.catchall) {
+          return false;
+        }
+        return true;
+      }
+      return false;
+    }
   }
 
   // Scheme chapter 2
@@ -450,6 +677,25 @@ export namespace Extended {
     accept(visitor: Visitor): any {
       return visitor.visitList(this);
     }
+    equals(other: Expression): boolean {
+      if (other instanceof List) {
+        if (this.elements.length !== other.elements.length) {
+          return false;
+        }
+        for (let i = 0; i < this.elements.length; i++) {
+          if (!this.elements[i].equals(other.elements[i])) {
+            return false;
+          }
+        }
+        if (this.terminator && other.terminator) {
+          return this.terminator.equals(other.terminator);
+        } else if (this.terminator || other.terminator) {
+          return false;
+        }
+        return true;
+      }
+      return false;
+    }
   }
 
   // Scheme chapter 3
@@ -469,6 +715,20 @@ export namespace Extended {
     accept(visitor: Visitor): any {
       return visitor.visitBegin(this);
     }
+    equals(other: Expression): boolean {
+      if (other instanceof Begin) {
+        if (this.expressions.length !== other.expressions.length) {
+          return false;
+        }
+        for (let i = 0; i < this.expressions.length; i++) {
+          if (!this.expressions[i].equals(other.expressions[i])) {
+            return false;
+          }
+        }
+        return true;
+      }
+      return false;
+    }
   }
 
   /**
@@ -485,6 +745,12 @@ export namespace Extended {
     }
     accept(visitor: Visitor): any {
       return visitor.visitDelay(this);
+    }
+    equals(other: Expression): boolean {
+      if (other instanceof Delay) {
+        return this.expression.equals(other.expression);
+      }
+      return false;
     }
   }
 }
