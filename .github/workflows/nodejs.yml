@@ -33,7 +33,6 @@ jobs:
         node-version: 20
         cache: yarn
     - run: yarn install
-    - run: yarn build
     - run: yarn format
     - run: yarn eslint
     - run: yarn test
