@@ -11,7 +11,9 @@ export type Pair = [any, any];
 export type List = null | Pair;
 
 export function pair(car: any, cdr: any): Pair {
-  return [car, cdr];
+  const val = [car, cdr] as Pair;
+  (val as any).pair = true;
+  return val;
 }
 
 // converts a vector to a list.

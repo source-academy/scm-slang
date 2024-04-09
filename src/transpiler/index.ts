@@ -51,5 +51,5 @@ export function schemeParse(source: string, chapter?: number, encode?: boolean):
   // Finally we transpile the AST
   const program: Program = transpiler.transpile(redefinedAST);
 
-  return encode ? estreeEncode(program) : program;
+  return encode ? estreeEncode(program) as Program: program;
 }
