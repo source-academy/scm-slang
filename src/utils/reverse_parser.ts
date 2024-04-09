@@ -5,7 +5,7 @@ export function unparse(node: es.Node): string {
   switch (node.type) {
     case "Identifier":
       return node.name;
-    
+
     case "Literal":
       return node.raw!;
 
@@ -13,11 +13,11 @@ export function unparse(node: es.Node): string {
       const callee = unparse(node.callee);
       const args = node.arguments.map(unparse).join(" ");
       return `(${callee} ${args})`;
-    
+
     case "ArrayExpression":
-      const elements = node.elements.map(s => unparse(s as any)).join(" ");
+      const elements = node.elements.map((s) => unparse(s as any)).join(" ");
       return `(vector ${elements})`;
-    
+
     case "ArrowFunctionExpression":
       const params = node.params.map(unparse).join(" ");
       const body = unparse(node.body);
@@ -49,7 +49,7 @@ export function unparse(node: es.Node): string {
 
     case "ConditionalExpression":
       const test = unparse(node.test);
-      const consequent = unparse(node.consequent); 
+      const consequent = unparse(node.consequent);
       const alternate = unparse(node.alternate);
       return `(if ${test} ${consequent} ${alternate})`;
 
@@ -60,11 +60,11 @@ export function unparse(node: es.Node): string {
       const identifiers = node.specifiers.map(unparse).join(" ");
       const source = unparse(node.source);
       return `(import (${source} ${identifiers}))`;
-    
+
     case "ExportNamedDeclaration":
-      const definition = unparse(node.declaration!)
+      const definition = unparse(node.declaration!);
       return `(export ${definition})`;
-      
+
     default:
       throw new Error(`Unparsing for node type ${node.type} not implemented`);
   }

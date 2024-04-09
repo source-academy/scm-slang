@@ -1,6 +1,11 @@
 import { SchemeParser } from "../scheme-parser";
 import { SchemeLexer } from "../../lexer";
-import { Expression } from "../../types/nodes/scheme-node-types";
+import {
+  Atomic,
+  Extended,
+  Expression,
+} from "../../types/nodes/scheme-node-types";
+import { Location, Position } from "../../types/location";
 
 // Unfortunately, we are currently unable to test the parser in isolation from the
 // lexer, as the parser depends on the lexer to generate tokens. Generating the tokens
@@ -8,206 +13,646 @@ import { Expression } from "../../types/nodes/scheme-node-types";
 // As a result, we will have to test the parser in conjunction with the lexer.
 // We will avoid testing the more advanced features of the lexer here.
 
+const dummyLocation = new Location(new Position(0, 0), new Position(0, 0));
+
+// helper functions that will make creation of nodes a lot easier
+function numericLiteral(value: string) {
+  return new Atomic.NumericLiteral(dummyLocation, value);
+}
+
+function booleanLiteral(value: boolean) {
+  return new Atomic.BooleanLiteral(dummyLocation, value);
+}
+
+function stringLiteral(value: string) {
+  return new Atomic.StringLiteral(dummyLocation, value);
+}
+
+function identifier(value: string) {
+  return new Atomic.Identifier(dummyLocation, value);
+}
+
+function lambda(
+  body: Expression,
+  params: Atomic.Identifier[],
+  rest?: Atomic.Identifier,
+) {
+  return new Atomic.Lambda(dummyLocation, body, params, rest);
+}
+
+function sequence(...expressions: Expression[]) {
+  return new Atomic.Sequence(dummyLocation, expressions);
+}
+
+function definition(name: Atomic.Identifier, value: Expression) {
+  return new Atomic.Definition(dummyLocation, name, value);
+}
+
+function functionDefinition(
+  name: Atomic.Identifier,
+  body: Expression,
+  params: Atomic.Identifier[],
+  rest?: Atomic.Identifier,
+) {
+  return new Extended.FunctionDefinition(
+    dummyLocation,
+    name,
+    body,
+    params,
+    rest,
+  );
+}
+
+function application(operator: Expression, operands: Expression[]) {
+  return new Atomic.Application(dummyLocation, operator, operands);
+}
+
+function conditional(
+  test: Expression,
+  consequent: Expression,
+  alternate?: Expression,
+) {
+  return new Atomic.Conditional(
+    dummyLocation,
+    test,
+    consequent,
+    alternate ? alternate : identifier("undefined"),
+  );
+}
+
+function symbol(value: string) {
+  return new Atomic.Symbol(dummyLocation, value);
+}
+
+function vector(...elements: Expression[]) {
+  return new Atomic.Vector(dummyLocation, elements);
+}
+
+function list(...elements: Expression[]) {
+  return new Extended.List(dummyLocation, elements);
+}
+
+function dottedList(elements: Expression[], rest: Expression) {
+  return new Extended.List(dummyLocation, elements, rest);
+}
+
+function nil() {
+  return new Atomic.Nil(dummyLocation);
+}
+
+function reassignment(name: Atomic.Identifier, value: Expression) {
+  return new Atomic.Reassignment(dummyLocation, name, value);
+}
+
+function importNode(from: Atomic.StringLiteral, imports: Atomic.Identifier[]) {
+  return new Atomic.Import(dummyLocation, from, imports);
+}
+
+function exportNode(
+  definition: Atomic.Definition | Extended.FunctionDefinition,
+) {
+  return new Atomic.Export(dummyLocation, definition);
+}
+
+function letNode(
+  identifiers: Atomic.Identifier[],
+  values: Expression[],
+  body: Expression,
+) {
+  return new Extended.Let(dummyLocation, identifiers, values, body);
+}
+
+function cond(
+  predicates: Expression[],
+  consequents: Expression[],
+  elseClause?: Expression,
+) {
+  return new Extended.Cond(dummyLocation, predicates, consequents, elseClause);
+}
+
+function begin(...expressions: Expression[]) {
+  return new Extended.Begin(dummyLocation, expressions);
+}
+
+function delay(body: Expression) {
+  return new Extended.Delay(dummyLocation, body);
+}
+
+// helper functions to help make testing the parser easier
 function parse(input: string, chapter: number = Infinity): Expression[] {
   const lexer = new SchemeLexer(input);
   const parser = new SchemeParser(input, lexer.scanTokens(), chapter);
   return parser.parse();
 }
 
-// Additionally, with the way the parser is currently implemented, it is difficult to
-// test for equality of the parsed expressions. Unfortunately, we will currently test for the
-// LACK of erroneous behavior, rather than the presence of correct behavior.
-test("does not throw on parsing empty program", () => {
-  expect(() => parse("")).not.toThrow();
+function parseFirst(input: string, chapter: number = Infinity): Expression {
+  return parse(input, chapter)[0];
+}
+
+test("parsing empty program returns nothing", () => {
+  expect(parse("")).toEqual([]);
 });
 
-test("does not throw on parsing literals", () => {
-  expect(() => parse("1")).not.toThrow();
-  expect(() => parse("1.0")).not.toThrow();
-  expect(() => parse('"hello"')).not.toThrow();
-  expect(() => parse("#t")).not.toThrow();
-  expect(() => parse("#f")).not.toThrow();
+test("parses literals", () => {
+  expect(parseFirst("1").equals(numericLiteral("1"))).toEqual(true);
+  expect(parseFirst("1.0").equals(numericLiteral("1.0"))).toEqual(true);
+  expect(parseFirst('"hello"').equals(stringLiteral("hello"))).toEqual(true);
+  expect(parseFirst("#t").equals(booleanLiteral(true))).toEqual(true);
+  expect(parseFirst("#f").equals(booleanLiteral(false))).toEqual(true);
 });
 
-test("does not throw on parsing identifiers", () => {
-  expect(() => parse("hello")).not.toThrow();
-  expect(() => parse("hello-world")).not.toThrow();
-  expect(() => parse("hello?")).not.toThrow();
-  expect(() => parse("hello-world!")).not.toThrow();
+test("parses identifiers", () => {
+  expect(parseFirst("hello").equals(identifier("hello"))).toEqual(true);
+  expect(parseFirst("hello-world").equals(identifier("hello-world"))).toEqual(
+    true,
+  );
+  expect(parseFirst("hello?").equals(identifier("hello?"))).toEqual(true);
+  expect(parseFirst("hello-world!").equals(identifier("hello-world!"))).toEqual(
+    true,
+  );
 });
 
-test("does not throw on parsing normal lambda functions", () => {
-  expect(() => parse("(lambda (x) x)")).not.toThrow();
-  expect(() => parse("(lambda (x y) x)")).not.toThrow();
-  expect(() => parse("(lambda (x y z) x)")).not.toThrow();
+test("parses lambda functions", () => {
+  expect(
+    parseFirst("(lambda () 1)").equals(lambda(numericLiteral("1"), [])),
+  ).toEqual(true);
+  expect(
+    parseFirst("(lambda (x) x)").equals(
+      lambda(identifier("x"), [identifier("x")]),
+    ),
+  ).toEqual(true);
+  expect(
+    parseFirst("(lambda (x y) x)").equals(
+      lambda(identifier("x"), [identifier("x"), identifier("y")]),
+    ),
+  ).toEqual(true);
+  expect(
+    parseFirst("(lambda (x y z) x)").equals(
+      lambda(identifier("x"), [
+        identifier("x"),
+        identifier("y"),
+        identifier("z"),
+      ]),
+    ),
+  ).toEqual(true);
 });
 
-test("does not throw on parsing variadic lambda functions", () => {
-  expect(() => parse("(lambda x x)")).not.toThrow();
-  expect(() => parse("(lambda (x . y) x)")).not.toThrow();
-  expect(() => parse("(lambda (x y . z) x)")).not.toThrow();
+test("parses variadic lambda functions", () => {
+  expect(
+    parseFirst("(lambda x x)").equals(
+      lambda(identifier("x"), [], identifier("x")),
+    ),
+  ).toEqual(true);
+  expect(
+    parseFirst("(lambda (x . y) x)").equals(
+      lambda(identifier("x"), [identifier("x")], identifier("y")),
+    ),
+  ).toEqual(true);
+  expect(
+    parseFirst("(lambda (x y . z) x)").equals(
+      lambda(
+        identifier("x"),
+        [identifier("x"), identifier("y")],
+        identifier("z"),
+      ),
+    ),
+  ).toEqual(true);
 });
 
-test("does not throw on parsing functions with body", () => {
-  expect(() => parse("(lambda (x) x x)")).not.toThrow();
-  expect(() => parse("(lambda (x y) x y)")).not.toThrow();
-  expect(() => parse("(lambda (x y z) x y z)")).not.toThrow();
+test("parses functions with body", () => {
+  expect(
+    parseFirst("(lambda () x x)").equals(
+      lambda(sequence(identifier("x"), identifier("x")), []),
+    ),
+  ).toEqual(true);
 });
 
-test("does not throw on parsing definitions", () => {
-  expect(() => parse("(define x 1)")).not.toThrow();
-  expect(() => parse("(define x 1.0)")).not.toThrow();
-  expect(() => parse('(define x "hello")')).not.toThrow();
-  expect(() => parse("(define x #t)")).not.toThrow();
-  expect(() => parse("(define x #f)")).not.toThrow();
-  expect(() => parse("(define x (lambda (x) x))")).not.toThrow();
+test("parses definitions", () => {
+  expect(
+    parseFirst("(define x 1)").equals(
+      definition(identifier("x"), numericLiteral("1")),
+    ),
+  ).toEqual(true);
+  expect(
+    parseFirst("(define x 1.0)").equals(
+      definition(identifier("x"), numericLiteral("1.0")),
+    ),
+  ).toEqual(true);
+  expect(
+    parseFirst('(define x "hello")').equals(
+      definition(identifier("x"), stringLiteral("hello")),
+    ),
+  ).toEqual(true);
+  expect(
+    parseFirst("(define x #t)").equals(
+      definition(identifier("x"), booleanLiteral(true)),
+    ),
+  ).toEqual(true);
+  expect(
+    parseFirst("(define x #f)").equals(
+      definition(identifier("x"), booleanLiteral(false)),
+    ),
+  ).toEqual(true);
+  expect(
+    parseFirst("(define x (lambda (x) x))").equals(
+      definition(identifier("x"), lambda(identifier("x"), [identifier("x")])),
+    ),
+  ).toEqual(true);
 });
 
-test("does not throw on parsing function definitions", () => {
-  expect(() => parse("(define (f x) x)")).not.toThrow();
-  expect(() => parse("(define (f x y) x y)")).not.toThrow();
-  expect(() => parse("(define (f x y z) x y z)")).not.toThrow();
+test("parses function definitions", () => {
+  expect(
+    parseFirst("(define (f x) x)").equals(
+      functionDefinition(identifier("f"), identifier("x"), [identifier("x")]),
+    ),
+  ).toEqual(true);
+  expect(
+    parseFirst("(define (f x y) x y)").equals(
+      functionDefinition(
+        identifier("f"),
+        sequence(identifier("x"), identifier("y")),
+        [identifier("x"), identifier("y")],
+      ),
+    ),
+  ).toEqual(true);
 });
 
-test("does not throw on parsing function applications", () => {
-  expect(() => parse("(f)")).not.toThrow();
-  expect(() => parse("(f x)")).not.toThrow();
-  expect(() => parse("(f x y)")).not.toThrow();
-  expect(() => parse("(f x y z)")).not.toThrow();
+test("parses applications", () => {
+  expect(parseFirst("(f)").equals(application(identifier("f"), []))).toEqual(
+    true,
+  );
+  expect(
+    parseFirst("(f x)").equals(application(identifier("f"), [identifier("x")])),
+  ).toEqual(true);
+  expect(
+    parseFirst("(f x y)").equals(
+      application(identifier("f"), [identifier("x"), identifier("y")]),
+    ),
+  ).toEqual(true);
+  expect(
+    parseFirst("((lambda (x) x) 1)").equals(
+      application(lambda(identifier("x"), [identifier("x")]), [
+        numericLiteral("1"),
+      ]),
+    ),
+  ).toEqual(true);
 });
 
-test("does not throw on parsing conditionals", () => {
-  expect(() => parse("(if #t 1 2)")).not.toThrow();
-  expect(() => parse("(if #f 1 2)")).not.toThrow();
-  expect(() => parse("(if #t 1)")).not.toThrow();
-  expect(() => parse("(if #f 1)")).not.toThrow();
+test("parses conditionals", () => {
+  expect(
+    parseFirst("(if #t 1 2)").equals(
+      conditional(
+        booleanLiteral(true),
+        numericLiteral("1"),
+        numericLiteral("2"),
+      ),
+    ),
+  ).toEqual(true);
+  expect(
+    parseFirst("(if #f 1)").equals(
+      conditional(booleanLiteral(false), numericLiteral("1")),
+    ),
+  ).toEqual(true);
 });
 
-test("does not throw on parsing quoted literals and identifiers", () => {
-  expect(() => parse("'1")).not.toThrow();
-  expect(() => parse("'1.0")).not.toThrow();
-  expect(() => parse('\'"hello"')).not.toThrow();
-  expect(() => parse("'hello")).not.toThrow();
+test("parses quoted literals and identifiers", () => {
+  expect(parseFirst("'1").equals(numericLiteral("1"))).toEqual(true);
+  expect(parseFirst("'1.0").equals(numericLiteral("1.0"))).toEqual(true);
+  expect(parseFirst('\'"hello"').equals(stringLiteral("hello"))).toEqual(true);
+  expect(parseFirst("'hello").equals(symbol("hello"))).toEqual(true);
 });
 
-test("does not throw on quoted vectors", () => {
-  expect(() => parse("'#(1 2 3)")).not.toThrow();
-  expect(() => parse("'#(1 2 3 4)")).not.toThrow();
-  expect(() => parse("'#(1 testy 3 4 5)")).not.toThrow();
+test("parses quoted vectors (everything inside should be quoted)", () => {
+  expect(
+    parseFirst("'#(1 2 3)").equals(
+      vector(numericLiteral("1"), numericLiteral("2"), numericLiteral("3")),
+    ),
+  ).toEqual(true);
+  expect(
+    parseFirst("'#(1 2 3 4)").equals(
+      vector(
+        numericLiteral("1"),
+        numericLiteral("2"),
+        numericLiteral("3"),
+        numericLiteral("4"),
+      ),
+    ),
+  ).toEqual(true);
+  expect(
+    parseFirst("'#(1 testy 3 4 5)").equals(
+      vector(
+        numericLiteral("1"),
+        symbol("testy"),
+        numericLiteral("3"),
+        numericLiteral("4"),
+        numericLiteral("5"),
+      ),
+    ),
+  ).toEqual(true);
 });
 
-test("does not throw on parsing quotations in lists", () => {
-  expect(() => parse("'(1 2 3)")).not.toThrow();
-  expect(() => parse('\'("1" (2 3) 4)')).not.toThrow();
-  expect(() => parse("'(1 (2 (3 will-this be a symbol)) 5)")).not.toThrow();
+test("parses quotations in lists", () => {
+  expect(
+    parseFirst("'(1 2 3)").equals(
+      list(numericLiteral("1"), numericLiteral("2"), numericLiteral("3")),
+    ),
+  ).toEqual(true);
+  expect(
+    parseFirst('\'("1" (2 3) 4)').equals(
+      list(
+        stringLiteral("1"),
+        list(numericLiteral("2"), numericLiteral("3")),
+        numericLiteral("4"),
+      ),
+    ),
+  ).toEqual(true);
+  expect(
+    parseFirst("'(1 (2 (3 will-this be a symbol)) 5)").equals(
+      list(
+        numericLiteral("1"),
+        list(
+          numericLiteral("2"),
+          list(
+            numericLiteral("3"),
+            symbol("will-this"),
+            symbol("be"),
+            symbol("a"),
+            symbol("symbol"),
+          ),
+        ),
+        numericLiteral("5"),
+      ),
+    ),
+  ).toEqual(true);
 });
 
-test("does not throw when evaluating the empty list", () => {
-  expect(() => parse("'()")).not.toThrow();
+test("parses the empty list", () => {
+  expect(parseFirst("'()").equals(nil())).toEqual(true);
 });
 
-test("does not throw on parsing dotted lists", () => {
-  expect(() => parse("'(1 . 2)")).not.toThrow();
-  expect(() => parse("'(1 2 . 3)")).not.toThrow();
-  expect(() => parse("'(1 2 3 . 4)")).not.toThrow();
+test("parses dotted lists", () => {
+  expect(
+    parseFirst("'(1 . 2)").equals(
+      dottedList([numericLiteral("1")], numericLiteral("2")),
+    ),
+  ).toEqual(true);
+  expect(
+    parseFirst("'(1 2 . 3)").equals(
+      dottedList(
+        [numericLiteral("1"), numericLiteral("2")],
+        numericLiteral("3"),
+      ),
+    ),
+  ).toEqual(true);
+  expect(
+    parseFirst("'((1 2 . 3) 2 3 . 4)").equals(
+      dottedList(
+        [
+          dottedList(
+            [numericLiteral("1"), numericLiteral("2")],
+            numericLiteral("3"),
+          ),
+          numericLiteral("2"),
+          numericLiteral("3"),
+        ],
+        numericLiteral("4"),
+      ),
+    ),
+  ).toEqual(true);
 });
 
-test("does not throw on parsing nested dotted lists", () => {
-  expect(() => parse("'(1 . (2 . 3))")).not.toThrow();
-  expect(() => parse("'(1 2 . (3 . 4))")).not.toThrow();
-  expect(() => parse("'((1 2 . 3) 2 3 . (4 . 5))")).not.toThrow();
+test("parses nested lists", () => {
+  expect(
+    parseFirst("'(1 (2 3) 4)").equals(
+      list(
+        numericLiteral("1"),
+        list(numericLiteral("2"), numericLiteral("3")),
+        numericLiteral("4"),
+      ),
+    ),
+  ).toEqual(true);
 });
 
-test("does not throw on parsing nested lists", () => {
-  expect(() => parse("'(1 (2 3) 4)")).not.toThrow();
-  expect(() => parse("'(1 (2 (3 4)) 5)")).not.toThrow();
-  expect(() => parse("'((1 2 (3 4)) 2 3 (4 5))")).not.toThrow();
-});
-
-test("does not throw on parsing quasiquoted lists", () => {
-  expect(() => parse("`(1 2 3)")).not.toThrow();
-  expect(() => parse("`(1 (2 ,(+ 1 2)) 4)")).not.toThrow();
-  expect(() => parse("`(1 (,a (3 4)) 5)")).not.toThrow();
+test("parses quasiquoted lists", () => {
+  expect(
+    parseFirst("`(1 2 3)").equals(
+      list(numericLiteral("1"), numericLiteral("2"), numericLiteral("3")),
+    ),
+  ).toEqual(true);
+  // the application is unquoted!
+  expect(
+    parseFirst("`(1 (2 ,(+ 1 2)) 4)").equals(
+      list(
+        numericLiteral("1"),
+        list(
+          numericLiteral("2"),
+          application(identifier("+"), [
+            numericLiteral("1"),
+            numericLiteral("2"),
+          ]),
+        ),
+        numericLiteral("4"),
+      ),
+    ),
+  ).toEqual(true);
 });
 
 /*
+quasiquotation will be left for semester 1 ay2425
+
 test("does not throw on parsing quasiquoted structures with unquote-splicing", () => {
   expect(() => parse("`(1 2 ,@a 4)")).not.toThrow();
   expect(() => parse("`(1 (2 ,@a) 5)")).not.toThrow();
   expect(() => parse("`(1 ,@(list 1 2 3) 3 4)")).not.toThrow();
 });
- */
+*/
 
-test("does not throw on parsing reassignments", () => {
-  expect(() => parse("(set! x 1)")).not.toThrow();
-  expect(() => parse("(set! x 1.0)")).not.toThrow();
-  expect(() => parse('(set! x "hello")')).not.toThrow();
-  expect(() => parse("(set! x #t)")).not.toThrow();
-  expect(() => parse("(set! x #f)")).not.toThrow();
-  expect(() => parse("(set! x (lambda (x) x))")).not.toThrow();
+test("should throw on a unquote without an external quote", () => {
+  expect(() => parse(",1")).toThrow();
 });
 
-test("does not throw on nested reassignments", () => {
-  expect(() => parse("(set! x (set! y 1))")).not.toThrow();
-  expect(() => parse("(set! x (set! y 1.0))")).not.toThrow();
-  expect(() => parse('(set! x (set! y "hello"))')).not.toThrow();
-  expect(() => parse("(set! x (set! y #t))")).not.toThrow();
-  expect(() => parse("(set! x (set! y #f))")).not.toThrow();
-  expect(() => parse("(set! x (set! y (lambda (x) x)))")).not.toThrow();
+test("parses reassignments", () => {
+  expect(
+    parseFirst("(set! x 1)").equals(
+      reassignment(identifier("x"), numericLiteral("1")),
+    ),
+  ).toEqual(true);
 });
 
-test("does not throw on parsing import statements", () => {
-  expect(() => parse('(import "path/to/file" (a b c d))')).not.toThrow();
+// the return value of reassignment is UNSPECIFIED in R7RS.
+// for scm-slang, we choose to have it emit the value of the assignment,
+// similar to javascript.
+test("parses nested reassignments", () => {
+  expect(
+    parseFirst("(set! x (set! y 1))").equals(
+      reassignment(
+        identifier("x"),
+        reassignment(identifier("y"), numericLiteral("1")),
+      ),
+    ),
+  ).toEqual(true);
 });
 
-test("does not throw on parsing export statements", () => {
-  expect(() => parse("(export (define a 1))")).not.toThrow();
+test("parses import statements", () => {
+  expect(
+    parseFirst('(import "path" (a b c d))').equals(
+      importNode(stringLiteral("path"), [
+        identifier("a"),
+        identifier("b"),
+        identifier("c"),
+        identifier("d"),
+      ]),
+    ),
+  ).toEqual(true);
 });
 
-test("does not throw on parsing vector literals", () => {
-  expect(() => parse("#(1 2 3)")).not.toThrow();
-  expect(() => parse("#(1 2 3 4)")).not.toThrow();
-  expect(() => parse("#(1 testy 3 4 5)")).not.toThrow();
+test("parses export statements", () => {
+  expect(
+    parseFirst("(export (define a 1))").equals(
+      exportNode(definition(identifier("a"), numericLiteral("1"))),
+    ),
+  ).toEqual(true);
 });
 
-test("does not throw on parsing vector literals with nested lists", () => {
-  expect(() => parse("#(1 (2 3) 4)")).not.toThrow();
-  expect(() => parse("#(1 (2 (3 4)) 5)")).not.toThrow();
-  expect(() => parse("#((1 2 (3 4)) 2 3 (4 5))")).not.toThrow();
+test("parses vector literals (which are equal to their quoted equivalents - everything is quoted)", () => {
+  expect(parseFirst("#(1 2 3)").equals(parseFirst("'#(1 2 3)"))).toEqual(true);
+  expect(
+    parseFirst("#(1 testy 3 4 5)").equals(parseFirst("'#(1 testy 3 4 5)")),
+  ).toEqual(true);
 });
 
-test("does not throw on parsing let expressions", () => {
-  expect(() => parse("(let () (= 1 1))")).not.toThrow();
-  expect(() => parse("(let ((x 1)) x)")).not.toThrow();
-  expect(() => parse("(let ((x 1) (y 2)) x y)")).not.toThrow();
-  expect(() => parse("(let ((x 1) (y 2) (z 3)) x y z)")).not.toThrow();
+test("parses vector literals with nested lists", () => {
+  // observe - (testy) is not treated as an application, but a list
+  expect(
+    parseFirst("#(1 (testy) 4)").equals(
+      vector(numericLiteral("1"), list(symbol("testy")), numericLiteral("4")),
+    ),
+  ).toEqual(true);
 });
 
-test("does not throw on parsing cond expressions", () => {
-  expect(() => parse("(cond (else 1))")).not.toThrow();
-  expect(() => parse("(cond ((foo) (bar) (baz)))")).not.toThrow();
-  expect(() =>
-    parse("(cond ((= 1 1) 1 ) ((= 2 2) 2 2) (else 3))"),
-  ).not.toThrow();
+test("parses let expressions", () => {
+  expect(
+    parseFirst("(let () 1)").equals(letNode([], [], numericLiteral("1"))),
+  ).toEqual(true);
+  expect(
+    parseFirst("(let ((x 3)) (= x 1))").equals(
+      letNode(
+        [identifier("x")],
+        [numericLiteral("3")],
+        application(identifier("="), [identifier("x"), numericLiteral("1")]),
+      ),
+    ),
+  ).toEqual(true);
 });
 
-test("does not throw on parsing begin expressions", () => {
-  expect(() => parse("(begin 1)")).not.toThrow();
-  expect(() => parse("(begin 1 2)")).not.toThrow();
-  expect(() => parse("(begin 1 2 3)")).not.toThrow();
+test("parses cond expressions", () => {
+  expect(
+    parseFirst("(cond ((= 1 1) 1))").equals(
+      cond(
+        [
+          application(identifier("="), [
+            numericLiteral("1"),
+            numericLiteral("1"),
+          ]),
+        ],
+        [numericLiteral("1")],
+      ),
+    ),
+  ).toEqual(true);
+  expect(
+    parseFirst("(cond (else 1))").equals(cond([], [], numericLiteral("1"))),
+  ).toEqual(true);
+
+  // more than one "return value" becomes a sequence
+  expect(
+    parseFirst("(cond ((foo) (bar) (baz)))").equals(
+      cond(
+        [application(identifier("foo"), [])],
+        [
+          sequence(
+            application(identifier("bar"), []),
+            application(identifier("baz"), []),
+          ),
+        ],
+      ),
+    ),
+  ).toEqual(true);
+
+  // testing all features
+  expect(
+    parseFirst("(cond ((= 1 1) 1 ) ((= 2 2) 2 2) (else 3))").equals(
+      cond(
+        [
+          application(identifier("="), [
+            numericLiteral("1"),
+            numericLiteral("1"),
+          ]),
+          application(identifier("="), [
+            numericLiteral("2"),
+            numericLiteral("2"),
+          ]),
+        ],
+        [
+          numericLiteral("1"),
+          sequence(numericLiteral("2"), numericLiteral("2")),
+        ],
+        numericLiteral("3"),
+      ),
+    ),
+  ).toEqual(true);
 });
 
-test("does not throw on parsing delay expressions", () => {
-  expect(() => parse("(delay 1)")).not.toThrow();
-  expect(() => parse("(delay (+ 1 2))")).not.toThrow();
-  expect(() => parse("(delay (lambda (x) x))")).not.toThrow();
+test("parses begin expressions", () => {
+  expect(parseFirst("(begin 1)").equals(begin(numericLiteral("1")))).toEqual(
+    true,
+  );
+  expect(
+    parseFirst("(begin 1 2)").equals(
+      begin(numericLiteral("1"), numericLiteral("2")),
+    ),
+  ).toEqual(true);
 });
 
-test("does not throw on parsing datum comments", () => {
-  expect(() => parse("#; (this-should-be-ignored)")).not.toThrow();
-  expect(() =>
-    parse("#; (this-should-be-ignored) (but-this-should-not)"),
-  ).not.toThrow();
+test("parses delay expressions", () => {
+  expect(parseFirst("(delay 1)").equals(delay(numericLiteral("1")))).toEqual(
+    true,
+  );
+  expect(
+    parseFirst("(delay (begin 1 2))").equals(
+      delay(begin(numericLiteral("1"), numericLiteral("2"))),
+    ),
+  ).toEqual(true);
+});
+
+test("ignores datum comments", () => {
+  // an empty program
+  expect(parse("#; (this-should-be-ignored)")).toHaveLength(0);
+
+  // only (but-this-should-not) should be parsed
+  expect(
+    parseFirst("#; (this-should-be-ignored) (but-this-should-not)").equals(
+      application(identifier("but-this-should-not"), []),
+    ),
+  ).toEqual(true);
+});
+
+test("ignores line comments", () => {
+  expect(
+    parseFirst("; this is a comment\n1").equals(numericLiteral("1")),
+  ).toEqual(true);
+});
+
+test("ignores block comments", () => {
+  expect(
+    parseFirst(`
+  (you-won't-see-2 1 #| 2 |# 3)
+  `).equals(
+      application(identifier("you-won't-see-2"), [
+        numericLiteral("1"),
+        numericLiteral("3"),
+      ]),
+    ),
+  ).toEqual(true);
 });
 
 test("able to parse a program with all features", () => {

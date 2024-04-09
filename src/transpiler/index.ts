@@ -20,7 +20,11 @@ export { ParserError } from "./parser";
  *                If not provided, defaults to the latest version.
  * @returns
  */
-export function schemeParse(source: string, chapter?: number, encode?: boolean): Program {
+export function schemeParse(
+  source: string,
+  chapter?: number,
+  encode?: boolean,
+): Program {
   // Instantiate the lexer
   const lexer = new SchemeLexer(source);
 
@@ -51,5 +55,5 @@ export function schemeParse(source: string, chapter?: number, encode?: boolean):
   // Finally we transpile the AST
   const program: Program = transpiler.transpile(redefinedAST);
 
-  return encode ? estreeEncode(program) as Program: program;
+  return encode ? (estreeEncode(program) as Program) : program;
 }
