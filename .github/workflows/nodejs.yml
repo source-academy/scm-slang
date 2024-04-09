@@ -30,7 +30,7 @@ jobs:
       with:
         node-version: 20
         cache: yarn
-    - run: yarn install
+    - run: yarn install --frozen-lockfile
     - run: yarn build
     - run: yarn format
     - run: yarn eslint
