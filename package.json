@@ -33,8 +33,10 @@
   "scripts": {
     "build-libs": "npx ts-node ./src/compile-libs.ts",
     "test": "jest",
-    "lint": "eslint --ignore-path .eslintignore --ext .ts",
+    "test-coverage": "jest --coverage",
+    "eslint": "eslint --ignore-path .eslintignore --ext .ts",
     "format": "prettier --ignore-path .gitignore --write \"**/*.+(js|ts|json)\"",
+    "format:ci": "prettier --ignore-path .gitignore --list-different \"**/*.+(js|ts|json)\"",
     "prepare": "husky"
   },
   "meta": {},
