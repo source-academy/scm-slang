@@ -1,12 +1,12 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`schemeParse 1`] = `
-{
-  "body": [
-    {
-      "declarations": [
-        {
-          "id": {
+Object {
+  "body": Array [
+    Object {
+      "declarations": Array [
+        Object {
+          "id": Object {
             "loc": Location {
               "end": Position {
                 "column": 22,
@@ -20,11 +20,11 @@ exports[`schemeParse 1`] = `
             "name": "square",
             "type": "Identifier",
           },
-          "init": {
+          "init": Object {
             "async": false,
-            "body": {
-              "arguments": [
-                {
+            "body": Object {
+              "arguments": Array [
+                Object {
                   "loc": Location {
                     "end": Position {
                       "column": 25,
@@ -38,7 +38,7 @@ exports[`schemeParse 1`] = `
                   "name": "x",
                   "type": "Identifier",
                 },
-                {
+                Object {
                   "loc": Location {
                     "end": Position {
                       "column": 27,
@@ -53,7 +53,7 @@ exports[`schemeParse 1`] = `
                   "type": "Identifier",
                 },
               ],
-              "callee": {
+              "callee": Object {
                 "loc": Location {
                   "end": Position {
                     "column": 23,
@@ -91,8 +91,8 @@ exports[`schemeParse 1`] = `
                 "line": 2,
               },
             },
-            "params": [
-              {
+            "params": Array [
+              Object {
                 "loc": Location {
                   "end": Position {
                     "column": 19,
@@ -125,12 +125,12 @@ exports[`schemeParse 1`] = `
       },
       "type": "VariableDeclaration",
     },
-    {
-      "expression": {
-        "arguments": [
-          {
-            "arguments": [
-              {
+    Object {
+      "expression": Object {
+        "arguments": Array [
+          Object {
+            "arguments": Array [
+              Object {
                 "loc": Location {
                   "end": Position {
                     "column": 15,
@@ -141,12 +141,12 @@ exports[`schemeParse 1`] = `
                     "line": 3,
                   },
                 },
-                "raw": ""5/8"",
+                "raw": "\\"5/8\\"",
                 "type": "Literal",
                 "value": "5/8",
               },
             ],
-            "callee": {
+            "callee": Object {
               "loc": Location {
                 "end": Position {
                   "column": 15,
@@ -174,7 +174,7 @@ exports[`schemeParse 1`] = `
             "type": "CallExpression",
           },
         ],
-        "callee": {
+        "callee": Object {
           "loc": Location {
             "end": Position {
               "column": 14,
@@ -213,10 +213,10 @@ exports[`schemeParse 1`] = `
       },
       "type": "ExpressionStatement",
     },
-    {
-      "declarations": [
-        {
-          "id": {
+    Object {
+      "declarations": Array [
+        Object {
+          "id": Object {
             "loc": Location {
               "end": Position {
                 "column": 18,
@@ -230,9 +230,9 @@ exports[`schemeParse 1`] = `
             "name": "x",
             "type": "Identifier",
           },
-          "init": {
-            "arguments": [
-              {
+          "init": Object {
+            "arguments": Array [
+              Object {
                 "loc": Location {
                   "end": Position {
                     "column": 20,
@@ -243,12 +243,12 @@ exports[`schemeParse 1`] = `
                     "line": 4,
                   },
                 },
-                "raw": ""5"",
+                "raw": "\\"5\\"",
                 "type": "Literal",
                 "value": "5",
               },
             ],
-            "callee": {
+            "callee": Object {
               "loc": Location {
                 "end": Position {
                   "column": 20,
@@ -291,9 +291,9 @@ exports[`schemeParse 1`] = `
       },
       "type": "VariableDeclaration",
     },
-    {
-      "expression": {
-        "left": {
+    Object {
+      "expression": Object {
+        "left": Object {
           "loc": Location {
             "end": Position {
               "column": 29,
@@ -318,9 +318,9 @@ exports[`schemeParse 1`] = `
           },
         },
         "operator": "=",
-        "right": {
-          "arguments": [
-            {
+        "right": Object {
+          "arguments": Array [
+            Object {
               "loc": Location {
                 "end": Position {
                   "column": 33,
@@ -331,12 +331,12 @@ exports[`schemeParse 1`] = `
                   "line": 4,
                 },
               },
-              "raw": ""10"",
+              "raw": "\\"10\\"",
               "type": "Literal",
               "value": "10",
             },
           ],
-          "callee": {
+          "callee": Object {
             "loc": Location {
               "end": Position {
                 "column": 33,
@@ -377,8 +377,8 @@ exports[`schemeParse 1`] = `
       },
       "type": "ExpressionStatement",
     },
-    {
-      "expression": {
+    Object {
+      "expression": Object {
         "loc": Location {
           "end": Position {
             "column": 35,
@@ -404,9 +404,9 @@ exports[`schemeParse 1`] = `
       },
       "type": "ExpressionStatement",
     },
-    {
-      "expression": {
-        "left": {
+    Object {
+      "expression": Object {
+        "left": Object {
           "loc": Location {
             "end": Position {
               "column": 22,
@@ -431,14 +431,14 @@ exports[`schemeParse 1`] = `
           },
         },
         "operator": "=",
-        "right": {
+        "right": Object {
           "async": false,
-          "body": {
-            "body": [
-              {
-                "declarations": [
-                  {
-                    "id": {
+          "body": Object {
+            "body": Array [
+              Object {
+                "declarations": Array [
+                  Object {
+                    "id": Object {
                       "loc": Location {
                         "end": Position {
                           "column": 37,
@@ -452,9 +452,9 @@ exports[`schemeParse 1`] = `
                       "name": "x",
                       "type": "Identifier",
                     },
-                    "init": {
-                      "arguments": [
-                        {
+                    "init": Object {
+                      "arguments": Array [
+                        Object {
                           "loc": Location {
                             "end": Position {
                               "column": 39,
@@ -465,12 +465,12 @@ exports[`schemeParse 1`] = `
                               "line": 5,
                             },
                           },
-                          "raw": ""5"",
+                          "raw": "\\"5\\"",
                           "type": "Literal",
                           "value": "5",
                         },
                       ],
-                      "callee": {
+                      "callee": Object {
                         "loc": Location {
                           "end": Position {
                             "column": 39,
@@ -513,10 +513,10 @@ exports[`schemeParse 1`] = `
                 },
                 "type": "VariableDeclaration",
               },
-              {
-                "argument": {
-                  "arguments": [
-                    {
+              Object {
+                "argument": Object {
+                  "arguments": Array [
+                    Object {
                       "loc": Location {
                         "end": Position {
                           "column": 45,
@@ -530,7 +530,7 @@ exports[`schemeParse 1`] = `
                       "name": "x",
                       "type": "Identifier",
                     },
-                    {
+                    Object {
                       "loc": Location {
                         "end": Position {
                           "column": 47,
@@ -545,7 +545,7 @@ exports[`schemeParse 1`] = `
                       "type": "Identifier",
                     },
                   ],
-                  "callee": {
+                  "callee": Object {
                     "loc": Location {
                       "end": Position {
                         "column": 43,
@@ -585,7 +585,7 @@ exports[`schemeParse 1`] = `
                 "type": "ReturnStatement",
               },
             ],
-            "loc": {
+            "loc": Object {
               "end": Position {
                 "column": 48,
                 "line": 5,
@@ -608,8 +608,8 @@ exports[`schemeParse 1`] = `
               "line": 5,
             },
           },
-          "params": [
-            {
+          "params": Array [
+            Object {
               "loc": Location {
                 "end": Position {
                   "column": 19,
@@ -641,7 +641,7 @@ exports[`schemeParse 1`] = `
       "type": "ExpressionStatement",
     },
   ],
-  "loc": {
+  "loc": Object {
     "end": Position {
       "column": 50,
       "line": 5,
