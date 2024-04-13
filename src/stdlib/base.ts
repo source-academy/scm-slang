@@ -409,6 +409,25 @@ export const lcm: Function = (...vals: core.SchemeInteger[]) => {
 };
 
 export const square: Function = (n: core.SchemeNumber) => $42$(n, n);
+export const expt: Function = core.expt;
+export const exp: Function = core.exp;
+export const log: Function = core.log;
+export const sqrt: Function = core.sqrt;
+export const sin: Function = core.sin;
+export const cos: Function = core.cos;
+export const tan: Function = core.tan;
+export const asin: Function = core.asin;
+export const acos: Function = core.acos;
+export const atan: Function = core.atan;
+
+export const PI = core.PI;
+export const E = core.E;
+export const SQRT2 = core.SQRT2;
+export const SQRT1$47$2 = core.SQRT1_2;
+export const LN2 = core.LN2;
+export const LN10 = core.LN10;
+export const LOG2E = core.LOG2E;
+export const LOG10E = core.LOG10E;
 
 // pair operations
 
