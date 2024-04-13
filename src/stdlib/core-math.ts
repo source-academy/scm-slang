@@ -942,10 +942,16 @@ function simplify(a: SchemeNumber): SchemeNumber {
     case NumberType.COMPLEX:
       // safe to cast as simplify never promotes a number
       return SchemeComplex.build(
-        simplify((a as SchemeComplex).getReal()) as SchemeInteger | SchemeRational | SchemeReal,
-        simplify((a as SchemeComplex).getImaginary()) as SchemeInteger | SchemeRational | SchemeReal,
+        simplify((a as SchemeComplex).getReal()) as
+          | SchemeInteger
+          | SchemeRational
+          | SchemeReal,
+        simplify((a as SchemeComplex).getImaginary()) as
+          | SchemeInteger
+          | SchemeRational
+          | SchemeReal,
       );
-    }
+  }
 }
 
 /**

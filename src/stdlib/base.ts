@@ -240,7 +240,10 @@ export const $47$: Function = (
 export const abs: Function = (n: core.SchemeNumber[]) =>
   negative$63$(n) ? atomic_negate(n) : n;
 
-export const quotient: Function = (a: core.SchemeInteger, b: core.SchemeInteger) => {
+export const quotient: Function = (
+  a: core.SchemeInteger,
+  b: core.SchemeInteger,
+) => {
   if (!integer$63$(a) || !integer$63$(b)) {
     error("quotient: expected integers");
   }
@@ -250,18 +253,27 @@ export const quotient: Function = (a: core.SchemeInteger, b: core.SchemeInteger)
 
   let remainder = modulo(a, b);
 
-  let quotient = atomic_divide(atomic_subtract(a, remainder), b) as core.SchemeInteger;
+  let quotient = atomic_divide(
+    atomic_subtract(a, remainder),
+    b,
+  ) as core.SchemeInteger;
 
   if (atomic_equals(remainder, make_number(0))) {
     return quotient;
   }
 
   // if both a and b are same-signed, we are done
-  if (atomic_less_than(a, make_number(0)) && atomic_less_than(b, make_number(0))) {
+  if (
+    atomic_less_than(a, make_number(0)) &&
+    atomic_less_than(b, make_number(0))
+  ) {
     return quotient;
   }
 
-  if (atomic_greater_than(a, make_number(0)) && atomic_greater_than(b, make_number(0))) {
+  if (
+    atomic_greater_than(a, make_number(0)) &&
+    atomic_greater_than(b, make_number(0))
+  ) {
     return quotient;
   }
 
@@ -278,9 +290,12 @@ export const quotient: Function = (a: core.SchemeInteger, b: core.SchemeInteger)
   }
 
   return quotient;
-}
+};
 
-export const remainder: Function = (a: core.SchemeInteger, b: core.SchemeInteger) => {
+export const remainder: Function = (
+  a: core.SchemeInteger,
+  b: core.SchemeInteger,
+) => {
   if (!integer$63$(a) || !integer$63$(b)) {
     error("remainder: expected integers");
   }
@@ -290,12 +305,18 @@ export const remainder: Function = (a: core.SchemeInteger, b: core.SchemeInteger
 
   let q = quotient(a, b);
 
-  let remainder = atomic_subtract(a, atomic_multiply(q, b)) as core.SchemeInteger;
+  let remainder = atomic_subtract(
+    a,
+    atomic_multiply(q, b),
+  ) as core.SchemeInteger;
 
   return remainder;
-}
+};
 
-export const modulo: Function = (a: core.SchemeInteger, b: core.SchemeInteger) => {
+export const modulo: Function = (
+  a: core.SchemeInteger,
+  b: core.SchemeInteger,
+) => {
   if (!integer$63$(a) || !integer$63$(b)) {
     error("modulo: expected integers");
   }
@@ -344,7 +365,48 @@ export const modulo: Function = (a: core.SchemeInteger, b: core.SchemeInteger) =
       return working;
     }
   }
+};
+
+function atomic_gcd(
+  a: core.SchemeInteger,
+  b: core.SchemeInteger,
+): core.SchemeInteger {
+  if (atomic_equals(b, make_number(0))) {
+    return abs(a);
+  }
+  return abs(atomic_gcd(b, remainder(a, b)));
 }
+
+export const gcd: Function = (...vals: core.SchemeInteger[]) => {
+  if (vals.length === 0) {
+    return core.SchemeInteger.EXACT_ZERO;
+  }
+
+  if (vals.length === 1) {
+    return vals[0];
+  }
+
+  return vals.reduce(atomic_gcd);
+};
+
+function atomic_lcm(
+  a: core.SchemeInteger,
+  b: core.SchemeInteger,
+): core.SchemeInteger {
+  return abs(atomic_multiply(quotient(a, gcd(a, b)), b)) as core.SchemeInteger;
+}
+
+export const lcm: Function = (...vals: core.SchemeInteger[]) => {
+  if (vals.length === 0) {
+    return core.SchemeInteger.build(1);
+  }
+
+  if (vals.length === 1) {
+    return vals[0];
+  }
+
+  return vals.reduce(atomic_lcm);
+};
 
 // pair operations
 
@@ -959,7 +1021,7 @@ export const string$45$$62$list: Function = (s: string) => {
     result = cons(s[i], result);
   }
   return result;
-}
+};
 
 export const list$45$$62$string: Function = (l: core.List) => {
   let result = "";
@@ -969,4 +1031,4 @@ export const list$45$$62$string: Function = (l: core.List) => {
     current = cdr(current);
   }
   return result;
-}
+};
