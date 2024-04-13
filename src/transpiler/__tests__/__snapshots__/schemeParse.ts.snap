@@ -1,12 +1,12 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`schemeParse 1`] = `
-Object {
-  "body": Array [
-    Object {
-      "declarations": Array [
-        Object {
-          "id": Object {
+{
+  "body": [
+    {
+      "declarations": [
+        {
+          "id": {
             "loc": Location {
               "end": Position {
                 "column": 22,
@@ -20,11 +20,11 @@ Object {
             "name": "square",
             "type": "Identifier",
           },
-          "init": Object {
+          "init": {
             "async": false,
-            "body": Object {
-              "arguments": Array [
-                Object {
+            "body": {
+              "arguments": [
+                {
                   "loc": Location {
                     "end": Position {
                       "column": 25,
@@ -38,7 +38,7 @@ Object {
                   "name": "x",
                   "type": "Identifier",
                 },
-                Object {
+                {
                   "loc": Location {
                     "end": Position {
                       "column": 27,
@@ -53,7 +53,7 @@ Object {
                   "type": "Identifier",
                 },
               ],
-              "callee": Object {
+              "callee": {
                 "loc": Location {
                   "end": Position {
                     "column": 23,
@@ -91,8 +91,8 @@ Object {
                 "line": 2,
               },
             },
-            "params": Array [
-              Object {
+            "params": [
+              {
                 "loc": Location {
                   "end": Position {
                     "column": 19,
@@ -125,12 +125,12 @@ Object {
       },
       "type": "VariableDeclaration",
     },
-    Object {
-      "expression": Object {
-        "arguments": Array [
-          Object {
-            "arguments": Array [
-              Object {
+    {
+      "expression": {
+        "arguments": [
+          {
+            "arguments": [
+              {
                 "loc": Location {
                   "end": Position {
                     "column": 15,
@@ -141,12 +141,12 @@ Object {
                     "line": 3,
                   },
                 },
-                "raw": "\\"5/8\\"",
+                "raw": ""5/8"",
                 "type": "Literal",
                 "value": "5/8",
               },
             ],
-            "callee": Object {
+            "callee": {
               "loc": Location {
                 "end": Position {
                   "column": 15,
@@ -174,7 +174,7 @@ Object {
             "type": "CallExpression",
           },
         ],
-        "callee": Object {
+        "callee": {
           "loc": Location {
             "end": Position {
               "column": 14,
@@ -213,10 +213,10 @@ Object {
       },
       "type": "ExpressionStatement",
     },
-    Object {
-      "declarations": Array [
-        Object {
-          "id": Object {
+    {
+      "declarations": [
+        {
+          "id": {
             "loc": Location {
               "end": Position {
                 "column": 18,
@@ -230,9 +230,9 @@ Object {
             "name": "x",
             "type": "Identifier",
           },
-          "init": Object {
-            "arguments": Array [
-              Object {
+          "init": {
+            "arguments": [
+              {
                 "loc": Location {
                   "end": Position {
                     "column": 20,
@@ -243,12 +243,12 @@ Object {
                     "line": 4,
                   },
                 },
-                "raw": "\\"5\\"",
+                "raw": ""5"",
                 "type": "Literal",
                 "value": "5",
               },
             ],
-            "callee": Object {
+            "callee": {
               "loc": Location {
                 "end": Position {
                   "column": 20,
@@ -291,9 +291,9 @@ Object {
       },
       "type": "VariableDeclaration",
     },
-    Object {
-      "expression": Object {
-        "left": Object {
+    {
+      "expression": {
+        "left": {
           "loc": Location {
             "end": Position {
               "column": 29,
@@ -318,9 +318,9 @@ Object {
           },
         },
         "operator": "=",
-        "right": Object {
-          "arguments": Array [
-            Object {
+        "right": {
+          "arguments": [
+            {
               "loc": Location {
                 "end": Position {
                   "column": 33,
@@ -331,12 +331,12 @@ Object {
                   "line": 4,
                 },
               },
-              "raw": "\\"10\\"",
+              "raw": ""10"",
               "type": "Literal",
               "value": "10",
             },
           ],
-          "callee": Object {
+          "callee": {
             "loc": Location {
               "end": Position {
                 "column": 33,
@@ -377,8 +377,8 @@ Object {
       },
       "type": "ExpressionStatement",
     },
-    Object {
-      "expression": Object {
+    {
+      "expression": {
         "loc": Location {
           "end": Position {
             "column": 35,
@@ -404,9 +404,9 @@ Object {
       },
       "type": "ExpressionStatement",
     },
-    Object {
-      "expression": Object {
-        "left": Object {
+    {
+      "expression": {
+        "left": {
           "loc": Location {
             "end": Position {
               "column": 22,
@@ -431,14 +431,14 @@ Object {
           },
         },
         "operator": "=",
-        "right": Object {
+        "right": {
           "async": false,
-          "body": Object {
-            "body": Array [
-              Object {
-                "declarations": Array [
-                  Object {
-                    "id": Object {
+          "body": {
+            "body": [
+              {
+                "declarations": [
+                  {
+                    "id": {
                       "loc": Location {
                         "end": Position {
                           "column": 37,
@@ -452,9 +452,9 @@ Object {
                       "name": "x",
                       "type": "Identifier",
                     },
-                    "init": Object {
-                      "arguments": Array [
-                        Object {
+                    "init": {
+                      "arguments": [
+                        {
                           "loc": Location {
                             "end": Position {
                               "column": 39,
@@ -465,12 +465,12 @@ Object {
                               "line": 5,
                             },
                           },
-                          "raw": "\\"5\\"",
+                          "raw": ""5"",
                           "type": "Literal",
                           "value": "5",
                         },
                       ],
-                      "callee": Object {
+                      "callee": {
                         "loc": Location {
                           "end": Position {
                             "column": 39,
@@ -513,10 +513,10 @@ Object {
                 },
                 "type": "VariableDeclaration",
               },
-              Object {
-                "argument": Object {
-                  "arguments": Array [
-                    Object {
+              {
+                "argument": {
+                  "arguments": [
+                    {
                       "loc": Location {
                         "end": Position {
                           "column": 45,
@@ -530,7 +530,7 @@ Object {
                       "name": "x",
                       "type": "Identifier",
                     },
-                    Object {
+                    {
                       "loc": Location {
                         "end": Position {
                           "column": 47,
@@ -545,7 +545,7 @@ Object {
                       "type": "Identifier",
                     },
                   ],
-                  "callee": Object {
+                  "callee": {
                     "loc": Location {
                       "end": Position {
                         "column": 43,
@@ -585,7 +585,7 @@ Object {
                 "type": "ReturnStatement",
               },
             ],
-            "loc": Object {
+            "loc": {
               "end": Position {
                 "column": 48,
                 "line": 5,
@@ -608,8 +608,8 @@ Object {
               "line": 5,
             },
           },
-          "params": Array [
-            Object {
+          "params": [
+            {
               "loc": Location {
                 "end": Position {
                   "column": 19,
@@ -641,7 +641,7 @@ Object {
       "type": "ExpressionStatement",
     },
   ],
-  "loc": Object {
+  "loc": {
     "end": Position {
       "column": 50,
       "line": 5,

@@ -240,6 +240,112 @@ export const $47$: Function = (
 export const abs: Function = (n: core.SchemeNumber[]) =>
   negative$63$(n) ? atomic_negate(n) : n;
 
+export const quotient: Function = (a: core.SchemeInteger, b: core.SchemeInteger) => {
+  if (!integer$63$(a) || !integer$63$(b)) {
+    error("quotient: expected integers");
+  }
+  if (atomic_equals(b, make_number(0))) {
+    error("quotient: division by zero");
+  }
+
+  let remainder = modulo(a, b);
+
+  let quotient = atomic_divide(atomic_subtract(a, remainder), b) as core.SchemeInteger;
+
+  if (atomic_equals(remainder, make_number(0))) {
+    return quotient;
+  }
+
+  // if both a and b are same-signed, we are done
+  if (atomic_less_than(a, make_number(0)) && atomic_less_than(b, make_number(0))) {
+    return quotient;
+  }
+
+  if (atomic_greater_than(a, make_number(0)) && atomic_greater_than(b, make_number(0))) {
+    return quotient;
+  }
+
+  // if a is negative, we need to increment the quotient
+  // to account for the remainder
+  if (atomic_less_than(a, make_number(0))) {
+    quotient = atomic_add(quotient, make_number(1)) as core.SchemeInteger;
+  }
+
+  // if b is negative, we need to decrement the quotient
+  // to account for the remainder
+  if (atomic_less_than(b, make_number(0))) {
+    quotient = atomic_add(quotient, make_number(1)) as core.SchemeInteger;
+  }
+
+  return quotient;
+}
+
+export const remainder: Function = (a: core.SchemeInteger, b: core.SchemeInteger) => {
+  if (!integer$63$(a) || !integer$63$(b)) {
+    error("remainder: expected integers");
+  }
+  if (atomic_equals(b, make_number(0))) {
+    error("remainder: division by zero");
+  }
+
+  let q = quotient(a, b);
+
+  let remainder = atomic_subtract(a, atomic_multiply(q, b)) as core.SchemeInteger;
+
+  return remainder;
+}
+
+export const modulo: Function = (a: core.SchemeInteger, b: core.SchemeInteger) => {
+  if (!integer$63$(a) || !integer$63$(b)) {
+    error("modulo: expected integers");
+  }
+  if (atomic_equals(b, make_number(0))) {
+    error("modulo: division by zero");
+  }
+
+  let working = a;
+
+  while (atomic_greater_than_or_equals(abs(working), abs(b))) {
+    if (atomic_less_than(working, make_number(0))) {
+      if (atomic_less_than(b, make_number(0))) {
+        working = atomic_subtract(working, b) as core.SchemeInteger;
+      } else {
+        working = atomic_add(working, b) as core.SchemeInteger;
+      }
+    } else {
+      if (atomic_less_than(b, make_number(0))) {
+        working = atomic_add(working, b) as core.SchemeInteger;
+      } else {
+        working = atomic_subtract(working, b) as core.SchemeInteger;
+      }
+    }
+  }
+
+  // we need to deal with the sign of the result
+  // in 4 separate cases
+  if (atomic_less_than(working, make_number(0))) {
+    if (atomic_less_than(b, make_number(0))) {
+      // both are negative
+      // do nothing
+      return working;
+    } else {
+      // b is positive
+      // result needs to be positive - add b to the working
+      return atomic_add(working, b) as core.SchemeInteger;
+    }
+  } else {
+    if (atomic_less_than(b, make_number(0))) {
+      // b is negative
+      // result needs to be negative - add b to the working
+      return atomic_add(working, b) as core.SchemeInteger;
+    } else {
+      // both are positive
+      // do nothing
+      return working;
+    }
+  }
+}
+
 // pair operations
 
 export const cons: Function = core.pair;
@@ -846,3 +952,21 @@ export const string$45$$62$number: Function = (s: string) => {
     error("string->number: invalid number");
   }
 };
+
+export const string$45$$62$list: Function = (s: string) => {
+  let result = null;
+  for (let i = s.length - 1; i >= 0; i--) {
+    result = cons(s[i], result);
+  }
+  return result;
+}
+
+export const list$45$$62$string: Function = (l: core.List) => {
+  let result = "";
+  let current = l;
+  while (current !== null) {
+    result += String(car(current));
+    current = cdr(current);
+  }
+  return result;
+}

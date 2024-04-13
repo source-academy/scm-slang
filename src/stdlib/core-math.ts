@@ -812,6 +812,14 @@ export class SchemeComplex {
     return SchemeComplex.build(realPart, imaginaryPart);
   }
 
+  getReal(): SchemeInteger | SchemeRational | SchemeReal {
+    return this.real;
+  }
+
+  getImaginary(): SchemeInteger | SchemeRational | SchemeReal {
+    return this.imaginary;
+  }
+
   coerce(): number {
     throw new Error("Cannot coerce a complex number to a javascript number");
   }
@@ -921,6 +929,25 @@ export function is_inexact(a: any): boolean {
 
 // the functions below are used to perform operations on numbers
 
+function simplify(a: SchemeNumber): SchemeNumber {
+  switch (a.numberType) {
+    case NumberType.INTEGER:
+      return a;
+    case NumberType.RATIONAL:
+      return (a as SchemeRational).getDenominator() === 1n
+        ? SchemeInteger.build(a.getNumerator())
+        : a;
+    case NumberType.REAL:
+      return a;
+    case NumberType.COMPLEX:
+      // safe to cast as simplify never promotes a number
+      return SchemeComplex.build(
+        simplify((a as SchemeComplex).getReal()) as SchemeInteger | SchemeRational | SchemeReal,
+        simplify((a as SchemeComplex).getImaginary()) as SchemeInteger | SchemeRational | SchemeReal,
+      );
+    }
+}
+
 /**
  * This function takes two numbers and brings them to the same level.
  */
@@ -977,7 +1004,7 @@ export function atomic_greater_than_or_equals(
 export function atomic_add(a: SchemeNumber, b: SchemeNumber): SchemeNumber {
   const [newA, newB] = equalify(a, b);
   // safe to cast as we are assured they are of the same type
-  return newA.add(newB as any);
+  return simplify(newA.add(newB as any));
 }
 
 export function atomic_multiply(
@@ -986,7 +1013,7 @@ export function atomic_multiply(
 ): SchemeNumber {
   const [newA, newB] = equalify(a, b);
   // safe to cast as we are assured they are of the same type
-  return newA.multiply(newB as any);
+  return simplify(newA.multiply(newB as any));
 }
 
 export function atomic_subtract(
