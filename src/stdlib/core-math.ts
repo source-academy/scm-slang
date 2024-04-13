@@ -816,8 +816,59 @@ export class SchemeComplex {
     throw new Error("Cannot coerce a complex number to a javascript number");
   }
 
+  toPolar(): SchemePolar {
+    // force both the real and imaginary parts to be inexact
+    const real = this.real.promote(NumberType.REAL) as SchemeReal;
+    const imaginary = this.imaginary.promote(NumberType.REAL) as SchemeReal;
+
+    // schemeReals can be reasoned with using the same logic as javascript numbers
+    // r = sqrt(a^2 + b^2)
+    const magnitude = SchemeReal.build(
+      Math.sqrt(
+        real.coerce() * real.coerce() + imaginary.coerce() * imaginary.coerce(),
+      ),
+    );
+    // theta = atan(b / a)
+    const angle = SchemeReal.build(
+      Math.atan2(imaginary.coerce(), real.coerce()),
+    );
+    return SchemePolar.build(magnitude, angle);
+  }
+
   toString(): string {
     return `${this.real}+${this.imaginary}i`;
+  }
+}
+
+// an alternative form of the complex number.
+// only used in intermediate steps, will be converted back at the end of the operation.
+// current scm-slang will force any polar complex numbers to be made
+// inexact, hence we opt to limit the use of polar form as much as possible.
+class SchemePolar {
+  private readonly magnitude: SchemeReal;
+  private readonly angle: SchemeReal;
+
+  constructor(magnitude: SchemeReal, angle: SchemeReal) {
+    this.magnitude = magnitude;
+    this.angle = angle;
+  }
+
+  static build(magnitude: SchemeReal, angle: SchemeReal): SchemePolar {
+    return new SchemePolar(magnitude, angle);
+  }
+
+  // converts the polar number back to a cartesian complex number
+  toCartesian(): SchemeNumber {
+    // a + bi = r * cos(theta) + r * sin(theta)i
+    // a = r * cos(theta)
+    // b = r * sin(theta)
+    const real = SchemeReal.build(
+      this.magnitude.coerce() * Math.cos(this.angle.coerce()),
+    );
+    const imaginary = SchemeReal.build(
+      this.magnitude.coerce() * Math.sin(this.angle.coerce()),
+    );
+    return SchemeComplex.build(real, imaginary);
   }
 }
 
@@ -960,3 +1011,5 @@ export const LN10 = SchemeReal.build(Math.LN10);
 export const LOG2E = SchemeReal.build(Math.LOG2E);
 export const LOG10E = SchemeReal.build(Math.LOG10E);
 export const SQRT1_2 = SchemeReal.build(Math.SQRT1_2);
+
+// other important functions
