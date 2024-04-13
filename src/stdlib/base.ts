@@ -760,3 +760,89 @@ export const equal$63$ = function (x: any, y: any): boolean {
     return false;
   }
 };
+
+// string operations
+
+export const string$63$: Function = (s: any) => typeof s === "string";
+
+export const make$45$string: Function = (
+  n: core.SchemeNumber,
+  ch: string = " ",
+) => {
+  // make sure that the character is a single character
+  if (ch.length !== 1) {
+    error("make-string: expected single character");
+  }
+
+  let result = "";
+
+  for (let i = 0; i < core.coerce_to_number(n); i++) {
+    result += ch;
+  }
+
+  return result;
+};
+
+export const string = (...args: string[]) => args.join("");
+
+export const string$45$length: Function = (s: string) =>
+  make_number(String(s.length));
+
+export const string$45$ref: Function = (s: string, i: core.SchemeNumber) => {
+  const index = core.coerce_to_number(i);
+  if (index < 0 || index >= s.length) {
+    error("string-ref: index out of bounds");
+  }
+  return s[index];
+};
+
+export const string$61$$63$: Function = (s1: string, s2: string) => s1 === s2;
+
+export const string$60$$63$: Function = (s1: string, s2: string) => s1 < s2;
+
+export const string$62$$63$: Function = (s1: string, s2: string) => s1 > s2;
+
+export const string$60$$61$$63$: Function = (s1: string, s2: string) =>
+  s1 <= s2;
+
+export const string$62$$61$$63$: Function = (s1: string, s2: string) =>
+  s1 >= s2;
+
+export const substring: Function = (
+  s: string,
+  start: core.SchemeNumber,
+  end?: core.SchemeNumber,
+) => {
+  const s_start = core.coerce_to_number(start);
+  const s_end = end === undefined ? s.length : core.coerce_to_number(end);
+  if (s_start < 0 || s_end > s.length || s_start > s_end) {
+    error("substring: index out of bounds");
+  }
+  return s.substring(s_start, s_end);
+};
+
+export const string$45$append: Function = string;
+
+export const string$45$copy: Function = (s: string) => s;
+
+export const string$45$map: Function = (f: Function, s: string) => {
+  let result = "";
+  for (let i = 0; i < s.length; i++) {
+    result += f(s[i]);
+  }
+  return result;
+};
+
+export const string$45$for$45$each: Function = (f: Function, s: string) => {
+  for (let i = 0; i < s.length; i++) {
+    f(s[i]);
+  }
+};
+
+export const string$45$$62$number: Function = (s: string) => {
+  try {
+    return make_number(s);
+  } catch (e) {
+    error("string->number: invalid number");
+  }
+};
