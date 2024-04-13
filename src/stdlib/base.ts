@@ -408,6 +408,8 @@ export const lcm: Function = (...vals: core.SchemeInteger[]) => {
   return vals.reduce(atomic_lcm);
 };
 
+export const square: Function = (n: core.SchemeNumber) => $42$(n, n);
+
 // pair operations
 
 export const cons: Function = core.pair;
