@@ -1036,6 +1036,9 @@ export const string$45$$62$number: Function = (s: string) => {
   }
 };
 
+export const number$45$$62$string: Function = (n: core.SchemeNumber) =>
+  n.toString();
+
 export const string$45$$62$list: Function = (s: string) => {
   let result = null;
   for (let i = s.length - 1; i >= 0; i--) {
