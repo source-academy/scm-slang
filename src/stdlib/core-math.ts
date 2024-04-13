@@ -110,7 +110,7 @@ class ComplexMatch extends Match {
   ) {
     super(result);
   }
-  build(): SchemeComplex {
+  build(): SchemeNumber {
     const real = this.real
       ? (this.real.build() as SchemeInteger | SchemeRational | SchemeReal)
       : SchemeInteger.EXACT_ZERO;
@@ -717,9 +717,9 @@ export class SchemeComplex {
   static build(
     real: SchemeReal | SchemeRational | SchemeInteger,
     imaginary: SchemeReal | SchemeRational | SchemeInteger,
-    _force: boolean = false,
-  ): SchemeComplex {
-    return new SchemeComplex(real, imaginary);
+    force: boolean = false,
+  ): SchemeNumber {
+    return SchemeComplex.simplify(new SchemeComplex(real, imaginary), force);
   }
 
   private constructor(
@@ -728,6 +728,16 @@ export class SchemeComplex {
   ) {
     this.real = real;
     this.imaginary = imaginary;
+  }
+
+  private static simplify(
+    complex: SchemeComplex,
+    force: boolean,
+  ): SchemeNumber {
+    if (!force && atomic_equals(complex.imaginary, SchemeInteger.EXACT_ZERO)) {
+      return complex.real;
+    }
+    return complex;
   }
 
   promote(nType: NumberType): SchemeNumber {
@@ -739,7 +749,7 @@ export class SchemeComplex {
     }
   }
 
-  negate(): SchemeComplex {
+  negate(): SchemeNumber {
     return SchemeComplex.build(this.real.negate(), this.imaginary.negate());
   }
 
@@ -757,7 +767,7 @@ export class SchemeComplex {
     );
   }
 
-  multiplicativeInverse(): SchemeComplex {
+  multiplicativeInverse(): SchemeNumber {
     // inverse of a + bi = a - bi / a^2 + b^2
     // in this case, we use a / a^2 + b^2 and -b / a^2 + b^2 as the new values required
     const denominator = atomic_add(
@@ -776,7 +786,7 @@ export class SchemeComplex {
     );
   }
 
-  add(other: SchemeComplex): SchemeComplex {
+  add(other: SchemeComplex): SchemeNumber {
     return SchemeComplex.build(
       atomic_add(this.real, other.real) as
         | SchemeInteger
@@ -789,7 +799,7 @@ export class SchemeComplex {
     );
   }
 
-  multiply(other: SchemeComplex): SchemeComplex {
+  multiply(other: SchemeComplex): SchemeNumber {
     // (a + bi) * (c + di) = (ac - bd) + (ad + bc)i
     const realPart = atomic_subtract(
       atomic_multiply(this.real, other.real),
@@ -845,11 +855,17 @@ export function is_complex(a: any): boolean {
 }
 
 export function is_exact(a: any): boolean {
-  return is_number(a) && a.numberType <= 2;
+  // if the number is a complex number, we need to check both the real and imaginary parts
+  return is_number(a)
+    ? a.numberType === 4
+      ? is_exact(a.real) && is_exact(a.imaginary)
+      : a.numberType <= 2
+    : false;
 }
 
 export function is_inexact(a: any): boolean {
-  return is_number(a) && a.numberType > 3;
+  // defined in terms of is_exact
+  return is_number(a) && !is_exact(a);
 }
 
 // the functions below are used to perform operations on numbers
@@ -932,3 +948,15 @@ export function atomic_subtract(
 export function atomic_divide(a: SchemeNumber, b: SchemeNumber): SchemeNumber {
   return atomic_multiply(a, atomic_inverse(b));
 }
+
+/**
+ * Important constants
+ */
+export const PI = SchemeReal.build(Math.PI);
+export const E = SchemeReal.build(Math.E);
+export const SQRT2 = SchemeReal.build(Math.SQRT2);
+export const LN2 = SchemeReal.build(Math.LN2);
+export const LN10 = SchemeReal.build(Math.LN10);
+export const LOG2E = SchemeReal.build(Math.LOG2E);
+export const LOG10E = SchemeReal.build(Math.LOG10E);
+export const SQRT1_2 = SchemeReal.build(Math.SQRT1_2);
