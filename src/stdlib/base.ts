@@ -197,6 +197,10 @@ export const $62$$61$: Function = (
 
 export const zero$63$: Function = (n: core.SchemeNumber) =>
   $61$(n, make_number(0));
+export const infinity$63$: Function = (n: core.SchemeNumber) =>
+  $61$(n, core.SchemeReal.INFINITY) || $61$(n, core.SchemeReal.NEG_INFINITY);
+export const nan$63$: Function = (n: core.SchemeNumber) =>
+  n === core.SchemeReal.NAN;
 export const positive$63$: Function = (n: core.SchemeNumber) =>
   $62$(n, make_number(0));
 export const negative$63$: Function = (n: core.SchemeNumber) =>
@@ -240,6 +244,213 @@ export const $47$: Function = (
 export const abs: Function = (n: core.SchemeNumber[]) =>
   negative$63$(n) ? atomic_negate(n) : n;
 
+export const quotient: Function = (
+  a: core.SchemeInteger,
+  b: core.SchemeInteger,
+) => {
+  if (!integer$63$(a) || !integer$63$(b)) {
+    error("quotient: expected integers");
+  }
+  if (atomic_equals(b, make_number(0))) {
+    error("quotient: division by zero");
+  }
+
+  let remainder = modulo(a, b);
+
+  let quotient = atomic_divide(
+    atomic_subtract(a, remainder),
+    b,
+  ) as core.SchemeInteger;
+
+  if (atomic_equals(remainder, make_number(0))) {
+    return quotient;
+  }
+
+  // if both a and b are same-signed, we are done
+  if (
+    atomic_less_than(a, make_number(0)) &&
+    atomic_less_than(b, make_number(0))
+  ) {
+    return quotient;
+  }
+
+  if (
+    atomic_greater_than(a, make_number(0)) &&
+    atomic_greater_than(b, make_number(0))
+  ) {
+    return quotient;
+  }
+
+  // if a is negative, we need to increment the quotient
+  // to account for the remainder
+  if (atomic_less_than(a, make_number(0))) {
+    quotient = atomic_add(quotient, make_number(1)) as core.SchemeInteger;
+  }
+
+  // if b is negative, we need to decrement the quotient
+  // to account for the remainder
+  if (atomic_less_than(b, make_number(0))) {
+    quotient = atomic_add(quotient, make_number(1)) as core.SchemeInteger;
+  }
+
+  return quotient;
+};
+
+export const remainder: Function = (
+  a: core.SchemeInteger,
+  b: core.SchemeInteger,
+) => {
+  if (!integer$63$(a) || !integer$63$(b)) {
+    error("remainder: expected integers");
+  }
+  if (atomic_equals(b, make_number(0))) {
+    error("remainder: division by zero");
+  }
+
+  let q = quotient(a, b);
+
+  let remainder = atomic_subtract(
+    a,
+    atomic_multiply(q, b),
+  ) as core.SchemeInteger;
+
+  return remainder;
+};
+
+export const modulo: Function = (
+  a: core.SchemeInteger,
+  b: core.SchemeInteger,
+) => {
+  if (!integer$63$(a) || !integer$63$(b)) {
+    error("modulo: expected integers");
+  }
+  if (atomic_equals(b, make_number(0))) {
+    error("modulo: division by zero");
+  }
+
+  let working = a;
+
+  while (atomic_greater_than_or_equals(abs(working), abs(b))) {
+    if (atomic_less_than(working, make_number(0))) {
+      if (atomic_less_than(b, make_number(0))) {
+        working = atomic_subtract(working, b) as core.SchemeInteger;
+      } else {
+        working = atomic_add(working, b) as core.SchemeInteger;
+      }
+    } else {
+      if (atomic_less_than(b, make_number(0))) {
+        working = atomic_add(working, b) as core.SchemeInteger;
+      } else {
+        working = atomic_subtract(working, b) as core.SchemeInteger;
+      }
+    }
+  }
+
+  // we need to deal with the sign of the result
+  // in 4 separate cases
+  if (atomic_less_than(working, make_number(0))) {
+    if (atomic_less_than(b, make_number(0))) {
+      // both are negative
+      // do nothing
+      return working;
+    } else {
+      // b is positive
+      // result needs to be positive - add b to the working
+      return atomic_add(working, b) as core.SchemeInteger;
+    }
+  } else {
+    if (atomic_less_than(b, make_number(0))) {
+      // b is negative
+      // result needs to be negative - add b to the working
+      return atomic_add(working, b) as core.SchemeInteger;
+    } else {
+      // both are positive
+      // do nothing
+      return working;
+    }
+  }
+};
+
+function atomic_gcd(
+  a: core.SchemeInteger,
+  b: core.SchemeInteger,
+): core.SchemeInteger {
+  if (atomic_equals(b, make_number(0))) {
+    return abs(a);
+  }
+  return abs(atomic_gcd(b, remainder(a, b)));
+}
+
+export const gcd: Function = (...vals: core.SchemeInteger[]) => {
+  if (vals.length === 0) {
+    return core.SchemeInteger.EXACT_ZERO;
+  }
+
+  if (vals.length === 1) {
+    return vals[0];
+  }
+
+  return vals.reduce(atomic_gcd);
+};
+
+function atomic_lcm(
+  a: core.SchemeInteger,
+  b: core.SchemeInteger,
+): core.SchemeInteger {
+  return abs(atomic_multiply(quotient(a, gcd(a, b)), b)) as core.SchemeInteger;
+}
+
+export const lcm: Function = (...vals: core.SchemeInteger[]) => {
+  if (vals.length === 0) {
+    return core.SchemeInteger.build(1);
+  }
+
+  if (vals.length === 1) {
+    return vals[0];
+  }
+
+  return vals.reduce(atomic_lcm);
+};
+
+export const odd$63$: Function = core.odd$63$;
+export const even$63$: Function = core.even$63$;
+
+export const numerator: Function = core.numerator;
+export const denominator: Function = core.denominator;
+export const exact: Function = core.exact;
+export const inexact: Function = core.inexact;
+
+export const square: Function = (n: core.SchemeNumber) => $42$(n, n);
+export const expt: Function = core.expt;
+export const exp: Function = core.exp;
+export const log: Function = core.log;
+export const sqrt: Function = core.sqrt;
+export const sin: Function = core.sin;
+export const cos: Function = core.cos;
+export const tan: Function = core.tan;
+export const asin: Function = core.asin;
+export const acos: Function = core.acos;
+export const atan: Function = core.atan;
+export const floor: Function = core.floor;
+export const ceiling: Function = core.ceiling;
+export const truncate: Function = core.truncate;
+export const round: Function = core.round;
+export const make$45$rectangular: Function = core.make$45$rectangular;
+export const make$45$polar: Function = core.make$45$polar;
+export const real$45$part: Function = core.real$45$part;
+export const imag$45$part: Function = core.imag$45$part;
+export const magnitude: Function = core.magnitude;
+export const angle: Function = core.angle;
+
+export const PI = core.PI;
+export const E = core.E;
+export const SQRT2 = core.SQRT2;
+export const SQRT1$47$2 = core.SQRT1_2;
+export const LN2 = core.LN2;
+export const LN10 = core.LN10;
+export const LOG2E = core.LOG2E;
+export const LOG10E = core.LOG10E;
+
 // pair operations
 
 export const cons: Function = core.pair;
@@ -253,7 +464,8 @@ const array_test: Function = (p: any) => {
   }
   return Array.isArray(p);
 };
-export const pair$63$: Function = (p: any) => array_test(p) && p.length === 2 && p.pair === true;
+export const pair$63$: Function = (p: any) =>
+  array_test(p) && p.length === 2 && p.pair === true;
 export const not$45$pair$63$: Function = compose(not, pair$63$);
 export const set$45$car$33$: Function = (p: core.Pair | core.List, v: any) => {
   if (pair$63$(p)) {
@@ -758,4 +970,111 @@ export const equal$63$ = function (x: any, y: any): boolean {
   } else {
     return false;
   }
+};
+
+// string operations
+
+export const string$63$: Function = (s: any) => typeof s === "string";
+
+export const make$45$string: Function = (
+  n: core.SchemeNumber,
+  ch: string = " ",
+) => {
+  // make sure that the character is a single character
+  if (ch.length !== 1) {
+    error("make-string: expected single character");
+  }
+
+  let result = "";
+
+  for (let i = 0; i < core.coerce_to_number(n); i++) {
+    result += ch;
+  }
+
+  return result;
+};
+
+export const string = (...args: string[]) => args.join("");
+
+export const string$45$length: Function = (s: string) =>
+  make_number(String(s.length));
+
+export const string$45$ref: Function = (s: string, i: core.SchemeNumber) => {
+  const index = core.coerce_to_number(i);
+  if (index < 0 || index >= s.length) {
+    error("string-ref: index out of bounds");
+  }
+  return s[index];
+};
+
+export const string$61$$63$: Function = (s1: string, s2: string) => s1 === s2;
+
+export const string$60$$63$: Function = (s1: string, s2: string) => s1 < s2;
+
+export const string$62$$63$: Function = (s1: string, s2: string) => s1 > s2;
+
+export const string$60$$61$$63$: Function = (s1: string, s2: string) =>
+  s1 <= s2;
+
+export const string$62$$61$$63$: Function = (s1: string, s2: string) =>
+  s1 >= s2;
+
+export const substring: Function = (
+  s: string,
+  start: core.SchemeNumber,
+  end?: core.SchemeNumber,
+) => {
+  const s_start = core.coerce_to_number(start);
+  const s_end = end === undefined ? s.length : core.coerce_to_number(end);
+  if (s_start < 0 || s_end > s.length || s_start > s_end) {
+    error("substring: index out of bounds");
+  }
+  return s.substring(s_start, s_end);
+};
+
+export const string$45$append: Function = string;
+
+export const string$45$copy: Function = (s: string) => s;
+
+export const string$45$map: Function = (f: Function, s: string) => {
+  let result = "";
+  for (let i = 0; i < s.length; i++) {
+    result += f(s[i]);
+  }
+  return result;
+};
+
+export const string$45$for$45$each: Function = (f: Function, s: string) => {
+  for (let i = 0; i < s.length; i++) {
+    f(s[i]);
+  }
+};
+
+export const string$45$$62$number: Function = (s: string) => {
+  try {
+    return make_number(s);
+  } catch (e) {
+    error("string->number: invalid number");
+  }
+};
+
+export const number$45$$62$string: Function = (n: core.SchemeNumber) =>
+  n.toString();
+
+export const string$45$$62$list: Function = (s: string) => {
+  let result = null;
+  for (let i = s.length - 1; i >= 0; i--) {
+    result = cons(s[i], result);
+  }
+  return result;
+};
+
+export const list$45$$62$string: Function = (l: core.List) => {
+  let result = "";
+  let current = l;
+  while (current !== null) {
+    result += String(car(current));
+    current = cdr(current);
+  }
+  return result;
 };
