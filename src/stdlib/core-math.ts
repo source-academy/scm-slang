@@ -110,7 +110,7 @@ class ComplexMatch extends Match {
   ) {
     super(result);
   }
-  build(): SchemeComplex {
+  build(): SchemeNumber {
     const real = this.real
       ? (this.real.build() as SchemeInteger | SchemeRational | SchemeReal)
       : SchemeInteger.EXACT_ZERO;
@@ -717,9 +717,9 @@ export class SchemeComplex {
   static build(
     real: SchemeReal | SchemeRational | SchemeInteger,
     imaginary: SchemeReal | SchemeRational | SchemeInteger,
-    _force: boolean = false,
-  ): SchemeComplex {
-    return new SchemeComplex(real, imaginary);
+    force: boolean = false,
+  ): SchemeNumber {
+    return SchemeComplex.simplify(new SchemeComplex(real, imaginary), force);
   }
 
   private constructor(
@@ -728,6 +728,16 @@ export class SchemeComplex {
   ) {
     this.real = real;
     this.imaginary = imaginary;
+  }
+
+  private static simplify(
+    complex: SchemeComplex,
+    force: boolean,
+  ): SchemeNumber {
+    if (!force && atomic_equals(complex.imaginary, SchemeInteger.EXACT_ZERO)) {
+      return complex.real;
+    }
+    return complex;
   }
 
   promote(nType: NumberType): SchemeNumber {
@@ -739,7 +749,7 @@ export class SchemeComplex {
     }
   }
 
-  negate(): SchemeComplex {
+  negate(): SchemeNumber {
     return SchemeComplex.build(this.real.negate(), this.imaginary.negate());
   }
 
@@ -757,7 +767,7 @@ export class SchemeComplex {
     );
   }
 
-  multiplicativeInverse(): SchemeComplex {
+  multiplicativeInverse(): SchemeNumber {
     // inverse of a + bi = a - bi / a^2 + b^2
     // in this case, we use a / a^2 + b^2 and -b / a^2 + b^2 as the new values required
     const denominator = atomic_add(
@@ -776,7 +786,7 @@ export class SchemeComplex {
     );
   }
 
-  add(other: SchemeComplex): SchemeComplex {
+  add(other: SchemeComplex): SchemeNumber {
     return SchemeComplex.build(
       atomic_add(this.real, other.real) as
         | SchemeInteger
@@ -789,7 +799,7 @@ export class SchemeComplex {
     );
   }
 
-  multiply(other: SchemeComplex): SchemeComplex {
+  multiply(other: SchemeComplex): SchemeNumber {
     // (a + bi) * (c + di) = (ac - bd) + (ad + bc)i
     const realPart = atomic_subtract(
       atomic_multiply(this.real, other.real),
@@ -802,12 +812,71 @@ export class SchemeComplex {
     return SchemeComplex.build(realPart, imaginaryPart);
   }
 
+  getReal(): SchemeInteger | SchemeRational | SchemeReal {
+    return this.real;
+  }
+
+  getImaginary(): SchemeInteger | SchemeRational | SchemeReal {
+    return this.imaginary;
+  }
+
   coerce(): number {
     throw new Error("Cannot coerce a complex number to a javascript number");
   }
 
+  toPolar(): SchemePolar {
+    // force both the real and imaginary parts to be inexact
+    const real = this.real.promote(NumberType.REAL) as SchemeReal;
+    const imaginary = this.imaginary.promote(NumberType.REAL) as SchemeReal;
+
+    // schemeReals can be reasoned with using the same logic as javascript numbers
+    // r = sqrt(a^2 + b^2)
+    const magnitude = SchemeReal.build(
+      Math.sqrt(
+        real.coerce() * real.coerce() + imaginary.coerce() * imaginary.coerce(),
+      ),
+    );
+    // theta = atan(b / a)
+    const angle = SchemeReal.build(
+      Math.atan2(imaginary.coerce(), real.coerce()),
+    );
+    return SchemePolar.build(magnitude, angle);
+  }
+
   toString(): string {
     return `${this.real}+${this.imaginary}i`;
+  }
+}
+
+// an alternative form of the complex number.
+// only used in intermediate steps, will be converted back at the end of the operation.
+// current scm-slang will force any polar complex numbers to be made
+// inexact, hence we opt to limit the use of polar form as much as possible.
+class SchemePolar {
+  readonly magnitude: SchemeReal;
+  readonly angle: SchemeReal;
+
+  private constructor(magnitude: SchemeReal, angle: SchemeReal) {
+    this.magnitude = magnitude;
+    this.angle = angle;
+  }
+
+  static build(magnitude: SchemeReal, angle: SchemeReal): SchemePolar {
+    return new SchemePolar(magnitude, angle);
+  }
+
+  // converts the polar number back to a cartesian complex number
+  toCartesian(): SchemeNumber {
+    // a + bi = r * cos(theta) + r * sin(theta)i
+    // a = r * cos(theta)
+    // b = r * sin(theta)
+    const real = SchemeReal.build(
+      this.magnitude.coerce() * Math.cos(this.angle.coerce()),
+    );
+    const imaginary = SchemeReal.build(
+      this.magnitude.coerce() * Math.sin(this.angle.coerce()),
+    );
+    return SchemeComplex.build(real, imaginary);
   }
 }
 
@@ -845,14 +914,45 @@ export function is_complex(a: any): boolean {
 }
 
 export function is_exact(a: any): boolean {
-  return is_number(a) && a.numberType <= 2;
+  // if the number is a complex number, we need to check both the real and imaginary parts
+  return is_number(a)
+    ? a.numberType === 4
+      ? is_exact(a.real) && is_exact(a.imaginary)
+      : a.numberType <= 2
+    : false;
 }
 
 export function is_inexact(a: any): boolean {
-  return is_number(a) && a.numberType > 3;
+  // defined in terms of is_exact
+  return is_number(a) && !is_exact(a);
 }
 
 // the functions below are used to perform operations on numbers
+
+function simplify(a: SchemeNumber): SchemeNumber {
+  switch (a.numberType) {
+    case NumberType.INTEGER:
+      return a;
+    case NumberType.RATIONAL:
+      return (a as SchemeRational).getDenominator() === 1n
+        ? SchemeInteger.build(a.getNumerator())
+        : a;
+    case NumberType.REAL:
+      return a;
+    case NumberType.COMPLEX:
+      // safe to cast as simplify never promotes a number
+      return SchemeComplex.build(
+        simplify((a as SchemeComplex).getReal()) as
+          | SchemeInteger
+          | SchemeRational
+          | SchemeReal,
+        simplify((a as SchemeComplex).getImaginary()) as
+          | SchemeInteger
+          | SchemeRational
+          | SchemeReal,
+      );
+  }
+}
 
 /**
  * This function takes two numbers and brings them to the same level.
@@ -910,7 +1010,7 @@ export function atomic_greater_than_or_equals(
 export function atomic_add(a: SchemeNumber, b: SchemeNumber): SchemeNumber {
   const [newA, newB] = equalify(a, b);
   // safe to cast as we are assured they are of the same type
-  return newA.add(newB as any);
+  return simplify(newA.add(newB as any));
 }
 
 export function atomic_multiply(
@@ -919,7 +1019,7 @@ export function atomic_multiply(
 ): SchemeNumber {
   const [newA, newB] = equalify(a, b);
   // safe to cast as we are assured they are of the same type
-  return newA.multiply(newB as any);
+  return simplify(newA.multiply(newB as any));
 }
 
 export function atomic_subtract(
@@ -932,3 +1032,286 @@ export function atomic_subtract(
 export function atomic_divide(a: SchemeNumber, b: SchemeNumber): SchemeNumber {
   return atomic_multiply(a, atomic_inverse(b));
 }
+
+/**
+ * Important constants
+ */
+export const PI = SchemeReal.build(Math.PI);
+export const E = SchemeReal.build(Math.E);
+export const SQRT2 = SchemeReal.build(Math.SQRT2);
+export const LN2 = SchemeReal.build(Math.LN2);
+export const LN10 = SchemeReal.build(Math.LN10);
+export const LOG2E = SchemeReal.build(Math.LOG2E);
+export const LOG10E = SchemeReal.build(Math.LOG10E);
+export const SQRT1_2 = SchemeReal.build(Math.SQRT1_2);
+
+// other important functions
+// for now, exponentials, square roots and the like will be treated as
+// inexact functions, and will return inexact results. this allows us to
+// leverage on the inbuilt javascript Math library.
+// additional logic is required to handle complex numbers, which we can do with
+// our polar form representation.
+
+export const expt = (n: SchemeNumber, e: SchemeNumber): SchemeNumber => {
+  if (!is_number(n) || !is_number(e)) {
+    throw new Error("expt: expected numbers");
+  }
+  if (!is_real(n) || !is_real(e)) {
+    // complex number case
+    // we can convert both parts to polar form and use the
+    // polar form exponentiation formula.
+
+    // given a * e^(bi) and c * e^(di),
+    // (a * e^(bi)) ^ (c * e^(di)) can be represented by
+    // the general formula for complex exponentiation:
+    // (a^c * e^(-bd)) * e^(i(bc * ln(a) + ad))
+
+    // convert both numbers to polar form
+    const nPolar = (n.promote(NumberType.COMPLEX) as SchemeComplex).toPolar();
+    const ePolar = (e.promote(NumberType.COMPLEX) as SchemeComplex).toPolar();
+
+    const a = nPolar.magnitude.coerce();
+    const b = nPolar.angle.coerce();
+    const c = ePolar.magnitude.coerce();
+    const d = ePolar.angle.coerce();
+
+    // we can construct a new polar form following the formula above
+    const mag = SchemeReal.build(a ** c * Math.E ** (-b * d));
+    const angle = SchemeReal.build(b * c * Math.log(a) + a * d);
+
+    return SchemePolar.build(mag, angle).toCartesian();
+  }
+  // coerce both numbers to javascript numbers
+  const base = n.coerce();
+  const exponent = e.coerce();
+
+  // there are probably cases here i am not considering yet.
+  // for now, we will just use the javascript Math library and hope for the best.
+  return SchemeReal.build(Math.pow(base, exponent));
+};
+
+export const exp = (n: SchemeNumber): SchemeNumber => {
+  if (!is_number(n)) {
+    throw new Error("exp: expected number");
+  }
+  if (!is_real(n)) {
+    // complex number case
+    throw new Error("exp: expected real number");
+  }
+  return SchemeReal.build(Math.exp(n.coerce()));
+};
+
+export const log = (n: SchemeNumber, base: SchemeNumber = E): SchemeNumber => {
+  if (!is_number(n) || !is_number(base)) {
+    throw new Error("log: expected numbers");
+  }
+  if (!is_real(n) || !is_real(base)) {
+    // complex number case
+    // we can convert both parts to polar form and use the
+    // polar form logarithm formula.
+    // where log(a * e^(bi)) = log(a) + bi
+    // and log(c * e^(di)) = log(c) + di
+    // and so result is log(a) + bi / log(c) + di
+    // which is just (log(a) - log(c)) + (b / d) i
+
+    // convert both numbers to polar form
+    const nPolar = (n.promote(NumberType.COMPLEX) as SchemeComplex).toPolar();
+    const basePolar = (
+      base.promote(NumberType.COMPLEX) as SchemeComplex
+    ).toPolar();
+    const a = nPolar.magnitude.coerce();
+    const b = nPolar.angle.coerce();
+    const c = basePolar.magnitude.coerce();
+    const d = basePolar.angle.coerce();
+
+    return SchemeComplex.build(
+      SchemeReal.build(Math.log(a) - Math.log(c)),
+      SchemeReal.build(b / d),
+    );
+  }
+  return SchemeReal.build(Math.log(n.coerce()) / Math.log(base.coerce()));
+};
+
+export const sqrt = (n: SchemeNumber): SchemeNumber => {
+  if (!is_number(n)) {
+    throw new Error("sqrt: expected number");
+  }
+  if (!is_real(n)) {
+    // complex number case
+    const polar = (n.promote(NumberType.COMPLEX) as SchemeComplex).toPolar();
+    const mag = polar.magnitude;
+    const angle = polar.angle;
+
+    // the square root of a complex number is given by
+    // the square root of the magnitude and half the angle
+    const newMag = sqrt(mag) as SchemeReal;
+    const newAngle = SchemeReal.build(angle.coerce() / 2);
+
+    return SchemePolar.build(newMag, newAngle).toCartesian();
+  }
+  let value = n.coerce();
+
+  if (value < 0) {
+    return SchemeComplex.build(
+      SchemeReal.INEXACT_ZERO,
+      SchemeReal.build(Math.sqrt(-value)),
+    );
+  }
+
+  return SchemeReal.build(Math.sqrt(n.coerce()));
+};
+
+export const sin = (n: SchemeNumber): SchemeNumber => {
+  if (!is_number(n)) {
+    throw new Error("sin: expected number");
+  }
+  if (!is_real(n)) {
+    // complex number case
+
+    // we can use euler's formula to find sin(x) for a complex number x = a + bi
+    // e^(ix) = cos(x) + i * sin(x)
+    // that can be rearranged into
+    // sin(x) = (e^(ix) - e^(-ix)) / 2i
+    // and finally into
+    // sin(x) = (sin(a) * (e^(-b) + e^(b)) / 2) + i * (cos(a) * (e^(-b) - e^(b)) / 2)
+    const complex = n.promote(NumberType.COMPLEX) as SchemeComplex;
+    const real = complex.getReal();
+    const imaginary = complex.getImaginary();
+    const a = real.coerce();
+    const b = imaginary.coerce();
+    return SchemeComplex.build(
+      SchemeReal.build((Math.sin(a) * (Math.exp(-b) + Math.exp(b))) / 2),
+      SchemeReal.build((Math.cos(a) * (Math.exp(-b) - Math.exp(b))) / 2),
+    );
+  }
+  return SchemeReal.build(Math.sin(n.coerce()));
+};
+
+export const cos = (n: SchemeNumber): SchemeNumber => {
+  if (!is_number(n)) {
+    throw new Error("cos: expected number");
+  }
+  if (!is_real(n)) {
+    // complex number case
+
+    // we can use euler's formula to find cos(x) for a complex number x = a + bi
+    // e^(ix) = cos(x) + i * sin(x)
+    // that can be rearranged into
+    // cos(x) = (e^(ix) + e^(-ix)) / 2
+    // and finally into
+    // cos(x) = (cos(a) * (e^(-b) + e^(b)) / 2) - i * (sin(a) * (e^(-b) - e^(b)) / 2)
+    const complex = n.promote(NumberType.COMPLEX) as SchemeComplex;
+    const real = complex.getReal();
+    const imaginary = complex.getImaginary();
+    const a = real.coerce();
+    const b = imaginary.coerce();
+    return SchemeComplex.build(
+      SchemeReal.build((Math.cos(a) * (Math.exp(-b) + Math.exp(b))) / 2),
+      SchemeReal.build((-Math.sin(a) * (Math.exp(-b) - Math.exp(b))) / 2),
+    );
+  }
+  return SchemeReal.build(Math.cos(n.coerce()));
+};
+
+export const tan = (n: SchemeNumber): SchemeNumber => {
+  if (!is_number(n)) {
+    throw new Error("tan: expected number");
+  }
+  if (!is_real(n)) {
+    // complex number case
+    const sinValue = sin(n);
+    const cosValue = cos(n);
+    return atomic_divide(sinValue, cosValue);
+  }
+  return SchemeReal.build(Math.tan(n.coerce()));
+};
+
+export const asin = (n: SchemeNumber): SchemeNumber => {
+  if (!is_number(n)) {
+    throw new Error("asin: expected number");
+  }
+  if (!is_real(n)) {
+    // complex number case
+    // asin(n) = -i * ln(i * n + sqrt(1 - n^2))
+    // we already have the building blocks needed to compute this
+    const i = SchemeComplex.build(
+      SchemeInteger.EXACT_ZERO,
+      SchemeInteger.build(1),
+    );
+    return atomic_multiply(
+      atomic_negate(i),
+      log(
+        atomic_add(
+          atomic_multiply(i, n),
+          sqrt(atomic_subtract(SchemeInteger.build(1), atomic_multiply(n, n))),
+        ),
+      ),
+    );
+  }
+  return SchemeReal.build(Math.asin(n.coerce()));
+};
+
+export const acos = (n: SchemeNumber): SchemeNumber => {
+  if (!is_number(n)) {
+    throw new Error("acos: expected number");
+  }
+  if (!is_real(n)) {
+    // complex number case
+    // acos(n) = -i * ln(n + sqrt(n^2 - 1))
+    // again, we have the building blocks needed to compute this
+    const i = SchemeComplex.build(
+      SchemeInteger.EXACT_ZERO,
+      SchemeInteger.build(1),
+    );
+    return atomic_multiply(
+      atomic_negate(i),
+      log(
+        atomic_add(
+          n,
+          sqrt(atomic_subtract(atomic_multiply(n, n), SchemeInteger.build(1))),
+        ),
+      ),
+    );
+  }
+  return SchemeReal.build(Math.acos(n.coerce()));
+};
+
+export const atan = (n: SchemeNumber, m?: SchemeNumber): SchemeNumber => {
+  if (!is_number(n)) {
+    throw new Error("atan: expected number");
+  }
+
+  if (m !== undefined) {
+    // two argument case, we construct a complex number with n + mi
+    // if neither n nor m are real, it's an error
+    if (!is_real(n) || !is_real(m)) {
+      throw new Error("atan: expected real numbers");
+    }
+    return atan(
+      SchemeComplex.build(
+        n as SchemeInteger | SchemeRational | SchemeReal,
+        m as SchemeInteger | SchemeRational | SchemeReal,
+      ),
+    );
+  }
+
+  if (!is_real(n)) {
+    // complex number case
+    // atan(n) = 1/2 * i * ln((1 - i * n) / (1 + i * n))
+    const i = SchemeComplex.build(
+      SchemeInteger.EXACT_ZERO,
+      SchemeInteger.build(1),
+    );
+    return atomic_multiply(
+      // multiply is associative so the order here doesn't matter
+      atomic_multiply(SchemeRational.build(1, 2), i),
+      log(
+        atomic_divide(
+          atomic_subtract(SchemeInteger.build(1), atomic_multiply(i, n)),
+          atomic_add(SchemeInteger.build(1), atomic_multiply(i, n)),
+        ),
+      ),
+    );
+  }
+  return SchemeReal.build(Math.atan(n.coerce()));
+};
