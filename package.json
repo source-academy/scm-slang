@@ -28,7 +28,7 @@
     "@types/estree": "^1.0.0",
     "acorn": "^8.8.2",
     "acorn-walk": "^8.2.0",
-    "js-base64": "^3.7.5"
+    "js-base64": "^3.7.7"
   },
   "scripts": {
     "build-libs": "npx ts-node ./src/compile-libs.ts",
