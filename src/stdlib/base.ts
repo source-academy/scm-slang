@@ -79,7 +79,7 @@ export const apply: Function = (fun: Function, ...args: any[]): any => {
   }
   // append the array to the rest of the arguments.
   const allArgs = args.concat(lastArray);
-  fun(...allArgs);
+  return fun(...allArgs);
 };
 
 export const procedure$63$: Function = (p: any) => typeof p === "function";
