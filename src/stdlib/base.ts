@@ -419,6 +419,16 @@ export const tan: Function = core.tan;
 export const asin: Function = core.asin;
 export const acos: Function = core.acos;
 export const atan: Function = core.atan;
+export const floor: Function = core.floor;
+export const ceiling: Function = core.ceiling;
+export const truncate: Function = core.truncate;
+export const round: Function = core.round;
+export const make$45$rectangular: Function = core.make$45$rectangular;
+export const make$45$polar: Function = core.make$45$polar;
+export const real$45$part: Function = core.real$45$part;
+export const imag$45$part: Function = core.imag$45$part;
+export const magnitude: Function = core.magnitude;
+export const angle: Function = core.angle;
 
 export const PI = core.PI;
 export const E = core.E;
