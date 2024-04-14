@@ -103,3 +103,13 @@ test("lcm", () => {
   expect(base.lcm(makeInteger(0), makeInteger(13))).toEqual(makeInteger(0));
   expect(base.lcm(makeInteger(4), makeInteger(-2))).toEqual(makeInteger(4));
 });
+
+test("fold works as expected", () => {
+  expect(
+    base.fold(
+      (acc: any, x: any) => x,
+      makeInteger(0),
+      base.list(makeInteger(1), makeInteger(2), makeInteger(3)),
+    ),
+  ).toEqual(makeInteger(3));
+});

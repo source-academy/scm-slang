@@ -665,11 +665,9 @@ export const map: Function = (
   ...rest: core.List[]
 ) => {
   const all_lists = [xs, ...rest];
-  const all_elements = (all_lists as any).map(car);
-  const all_tails = (all_lists as any).map(cdr);
   return any(null$63$, core.vector$45$$62$list(all_lists))
     ? null
-    : cons(f(...all_elements), map(f, ...all_tails));
+    : cons(f(...all_lists.map(car)), map(f, ...all_lists.map(cdr)));
 };
 
 export const fold: Function = (
@@ -679,11 +677,9 @@ export const fold: Function = (
   ...rest: core.List[]
 ) => {
   const all_lists = [xs, ...rest];
-  const all_elements = (all_lists as any).map(car);
-  const all_tails = (all_lists as any).map(cdr);
   return any(null$63$, core.vector$45$$62$list(all_lists))
     ? acc
-    : fold(f, f(acc, ...all_elements), ...all_tails);
+    : fold(f, f(acc, ...all_lists.map(car)), ...all_lists.map(cdr));
 };
 
 export const fold$45$left: Function = fold;
@@ -695,11 +691,9 @@ export const fold$45$right: Function = (
   ...rest: core.List[]
 ) => {
   const all_lists = [xs, ...rest];
-  const all_elements = (all_lists as any).map(car);
-  const all_tails = (all_lists as any).map(cdr);
   return any(null$63$, core.vector$45$$62$list(all_lists))
     ? acc
-    : f(...all_elements, fold$45$right(f, acc, ...all_tails));
+    : f(...all_lists.map(car), fold$45$right(f, acc, ...all_lists.map(cdr)));
 };
 
 export const reduce: Function = (f: Function, ridentity: any, xs: core.List) =>
@@ -759,7 +753,8 @@ export const append: Function = (...xss: core.List[]) => {
 
 export const concatenate: Function = (xss: core.List) => apply(append, xss);
 
-export const reverse: Function = (xs: core.List) => fold(cons, null, xs);
+export const reverse: Function = (xs: core.List) =>
+  fold$45$right(cons, null, xs);
 
 export const take: Function = (xs: core.List, i: core.SchemeNumber) => {
   if ($61$(i, make_number(0))) {
