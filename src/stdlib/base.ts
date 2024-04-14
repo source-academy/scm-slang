@@ -754,7 +754,7 @@ export const append: Function = (...xss: core.List[]) => {
 export const concatenate: Function = (xss: core.List) => apply(append, xss);
 
 export const reverse: Function = (xs: core.List) =>
-  fold$45$right(cons, null, xs);
+  fold$45$left(xcons, null, xs);
 
 export const take: Function = (xs: core.List, i: core.SchemeNumber) => {
   if ($61$(i, make_number(0))) {
