@@ -197,6 +197,10 @@ export const $62$$61$: Function = (
 
 export const zero$63$: Function = (n: core.SchemeNumber) =>
   $61$(n, make_number(0));
+export const infinity$63$: Function = (n: core.SchemeNumber) =>
+  $61$(n, core.SchemeReal.INFINITY) || $61$(n, core.SchemeReal.NEG_INFINITY);
+export const nan$63$: Function = (n: core.SchemeNumber) =>
+  n === core.SchemeReal.NAN;
 export const positive$63$: Function = (n: core.SchemeNumber) =>
   $62$(n, make_number(0));
 export const negative$63$: Function = (n: core.SchemeNumber) =>
@@ -408,6 +412,14 @@ export const lcm: Function = (...vals: core.SchemeInteger[]) => {
   return vals.reduce(atomic_lcm);
 };
 
+export const odd$63$: Function = core.odd$63$;
+export const even$63$: Function = core.even$63$;
+
+export const numerator: Function = core.numerator;
+export const denominator: Function = core.denominator;
+export const exact: Function = core.exact;
+export const inexact: Function = core.inexact;
+
 export const square: Function = (n: core.SchemeNumber) => $42$(n, n);
 export const expt: Function = core.expt;
 export const exp: Function = core.exp;
@@ -419,6 +431,16 @@ export const tan: Function = core.tan;
 export const asin: Function = core.asin;
 export const acos: Function = core.acos;
 export const atan: Function = core.atan;
+export const floor: Function = core.floor;
+export const ceiling: Function = core.ceiling;
+export const truncate: Function = core.truncate;
+export const round: Function = core.round;
+export const make$45$rectangular: Function = core.make$45$rectangular;
+export const make$45$polar: Function = core.make$45$polar;
+export const real$45$part: Function = core.real$45$part;
+export const imag$45$part: Function = core.imag$45$part;
+export const magnitude: Function = core.magnitude;
+export const angle: Function = core.angle;
 
 export const PI = core.PI;
 export const E = core.E;
