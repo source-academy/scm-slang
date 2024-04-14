@@ -449,6 +449,10 @@ export class SchemeInteger {
     return SchemeInteger.build(this.value * other.value);
   }
 
+  getBigInt(): bigint {
+    return this.value;
+  }
+
   coerce(): number {
     if (this.value > Number.MAX_SAFE_INTEGER) {
       return Infinity;
@@ -1046,6 +1050,156 @@ export const LOG10E = SchemeReal.build(Math.LOG10E);
 export const SQRT1_2 = SchemeReal.build(Math.SQRT1_2);
 
 // other important functions
+
+export const numerator = (n: SchemeNumber): SchemeNumber => {
+  if (!is_number(n)) {
+    throw new Error("numerator: expected number");
+  }
+  if (!is_real(n)) {
+    // complex number case
+    // always return an integer
+    return is_exact(n) ? SchemeInteger.build(1) : SchemeReal.build(1);
+  }
+  if (!is_rational(n)) {
+    // is real number
+    // get the value of the number
+    const val = n.coerce();
+    // if the value is a defined special case, return accordingly
+    if (val === Infinity) {
+      return SchemeReal.build(1);
+    }
+    if (val === -Infinity) {
+      return SchemeReal.build(1);
+    }
+    if (isNaN(val)) {
+      return SchemeReal.NAN;
+    }
+    // if the value is an integer, return it
+    if (Number.isInteger(val)) {
+      return SchemeReal.build(val);
+    }
+    // else if the value is a float,
+    // multiply it till it becomes an integer
+    let multiplier = 1;
+    while (!Number.isInteger(val * multiplier)) {
+      multiplier *= 10;
+    }
+    let numerator = val * multiplier;
+    let denominator = multiplier;
+    // simplify the fraction
+    const gcd = (a: number, b: number): number => {
+      if (b === 0) {
+        return a;
+      }
+      return gcd(b, a % b);
+    };
+    const divisor = gcd(numerator, denominator);
+    numerator = numerator / divisor;
+    return SchemeReal.build(numerator);
+  }
+  return SchemeInteger.build(
+    (n.promote(NumberType.RATIONAL) as SchemeRational).getNumerator(),
+  );
+};
+
+export const denominator = (n: SchemeNumber): SchemeNumber => {
+  if (!is_number(n)) {
+    throw new Error("denominator: expected number");
+  }
+  if (!is_real(n)) {
+    // complex number case
+    // always return an integer
+    return is_exact(n) ? SchemeInteger.build(1) : SchemeReal.build(1);
+  }
+  if (!is_rational(n)) {
+    // is real number
+    // get the value of the number
+    const val = n.coerce();
+    // if the value is a defined special case, return accordingly
+    if (val === Infinity) {
+      return SchemeReal.INEXACT_ZERO;
+    }
+    if (val === -Infinity) {
+      return SchemeReal.INEXACT_ZERO;
+    }
+    if (isNaN(val)) {
+      return SchemeReal.NAN;
+    }
+    // if the value is an integer, return 1
+    if (Number.isInteger(val)) {
+      return SchemeReal.build(1);
+    }
+    // else if the value is a float,
+    // multiply it till it becomes an integer
+    let multiplier = 1;
+    while (!Number.isInteger(val * multiplier)) {
+      multiplier *= 10;
+    }
+    let numerator = val * multiplier;
+    let denominator = multiplier;
+    // simplify the fraction
+    const gcd = (a: number, b: number): number => {
+      if (b === 0) {
+        return a;
+      }
+      return gcd(b, a % b);
+    };
+    const divisor = gcd(numerator, denominator);
+    denominator = denominator / divisor;
+    return SchemeReal.build(denominator);
+  }
+  return SchemeInteger.build(
+    (n.promote(NumberType.RATIONAL) as SchemeRational).getDenominator(),
+  );
+};
+
+export const exact = (n: SchemeNumber): SchemeNumber => {
+  if (!is_number(n)) {
+    throw new Error("exact: expected number");
+  }
+  if (is_exact(n)) {
+    return n;
+  }
+  if (is_real(n)) {
+    // if the number is a real number, we can convert it to a rational number
+    // by multiplying it by a power of 10 until it becomes an integer
+    // and then dividing by the same power of 10
+    let multiplier = 1;
+    let val = n.coerce();
+    while (!Number.isInteger(val * multiplier)) {
+      multiplier *= 10;
+    }
+    return SchemeRational.build(val * multiplier, multiplier);
+  }
+  // if the number is a complex number, we can convert both the real and imaginary parts
+  // to exact numbers
+  return SchemeComplex.build(
+    exact((n as SchemeComplex).getReal()) as SchemeInteger | SchemeRational,
+    exact((n as SchemeComplex).getImaginary()) as
+      | SchemeInteger
+      | SchemeRational,
+  );
+};
+
+export const inexact = (n: SchemeNumber): SchemeNumber => {
+  if (!is_number(n)) {
+    throw new Error("inexact: expected number");
+  }
+  if (is_inexact(n)) {
+    return n;
+  }
+  if (is_real(n)) {
+    // if the number is a real number, we can convert it to a float
+    return SchemeReal.build(n.coerce());
+  }
+  // if the number is a complex number, we can convert both the real and imaginary parts
+  // to inexact numbers
+  return SchemeComplex.build(
+    inexact((n as SchemeComplex).getReal()) as SchemeReal,
+    inexact((n as SchemeComplex).getImaginary()) as SchemeReal,
+  );
+};
+
 // for now, exponentials, square roots and the like will be treated as
 // inexact functions, and will return inexact results. this allows us to
 // leverage on the inbuilt javascript Math library.
@@ -1484,4 +1638,28 @@ export const angle = (n: SchemeNumber): SchemeNumber => {
     return PI;
   }
   return SchemeInteger.EXACT_ZERO;
+};
+
+export const odd$63$ = (n: SchemeInteger): boolean => {
+  if (!is_number(n)) {
+    throw new Error("odd?: expected integer");
+  }
+
+  if (!is_integer(n)) {
+    throw new Error("odd?: expected integer");
+  }
+
+  return n.getBigInt() % 2n === 1n;
+};
+
+export const even$63$ = (n: SchemeInteger): boolean => {
+  if (!is_number(n)) {
+    throw new Error("even?: expected integer");
+  }
+
+  if (!is_integer(n)) {
+    throw new Error("even?: expected integer");
+  }
+
+  return n.getBigInt() % 2n === 0n;
 };

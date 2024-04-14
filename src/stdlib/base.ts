@@ -197,6 +197,10 @@ export const $62$$61$: Function = (
 
 export const zero$63$: Function = (n: core.SchemeNumber) =>
   $61$(n, make_number(0));
+export const infinity$63$: Function = (n: core.SchemeNumber) =>
+  $61$(n, core.SchemeReal.INFINITY) || $61$(n, core.SchemeReal.NEG_INFINITY);
+export const nan$63$: Function = (n: core.SchemeNumber) =>
+  n === core.SchemeReal.NAN;
 export const positive$63$: Function = (n: core.SchemeNumber) =>
   $62$(n, make_number(0));
 export const negative$63$: Function = (n: core.SchemeNumber) =>
@@ -407,6 +411,14 @@ export const lcm: Function = (...vals: core.SchemeInteger[]) => {
 
   return vals.reduce(atomic_lcm);
 };
+
+export const odd$63$: Function = core.odd$63$;
+export const even$63$: Function = core.even$63$;
+
+export const numerator: Function = core.numerator;
+export const denominator: Function = core.denominator;
+export const exact: Function = core.exact;
+export const inexact: Function = core.inexact;
 
 export const square: Function = (n: core.SchemeNumber) => $42$(n, n);
 export const expt: Function = core.expt;
