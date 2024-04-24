@@ -1,0 +1,23 @@
+{
+  "semi": false,
+  "singleQuote": true,
+  "printWidth": 100,
+  "parser": "typescript",
+  "trailingComma": "none",
+  "arrowParens": "avoid",
+  "endOfLine": "lf",
+  "overrides": [
+    {
+      "files": "*.json",
+      "options": {
+        "parser": "json"
+      }
+    },
+    {
+      "files": ["*.mts", "*.cts", "*.ts"],
+      "options": {
+        "parser": "typescript"
+      }
+    }
+  ]
+}
