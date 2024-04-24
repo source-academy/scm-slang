@@ -415,7 +415,7 @@ export class SchemeInteger {
       case NumberType.REAL:
         return SchemeReal.build(this.coerce(), true);
       case NumberType.COMPLEX:
-        return SchemeComplex.build(this, SchemeInteger.EXACT_ZERO);
+        return SchemeComplex.build(this, SchemeInteger.EXACT_ZERO, true);
     }
   }
 
@@ -538,7 +538,7 @@ export class SchemeRational {
       case NumberType.REAL:
         return SchemeReal.build(this.coerce(), true);
       case NumberType.COMPLEX:
-        return SchemeComplex.build(this, SchemeInteger.EXACT_ZERO);
+        return SchemeComplex.build(this, SchemeInteger.EXACT_ZERO, true);
       default:
         throw new Error("Unable to demote rational");
     }
@@ -659,7 +659,7 @@ export class SchemeReal {
       case NumberType.REAL:
         return this;
       case NumberType.COMPLEX:
-        return SchemeComplex.build(this, SchemeInteger.EXACT_ZERO);
+        return SchemeComplex.build(this, SchemeInteger.EXACT_ZERO, true);
       default:
         throw new Error("Unable to demote real");
     }
