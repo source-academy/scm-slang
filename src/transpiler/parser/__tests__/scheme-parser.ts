@@ -3,7 +3,7 @@ import { SchemeLexer } from "../../lexer";
 import {
   Atomic,
   Extended,
-  Expression
+  Expression,
 } from "../../types/nodes/scheme-node-types";
 import { Location, Position } from "../../types/location";
 
@@ -191,7 +191,7 @@ test("parses lambda functions", () => {
       lambda(identifier("x"), [
         identifier("x"),
         identifier("y"),
-        identifier("z")
+        identifier("z"),
       ])
     )
   ).toEqual(true);
@@ -292,7 +292,7 @@ test("parses applications", () => {
   expect(
     parseFirst("((lambda (x) x) 1)").equals(
       application(lambda(identifier("x"), [identifier("x")]), [
-        numericLiteral("1")
+        numericLiteral("1"),
       ])
     )
   ).toEqual(true);
@@ -413,7 +413,7 @@ test("parses dotted lists", () => {
             numericLiteral("3")
           ),
           numericLiteral("2"),
-          numericLiteral("3")
+          numericLiteral("3"),
         ],
         numericLiteral("4")
       )
@@ -448,7 +448,7 @@ test("parses quasiquoted lists", () => {
           numericLiteral("2"),
           application(identifier("+"), [
             numericLiteral("1"),
-            numericLiteral("2")
+            numericLiteral("2"),
           ])
         ),
         numericLiteral("4")
@@ -500,7 +500,7 @@ test("parses import statements", () => {
         identifier("a"),
         identifier("b"),
         identifier("c"),
-        identifier("d")
+        identifier("d"),
       ])
     )
   ).toEqual(true);
@@ -552,8 +552,8 @@ test("parses cond expressions", () => {
         [
           application(identifier("="), [
             numericLiteral("1"),
-            numericLiteral("1")
-          ])
+            numericLiteral("1"),
+          ]),
         ],
         [numericLiteral("1")]
       )
@@ -572,7 +572,7 @@ test("parses cond expressions", () => {
           sequence(
             application(identifier("bar"), []),
             application(identifier("baz"), [])
-          )
+          ),
         ]
       )
     )
@@ -585,16 +585,16 @@ test("parses cond expressions", () => {
         [
           application(identifier("="), [
             numericLiteral("1"),
-            numericLiteral("1")
+            numericLiteral("1"),
           ]),
           application(identifier("="), [
             numericLiteral("2"),
-            numericLiteral("2")
-          ])
+            numericLiteral("2"),
+          ]),
         ],
         [
           numericLiteral("1"),
-          sequence(numericLiteral("2"), numericLiteral("2"))
+          sequence(numericLiteral("2"), numericLiteral("2")),
         ],
         numericLiteral("3")
       )
@@ -649,7 +649,7 @@ test("ignores block comments", () => {
   `).equals(
       application(identifier("you-won't-see-2"), [
         numericLiteral("1"),
-        numericLiteral("3")
+        numericLiteral("3"),
       ])
     )
   ).toEqual(true);

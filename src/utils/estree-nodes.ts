@@ -17,7 +17,7 @@ import {
   AssignmentExpression,
   ImportSpecifier,
   ModuleDeclaration,
-  RestElement
+  RestElement,
 } from "estree";
 
 export function makeProgram(body: Statement[] = []): Program {
@@ -27,17 +27,17 @@ export function makeProgram(body: Statement[] = []): Program {
     body.length > 0
       ? {
           start: body[0].loc!.start,
-          end: body[body.length - 1].loc!.end
+          end: body[body.length - 1].loc!.end,
         }
       : {
           start: { line: 1, column: 0 },
-          end: { line: 1, column: 0 }
+          end: { line: 1, column: 0 },
         };
   return {
     type: "Program",
     body,
     sourceType: "module",
-    loc: loc
+    loc: loc,
   };
 }
 
@@ -54,10 +54,10 @@ export function makeDeclaration(
       {
         type: "VariableDeclarator",
         id,
-        init
-      }
+        init,
+      },
     ],
-    loc: loc ? loc : id.loc
+    loc: loc ? loc : id.loc,
   };
 }
 
@@ -65,7 +65,7 @@ export function makeIdentifier(name: string, loc?: SourceLocation): Identifier {
   return {
     type: "Identifier",
     name,
-    loc
+    loc,
   };
 }
 
@@ -77,7 +77,7 @@ export function makeLiteral(
     type: "Literal",
     value,
     raw: `"${value}"`,
-    loc
+    loc,
   } as Literal;
 }
 
@@ -92,7 +92,7 @@ export function makeArrowFunctionExpression(
     body,
     async: false,
     expression: body.type !== "BlockStatement",
-    loc: loc ? loc : body.loc
+    loc: loc ? loc : body.loc,
   };
 }
 
@@ -107,8 +107,8 @@ export function makeBlockStatement(
       ? loc
       : {
           start: body[0].loc!.start,
-          end: body[body.length - 1].loc!.end
-        }
+          end: body[body.length - 1].loc!.end,
+        },
   };
 }
 
@@ -126,8 +126,8 @@ export function makeCallExpression(
       ? loc
       : {
           start: callee.loc!.start,
-          end: args[args.length - 1].loc!.end
-        }
+          end: args[args.length - 1].loc!.end,
+        },
   };
 }
 
@@ -146,8 +146,8 @@ export function makeConditionalExpression(
       ? loc
       : {
           start: test.loc!.start,
-          end: alternate.loc!.end
-        }
+          end: alternate.loc!.end,
+        },
   };
 }
 
@@ -165,8 +165,8 @@ export function makeAssignmentExpression(
       ? loc
       : {
           start: left.loc!.start,
-          end: right.loc!.end
-        }
+          end: right.loc!.end,
+        },
   };
 }
 
@@ -177,7 +177,7 @@ export function makeExpressionStatement(
   return {
     type: "ExpressionStatement",
     expression,
-    loc: loc ? loc : expression.loc
+    loc: loc ? loc : expression.loc,
   };
 }
 
@@ -188,7 +188,7 @@ export function makeReturnStatement(
   return {
     type: "ReturnStatement",
     argument,
-    loc: loc ? loc : argument.loc
+    loc: loc ? loc : argument.loc,
   };
 }
 
@@ -199,7 +199,7 @@ export function makeRestElement(
   return {
     type: "RestElement",
     argument,
-    loc: loc ? loc : argument.loc
+    loc: loc ? loc : argument.loc,
   };
 }
 
@@ -214,8 +214,8 @@ export function makeArrayExpression(
       ? loc
       : {
           start: elements[0].loc!.start,
-          end: elements[elements.length - 1].loc!.end
-        }
+          end: elements[elements.length - 1].loc!.end,
+        },
   };
 }
 
@@ -228,7 +228,7 @@ export function makeImportSpecifier(
     type: "ImportSpecifier",
     imported,
     local,
-    loc: loc ? loc : imported.loc
+    loc: loc ? loc : imported.loc,
   };
 }
 
@@ -245,8 +245,8 @@ export function makeImportDeclaration(
       ? loc
       : {
           start: specifiers[0].loc!.start,
-          end: source.loc!.end
-        }
+          end: source.loc!.end,
+        },
   };
 }
 
@@ -259,6 +259,6 @@ export function makeExportNamedDeclaration(
     specifiers: [],
     source: null,
     declaration,
-    loc: loc ? loc : declaration.loc
+    loc: loc ? loc : declaration.loc,
   };
 }

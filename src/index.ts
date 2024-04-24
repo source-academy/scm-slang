@@ -50,7 +50,7 @@ const JS_KEYWORDS: string[] = [
   "static",
   "interface",
   "private",
-  "public"
+  "public",
 ];
 
 /**

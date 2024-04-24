@@ -26,7 +26,7 @@ batchNumberTypeTest("integer", math.isInteger, [
   { test: "123.123", expected: false },
   { test: "123.123.123", expected: false },
   { test: "123.", expected: false },
-  { test: ".", expected: false }
+  { test: ".", expected: false },
 ]);
 
 batchNumberTypeTest("rational", math.isRational, [
@@ -45,7 +45,7 @@ batchNumberTypeTest("rational", math.isRational, [
   { test: "", expected: false },
   { test: "0", expected: false },
   { test: "123/", expected: false },
-  { test: "/123", expected: false }
+  { test: "/123", expected: false },
 ]);
 
 batchNumberTypeTest("real", math.isReal, [
@@ -93,7 +93,7 @@ batchNumberTypeTest("real", math.isReal, [
   { test: "1e1/2", expected: true },
   { test: "1e1e1", expected: true },
   { test: "1e1e1e1", expected: true },
-  { test: "1e1e1e1e1", expected: true }
+  { test: "1e1e1e1e1", expected: true },
 ]);
 
 batchNumberTypeTest("complex", math.isComplex, [
@@ -129,7 +129,7 @@ batchNumberTypeTest("complex", math.isComplex, [
   { test: "inf.0i", expected: false },
   { test: "1+inf.0i", expected: true },
   { test: "1-inf.0i", expected: true },
-  { test: "12", expected: false }
+  { test: "12", expected: false },
 ]);
 
 // make_number tests

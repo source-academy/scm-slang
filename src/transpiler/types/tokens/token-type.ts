@@ -51,5 +51,5 @@ export enum TokenType {
   HASH_VECTOR, // vector
   VECTOR, // depreciated, as i believe
   // turning vector into a procedure call is better
-  EOF
+  EOF,
 }

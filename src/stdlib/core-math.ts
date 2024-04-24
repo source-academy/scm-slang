@@ -20,7 +20,7 @@ export enum NumberType {
   INTEGER = 1,
   RATIONAL = 2,
   REAL = 3,
-  COMPLEX = 4
+  COMPLEX = 4,
 }
 
 export abstract class Match {

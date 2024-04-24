@@ -14,7 +14,7 @@ import { isGroup, isToken } from "../types/tokens";
 enum QuoteMode {
   NONE,
   QUOTE,
-  QUASIQUOTE
+  QUASIQUOTE,
 }
 
 export class SchemeParser implements Parser {
@@ -105,7 +105,7 @@ export class SchemeParser implements Parser {
       listElements.forEach(verifier);
       return [
         listElements.map(this.parseExpression.bind(this)),
-        this.parseExpression(cdrElement)
+        this.parseExpression(cdrElement),
       ];
     }
 

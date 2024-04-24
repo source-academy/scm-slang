@@ -4,7 +4,7 @@
   "printWidth": 80,
   "tabWidth": 2,
   "parser": "typescript",
-  "trailingComma": "none",
+  "trailingComma": "es5",
   "arrowParens": "avoid",
   "endOfLine": "lf",
   "overrides": [

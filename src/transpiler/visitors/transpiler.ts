@@ -8,7 +8,7 @@ import * as estreeBuilder from "../../utils/estree-nodes";
 import {
   Atomic,
   Extended,
-  Expression as scmExpression
+  Expression as scmExpression,
 } from "../types/nodes/scheme-node-types";
 import { Visitor } from ".";
 
@@ -103,7 +103,7 @@ export class Transpiler implements Visitor {
     // we turn the number into a literal
     const number = estreeBuilder.makeLiteral(node.value, node.location);
     return [
-      estreeBuilder.makeCallExpression(makeNumber, [number], node.location)
+      estreeBuilder.makeCallExpression(makeNumber, [number], node.location),
     ];
   }
 
@@ -135,7 +135,7 @@ export class Transpiler implements Visitor {
           parameters,
           finalBody,
           node.location
-        )
+        ),
       ];
     }
 
@@ -175,7 +175,7 @@ export class Transpiler implements Visitor {
           parameters,
           finalBody,
           node.location
-        )
+        ),
       ];
     }
 
@@ -183,7 +183,7 @@ export class Transpiler implements Visitor {
     // and then inject the vectorToList call
     finalBody = estreeBuilder.makeBlockStatement([
       wrapInStatement(restParameterAssignment),
-      wrapInReturn(finalBody)
+      wrapInReturn(finalBody),
     ]);
 
     return [
@@ -191,7 +191,7 @@ export class Transpiler implements Visitor {
         parameters,
         finalBody,
         node.location
-      )
+      ),
     ];
   }
 
@@ -214,7 +214,7 @@ export class Transpiler implements Visitor {
     const [operator] = node.operator.accept(this);
     const operands = node.operands.flatMap(o => o.accept(this));
     return [
-      estreeBuilder.makeCallExpression(operator, operands, node.location)
+      estreeBuilder.makeCallExpression(operator, operands, node.location),
     ];
   }
 
@@ -236,7 +236,7 @@ export class Transpiler implements Visitor {
         consequent,
         alternate,
         node.location
-      )
+      ),
     ];
   }
 
@@ -264,7 +264,7 @@ export class Transpiler implements Visitor {
     );
 
     return [
-      estreeBuilder.makeCallExpression(stringToSymbol, [str], node.location)
+      estreeBuilder.makeCallExpression(stringToSymbol, [str], node.location),
     ];
   }
 
@@ -353,7 +353,7 @@ export class Transpiler implements Visitor {
   visitExport(node: Atomic.Export): [es.ModuleDeclaration] {
     const [newDefinition] = node.definition.accept(this);
     return [
-      estreeBuilder.makeExportNamedDeclaration(newDefinition, node.location)
+      estreeBuilder.makeExportNamedDeclaration(newDefinition, node.location),
     ];
   }
 
@@ -381,7 +381,7 @@ export class Transpiler implements Visitor {
           dottedList,
           [...newElements, newTerminator],
           node.location
-        )
+        ),
       ];
     }
 
