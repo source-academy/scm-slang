@@ -23,7 +23,7 @@ test("modulo works with negative numbers", () => {
   expect(base.modulo(makeInteger(-5), makeInteger(8))).toEqual(makeInteger(3));
   expect(base.modulo(makeInteger(-5), makeInteger(9))).toEqual(makeInteger(4));
   expect(base.modulo(makeInteger(-5), makeInteger(-4))).toEqual(
-    makeInteger(-1),
+    makeInteger(-1)
   );
 });
 
@@ -34,58 +34,58 @@ test("quotient works with positive numbers", () => {
   expect(base.quotient(makeInteger(5), makeInteger(7))).toEqual(makeInteger(0));
   expect(base.quotient(makeInteger(5), makeInteger(8))).toEqual(makeInteger(0));
   expect(base.quotient(makeInteger(5), makeInteger(-4))).toEqual(
-    makeInteger(-1),
+    makeInteger(-1)
   );
 });
 
 test("quotient works with negative numbers", () => {
   expect(base.quotient(makeInteger(-5), makeInteger(3))).toEqual(
-    makeInteger(-1),
+    makeInteger(-1)
   );
   expect(base.quotient(makeInteger(-5), makeInteger(5))).toEqual(
-    makeInteger(-1),
+    makeInteger(-1)
   );
   expect(base.quotient(makeInteger(-5), makeInteger(6))).toEqual(
-    makeInteger(0),
+    makeInteger(0)
   );
   expect(base.quotient(makeInteger(-5), makeInteger(7))).toEqual(
-    makeInteger(0),
+    makeInteger(0)
   );
   expect(base.quotient(makeInteger(-5), makeInteger(8))).toEqual(
-    makeInteger(0),
+    makeInteger(0)
   );
   expect(base.quotient(makeInteger(-5), makeInteger(-4))).toEqual(
-    makeInteger(1),
+    makeInteger(1)
   );
 });
 
 test("remainder works with positive numbers", () => {
   expect(base.remainder(makeInteger(5), makeInteger(3))).toEqual(
-    makeInteger(2),
+    makeInteger(2)
   );
   expect(base.remainder(makeInteger(5), makeInteger(5))).toEqual(
-    makeInteger(0),
+    makeInteger(0)
   );
   expect(base.remainder(makeInteger(5), makeInteger(6))).toEqual(
-    makeInteger(5),
+    makeInteger(5)
   );
   expect(base.remainder(makeInteger(5), makeInteger(7))).toEqual(
-    makeInteger(5),
+    makeInteger(5)
   );
 });
 
 test("remainder works with negative numbers", () => {
   expect(base.remainder(makeInteger(-5), makeInteger(3))).toEqual(
-    makeInteger(-2),
+    makeInteger(-2)
   );
   expect(base.remainder(makeInteger(-5), makeInteger(5))).toEqual(
-    makeInteger(0),
+    makeInteger(0)
   );
   expect(base.remainder(makeInteger(-5), makeInteger(6))).toEqual(
-    makeInteger(-5),
+    makeInteger(-5)
   );
   expect(base.remainder(makeInteger(-5), makeInteger(7))).toEqual(
-    makeInteger(-5),
+    makeInteger(-5)
   );
 });
 
@@ -109,7 +109,7 @@ test("fold works as expected", () => {
     base.fold(
       (acc: any, x: any) => x,
       makeInteger(0),
-      base.list(makeInteger(1), makeInteger(2), makeInteger(3)),
-    ),
+      base.list(makeInteger(1), makeInteger(2), makeInteger(3))
+    )
   ).toEqual(makeInteger(3));
 });

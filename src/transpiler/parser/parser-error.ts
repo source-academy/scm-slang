@@ -38,7 +38,7 @@ export class ParenthesisMismatchError extends ParserError {
         showPoint(pos) +
         "\n" +
         "Mismatched parenthesis",
-      pos,
+      pos
     );
     this.name = "ParenthesisMismatchError";
   }
@@ -60,7 +60,7 @@ export class UnexpectedFormError extends ParserError {
         showPoint(pos) +
         "\n" +
         `Unexpected \'${form}\'`,
-      pos,
+      pos
     );
     this.form = form;
     this.name = "UnexpectedTokenError";
@@ -77,7 +77,7 @@ export class ExpectedFormError extends ParserError {
         showPoint(pos) +
         "\n" +
         `Expected \'${expected}\' but got \'${form}\'`,
-      pos,
+      pos
     );
     this.form = form;
     this.expected = expected;
@@ -94,7 +94,7 @@ export class MissingFormError extends ParserError {
         showPoint(pos) +
         "\n" +
         `Expected \'${expected}\'`,
-      pos,
+      pos
     );
     this.expected = expected;
     this.name = "MissingTokenError";
@@ -110,7 +110,7 @@ export class DisallowedTokenError extends ParserError {
         showPoint(pos) +
         "\n" +
         `Syntax \'${token}\' not allowed at Scheme \xa7${chapter}`,
-      pos,
+      pos
     );
     this.token = token;
     this.name = "DisallowedTokenError";
@@ -126,7 +126,7 @@ export class UnsupportedTokenError extends ParserError {
         showPoint(pos) +
         "\n" +
         `Syntax \'${token}\' not supported yet`,
-      pos,
+      pos
     );
     this.token = token;
     this.name = "UnsupportedTokenError";

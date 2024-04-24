@@ -2,7 +2,7 @@
 export class Location {
   constructor(
     public start: Position,
-    public end: Position,
+    public end: Position
   ) {}
 
   merge(other: Location): Location {
@@ -14,6 +14,6 @@ export class Location {
 export class Position {
   constructor(
     public line: number,
-    public column: number,
+    public column: number
   ) {}
 }

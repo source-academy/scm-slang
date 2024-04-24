@@ -3,13 +3,7 @@
   "version": "1.0.3",
   "license": "Apache-2.0",
   "description": "Scheme-based implementations of Source, written in Typescript",
-  "keywords": [
-    "Scheme",
-    "interpreter",
-    "compiler",
-    "Source",
-    "SICP"
-  ],
+  "keywords": ["Scheme", "interpreter", "compiler", "Source", "SICP"],
   "author": {
     "name": "Source Academy",
     "url": "https://github.com/source-academy/"

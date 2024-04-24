@@ -17,7 +17,7 @@ import {
   AssignmentExpression,
   ImportSpecifier,
   ModuleDeclaration,
-  RestElement,
+  RestElement
 } from "estree";
 
 export function makeProgram(body: Statement[] = []): Program {
@@ -27,17 +27,17 @@ export function makeProgram(body: Statement[] = []): Program {
     body.length > 0
       ? {
           start: body[0].loc!.start,
-          end: body[body.length - 1].loc!.end,
+          end: body[body.length - 1].loc!.end
         }
       : {
           start: { line: 1, column: 0 },
-          end: { line: 1, column: 0 },
+          end: { line: 1, column: 0 }
         };
   return {
     type: "Program",
     body,
     sourceType: "module",
-    loc: loc,
+    loc: loc
   };
 }
 
@@ -45,7 +45,7 @@ export function makeDeclaration(
   kind: "var" | "let" | "const",
   id: Identifier,
   init: Expression,
-  loc?: SourceLocation,
+  loc?: SourceLocation
 ): VariableDeclaration {
   return {
     type: "VariableDeclaration",
@@ -54,10 +54,10 @@ export function makeDeclaration(
       {
         type: "VariableDeclarator",
         id,
-        init,
-      },
+        init
+      }
     ],
-    loc: loc ? loc : id.loc,
+    loc: loc ? loc : id.loc
   };
 }
 
@@ -65,26 +65,26 @@ export function makeIdentifier(name: string, loc?: SourceLocation): Identifier {
   return {
     type: "Identifier",
     name,
-    loc,
+    loc
   };
 }
 
 export function makeLiteral(
   value: string | number | boolean | null | undefined,
-  loc?: SourceLocation,
+  loc?: SourceLocation
 ): Literal {
   return {
     type: "Literal",
     value,
     raw: `"${value}"`,
-    loc,
+    loc
   } as Literal;
 }
 
 export function makeArrowFunctionExpression(
   params: (Identifier | RestElement)[],
   body: Expression | BlockStatement,
-  loc?: SourceLocation,
+  loc?: SourceLocation
 ): ArrowFunctionExpression {
   return {
     type: "ArrowFunctionExpression",
@@ -92,13 +92,13 @@ export function makeArrowFunctionExpression(
     body,
     async: false,
     expression: body.type !== "BlockStatement",
-    loc: loc ? loc : body.loc,
+    loc: loc ? loc : body.loc
   };
 }
 
 export function makeBlockStatement(
   body: Statement[],
-  loc?: SourceLocation,
+  loc?: SourceLocation
 ): BlockStatement {
   return {
     type: "BlockStatement",
@@ -107,15 +107,15 @@ export function makeBlockStatement(
       ? loc
       : {
           start: body[0].loc!.start,
-          end: body[body.length - 1].loc!.end,
-        },
+          end: body[body.length - 1].loc!.end
+        }
   };
 }
 
 export function makeCallExpression(
   callee: Expression,
   args: Expression[],
-  loc?: SourceLocation,
+  loc?: SourceLocation
 ): CallExpression {
   return {
     type: "CallExpression",
@@ -126,8 +126,8 @@ export function makeCallExpression(
       ? loc
       : {
           start: callee.loc!.start,
-          end: args[args.length - 1].loc!.end,
-        },
+          end: args[args.length - 1].loc!.end
+        }
   };
 }
 
@@ -135,7 +135,7 @@ export function makeConditionalExpression(
   test: Expression,
   consequent: Expression,
   alternate: Expression,
-  loc?: SourceLocation,
+  loc?: SourceLocation
 ): ConditionalExpression {
   return {
     type: "ConditionalExpression",
@@ -146,15 +146,15 @@ export function makeConditionalExpression(
       ? loc
       : {
           start: test.loc!.start,
-          end: alternate.loc!.end,
-        },
+          end: alternate.loc!.end
+        }
   };
 }
 
 export function makeAssignmentExpression(
   left: Identifier,
   right: Expression,
-  loc?: SourceLocation,
+  loc?: SourceLocation
 ): AssignmentExpression {
   return {
     type: "AssignmentExpression",
@@ -165,47 +165,47 @@ export function makeAssignmentExpression(
       ? loc
       : {
           start: left.loc!.start,
-          end: right.loc!.end,
-        },
+          end: right.loc!.end
+        }
   };
 }
 
 export function makeExpressionStatement(
   expression: Expression,
-  loc?: SourceLocation,
+  loc?: SourceLocation
 ): ExpressionStatement {
   return {
     type: "ExpressionStatement",
     expression,
-    loc: loc ? loc : expression.loc,
+    loc: loc ? loc : expression.loc
   };
 }
 
 export function makeReturnStatement(
   argument: Expression,
-  loc?: SourceLocation,
+  loc?: SourceLocation
 ): Statement {
   return {
     type: "ReturnStatement",
     argument,
-    loc: loc ? loc : argument.loc,
+    loc: loc ? loc : argument.loc
   };
 }
 
 export function makeRestElement(
   argument: Identifier,
-  loc?: SourceLocation,
+  loc?: SourceLocation
 ): RestElement {
   return {
     type: "RestElement",
     argument,
-    loc: loc ? loc : argument.loc,
+    loc: loc ? loc : argument.loc
   };
 }
 
 export function makeArrayExpression(
   elements: Expression[],
-  loc?: SourceLocation,
+  loc?: SourceLocation
 ): ArrayExpression {
   return {
     type: "ArrayExpression",
@@ -214,28 +214,28 @@ export function makeArrayExpression(
       ? loc
       : {
           start: elements[0].loc!.start,
-          end: elements[elements.length - 1].loc!.end,
-        },
+          end: elements[elements.length - 1].loc!.end
+        }
   };
 }
 
 export function makeImportSpecifier(
   imported: Identifier,
   local: Identifier,
-  loc?: SourceLocation,
+  loc?: SourceLocation
 ): ImportSpecifier {
   return {
     type: "ImportSpecifier",
     imported,
     local,
-    loc: loc ? loc : imported.loc,
+    loc: loc ? loc : imported.loc
   };
 }
 
 export function makeImportDeclaration(
   specifiers: ImportSpecifier[],
   source: Literal,
-  loc?: SourceLocation,
+  loc?: SourceLocation
 ): ModuleDeclaration {
   return {
     type: "ImportDeclaration",
@@ -245,20 +245,20 @@ export function makeImportDeclaration(
       ? loc
       : {
           start: specifiers[0].loc!.start,
-          end: source.loc!.end,
-        },
+          end: source.loc!.end
+        }
   };
 }
 
 export function makeExportNamedDeclaration(
   declaration: VariableDeclaration,
-  loc?: SourceLocation,
+  loc?: SourceLocation
 ): ModuleDeclaration {
   return {
     type: "ExportNamedDeclaration",
     specifiers: [],
     source: null,
     declaration,
-    loc: loc ? loc : declaration.loc,
+    loc: loc ? loc : declaration.loc
   };
 }

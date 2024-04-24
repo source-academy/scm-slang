@@ -21,7 +21,7 @@ export class Token {
     start: number,
     end: number,
     line: number,
-    col: number,
+    col: number
   ) {
     this.type = type;
     this.lexeme = lexeme;
@@ -47,7 +47,7 @@ export class Token {
           this.start,
           this.end,
           this.pos.line,
-          this.pos.column,
+          this.pos.column
         );
       case TokenType.BACKTICK:
         return new Token(
@@ -57,7 +57,7 @@ export class Token {
           this.start,
           this.end,
           this.pos.line,
-          this.pos.column,
+          this.pos.column
         );
       case TokenType.HASH_VECTOR:
         return new Token(
@@ -67,7 +67,7 @@ export class Token {
           this.start,
           this.end,
           this.pos.line,
-          this.pos.column,
+          this.pos.column
         );
       case TokenType.COMMA:
         return new Token(
@@ -77,7 +77,7 @@ export class Token {
           this.start,
           this.end,
           this.pos.line,
-          this.pos.column,
+          this.pos.column
         );
       case TokenType.COMMA_AT:
         return new Token(
@@ -87,7 +87,7 @@ export class Token {
           this.start,
           this.end,
           this.pos.line,
-          this.pos.column,
+          this.pos.column
         );
       default:
         return this;

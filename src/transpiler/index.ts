@@ -23,7 +23,7 @@ export { ParserError } from "./parser";
 export function schemeParse(
   source: string,
   chapter?: number,
-  encode?: boolean,
+  encode?: boolean
 ): Program {
   // Instantiate the lexer
   const lexer = new SchemeLexer(source);

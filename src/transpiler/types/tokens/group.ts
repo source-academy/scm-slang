@@ -114,7 +114,7 @@ export class Group {
       "",
       wrongGroup.location.start,
       wrongGroup,
-      "matching parentheses",
+      "matching parentheses"
     );
   }
 
@@ -206,6 +206,6 @@ export class Group {
    * @returns A string representation of the group
    */
   toString(): string {
-    return this.elements.map((e) => e.toString()).join(" ");
+    return this.elements.map(e => e.toString()).join(" ");
   }
 }

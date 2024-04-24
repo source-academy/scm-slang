@@ -20,7 +20,7 @@ export enum NumberType {
   INTEGER = 1,
   RATIONAL = 2,
   REAL = 3,
-  COMPLEX = 4,
+  COMPLEX = 4
 }
 
 export abstract class Match {
@@ -31,7 +31,7 @@ export abstract class Match {
 class IntegerMatch extends Match {
   constructor(
     public result: boolean,
-    public value?: string,
+    public value?: string
   ) {
     super(result);
   }
@@ -51,7 +51,7 @@ class RationalMatch extends Match {
   constructor(
     public result: boolean,
     public numerator?: string,
-    public denominator?: string,
+    public denominator?: string
   ) {
     super(result);
   }
@@ -66,7 +66,7 @@ class RealMatch extends Match {
     public result: boolean,
     public integer?: string,
     public decimal?: string,
-    public exponent?: Match,
+    public exponent?: Match
   ) {
     super(result);
   }
@@ -91,7 +91,7 @@ class RealMatch extends Match {
     let value = Number(
       (this.integer ? this.integer : "0") +
         "." +
-        (this.decimal ? this.decimal : "0"),
+        (this.decimal ? this.decimal : "0")
     );
 
     // apply the exponent
@@ -106,7 +106,7 @@ class ComplexMatch extends Match {
     public result: boolean,
     public real?: Match,
     public sign?: string,
-    public imaginary?: Match,
+    public imaginary?: Match
   ) {
     super(result);
   }
@@ -269,7 +269,7 @@ export function isReal(value: string): RealMatch {
       true,
       basicRealMatch.integer,
       basicRealMatch.decimal,
-      exponentMatch,
+      exponentMatch
     );
   }
 
@@ -397,7 +397,7 @@ export class SchemeInteger {
   // Force prevents automatic downcasting to a lower type.
   static build(
     value: number | string | bigint,
-    _force: boolean = false,
+    _force: boolean = false
   ): SchemeInteger {
     const val = BigInt(value);
     if (val === 0n) {
@@ -485,19 +485,19 @@ export class SchemeRational {
   static build(
     numerator: number | string | bigint,
     denominator: number | string | bigint,
-    force: boolean = false,
+    force: boolean = false
   ): SchemeRational | SchemeInteger {
     return SchemeRational.simplify(
       BigInt(numerator),
       BigInt(denominator),
-      force,
+      force
     );
   }
 
   private static simplify(
     numerator: bigint,
     denominator: bigint,
-    force: boolean = false,
+    force: boolean = false
   ): SchemeRational | SchemeInteger {
     const gcd = (a: bigint, b: bigint): bigint => {
       if (b === 0n) {
@@ -519,7 +519,7 @@ export class SchemeRational {
     }
     return new SchemeRational(
       (sign * numerator) / divisor,
-      denominator / divisor,
+      denominator / divisor
     );
   }
 
@@ -561,7 +561,7 @@ export class SchemeRational {
   negate(): SchemeRational {
     return SchemeRational.build(
       -this.numerator,
-      this.denominator,
+      this.denominator
     ) as SchemeRational;
   }
 
@@ -721,14 +721,14 @@ export class SchemeComplex {
   static build(
     real: SchemeReal | SchemeRational | SchemeInteger,
     imaginary: SchemeReal | SchemeRational | SchemeInteger,
-    force: boolean = false,
+    force: boolean = false
   ): SchemeNumber {
     return SchemeComplex.simplify(new SchemeComplex(real, imaginary), force);
   }
 
   private constructor(
     real: SchemeReal | SchemeRational | SchemeInteger,
-    imaginary: SchemeReal | SchemeRational | SchemeInteger,
+    imaginary: SchemeReal | SchemeRational | SchemeInteger
   ) {
     this.real = real;
     this.imaginary = imaginary;
@@ -736,7 +736,7 @@ export class SchemeComplex {
 
   private static simplify(
     complex: SchemeComplex,
-    force: boolean,
+    force: boolean
   ): SchemeNumber {
     if (!force && atomic_equals(complex.imaginary, SchemeInteger.EXACT_ZERO)) {
       return complex.real;
@@ -776,7 +776,7 @@ export class SchemeComplex {
     // in this case, we use a / a^2 + b^2 and -b / a^2 + b^2 as the new values required
     const denominator = atomic_add(
       atomic_multiply(this.real, this.real),
-      atomic_multiply(this.imaginary, this.imaginary),
+      atomic_multiply(this.imaginary, this.imaginary)
     ) as SchemeInteger | SchemeRational | SchemeReal;
     return SchemeComplex.build(
       atomic_multiply(denominator.multiplicativeInverse(), this.real) as
@@ -785,8 +785,8 @@ export class SchemeComplex {
         | SchemeReal,
       atomic_multiply(
         denominator.multiplicativeInverse(),
-        this.imaginary.negate(),
-      ) as SchemeInteger | SchemeRational | SchemeReal,
+        this.imaginary.negate()
+      ) as SchemeInteger | SchemeRational | SchemeReal
     );
   }
 
@@ -799,7 +799,7 @@ export class SchemeComplex {
       atomic_add(this.imaginary, other.imaginary) as
         | SchemeInteger
         | SchemeRational
-        | SchemeReal,
+        | SchemeReal
     );
   }
 
@@ -807,11 +807,11 @@ export class SchemeComplex {
     // (a + bi) * (c + di) = (ac - bd) + (ad + bc)i
     const realPart = atomic_subtract(
       atomic_multiply(this.real, other.real),
-      atomic_multiply(this.imaginary, other.imaginary),
+      atomic_multiply(this.imaginary, other.imaginary)
     ) as SchemeInteger | SchemeRational | SchemeReal;
     const imaginaryPart = atomic_add(
       atomic_multiply(this.real, other.imaginary),
-      atomic_multiply(this.imaginary, other.real),
+      atomic_multiply(this.imaginary, other.real)
     ) as SchemeInteger | SchemeRational | SchemeReal;
     return SchemeComplex.build(realPart, imaginaryPart);
   }
@@ -837,12 +837,12 @@ export class SchemeComplex {
     // r = sqrt(a^2 + b^2)
     const magnitude = SchemeReal.build(
       Math.sqrt(
-        real.coerce() * real.coerce() + imaginary.coerce() * imaginary.coerce(),
-      ),
+        real.coerce() * real.coerce() + imaginary.coerce() * imaginary.coerce()
+      )
     );
     // theta = atan(b / a)
     const angle = SchemeReal.build(
-      Math.atan2(imaginary.coerce(), real.coerce()),
+      Math.atan2(imaginary.coerce(), real.coerce())
     );
     return SchemePolar.build(magnitude, angle);
   }
@@ -875,10 +875,10 @@ class SchemePolar {
     // a = r * cos(theta)
     // b = r * sin(theta)
     const real = SchemeReal.build(
-      this.magnitude.coerce() * Math.cos(this.angle.coerce()),
+      this.magnitude.coerce() * Math.cos(this.angle.coerce())
     );
     const imaginary = SchemeReal.build(
-      this.magnitude.coerce() * Math.sin(this.angle.coerce()),
+      this.magnitude.coerce() * Math.sin(this.angle.coerce())
     );
     return SchemeComplex.build(real, imaginary);
   }
@@ -953,7 +953,7 @@ function simplify(a: SchemeNumber): SchemeNumber {
         simplify((a as SchemeComplex).getImaginary()) as
           | SchemeInteger
           | SchemeRational
-          | SchemeReal,
+          | SchemeReal
       );
   }
 }
@@ -963,7 +963,7 @@ function simplify(a: SchemeNumber): SchemeNumber {
  */
 function equalify(
   a: SchemeNumber,
-  b: SchemeNumber,
+  b: SchemeNumber
 ): [SchemeNumber, SchemeNumber] {
   if (a.numberType > b.numberType) {
     return [a, b.promote(a.numberType)];
@@ -993,7 +993,7 @@ export function atomic_less_than(a: SchemeNumber, b: SchemeNumber): boolean {
 
 export function atomic_less_than_or_equals(
   a: SchemeNumber,
-  b: SchemeNumber,
+  b: SchemeNumber
 ): boolean {
   return !atomic_greater_than(a, b);
 }
@@ -1006,7 +1006,7 @@ export function atomic_greater_than(a: SchemeNumber, b: SchemeNumber): boolean {
 
 export function atomic_greater_than_or_equals(
   a: SchemeNumber,
-  b: SchemeNumber,
+  b: SchemeNumber
 ): boolean {
   return atomic_greater_than(a, b) || atomic_equals(a, b);
 }
@@ -1019,7 +1019,7 @@ export function atomic_add(a: SchemeNumber, b: SchemeNumber): SchemeNumber {
 
 export function atomic_multiply(
   a: SchemeNumber,
-  b: SchemeNumber,
+  b: SchemeNumber
 ): SchemeNumber {
   const [newA, newB] = equalify(a, b);
   // safe to cast as we are assured they are of the same type
@@ -1028,7 +1028,7 @@ export function atomic_multiply(
 
 export function atomic_subtract(
   a: SchemeNumber,
-  b: SchemeNumber,
+  b: SchemeNumber
 ): SchemeNumber {
   return atomic_add(a, atomic_negate(b));
 }
@@ -1098,7 +1098,7 @@ export const numerator = (n: SchemeNumber): SchemeNumber => {
     return SchemeReal.build(numerator);
   }
   return SchemeInteger.build(
-    (n.promote(NumberType.RATIONAL) as SchemeRational).getNumerator(),
+    (n.promote(NumberType.RATIONAL) as SchemeRational).getNumerator()
   );
 };
 
@@ -1149,7 +1149,7 @@ export const denominator = (n: SchemeNumber): SchemeNumber => {
     return SchemeReal.build(denominator);
   }
   return SchemeInteger.build(
-    (n.promote(NumberType.RATIONAL) as SchemeRational).getDenominator(),
+    (n.promote(NumberType.RATIONAL) as SchemeRational).getDenominator()
   );
 };
 
@@ -1175,9 +1175,7 @@ export const exact = (n: SchemeNumber): SchemeNumber => {
   // to exact numbers
   return SchemeComplex.build(
     exact((n as SchemeComplex).getReal()) as SchemeInteger | SchemeRational,
-    exact((n as SchemeComplex).getImaginary()) as
-      | SchemeInteger
-      | SchemeRational,
+    exact((n as SchemeComplex).getImaginary()) as SchemeInteger | SchemeRational
   );
 };
 
@@ -1196,7 +1194,7 @@ export const inexact = (n: SchemeNumber): SchemeNumber => {
   // to inexact numbers
   return SchemeComplex.build(
     inexact((n as SchemeComplex).getReal()) as SchemeReal,
-    inexact((n as SchemeComplex).getImaginary()) as SchemeReal,
+    inexact((n as SchemeComplex).getImaginary()) as SchemeReal
   );
 };
 
@@ -1280,7 +1278,7 @@ export const log = (n: SchemeNumber, base: SchemeNumber = E): SchemeNumber => {
 
     return SchemeComplex.build(
       SchemeReal.build(Math.log(a) - Math.log(c)),
-      SchemeReal.build(b / d),
+      SchemeReal.build(b / d)
     );
   }
   return SchemeReal.build(Math.log(n.coerce()) / Math.log(base.coerce()));
@@ -1308,7 +1306,7 @@ export const sqrt = (n: SchemeNumber): SchemeNumber => {
   if (value < 0) {
     return SchemeComplex.build(
       SchemeReal.INEXACT_ZERO,
-      SchemeReal.build(Math.sqrt(-value)),
+      SchemeReal.build(Math.sqrt(-value))
     );
   }
 
@@ -1335,7 +1333,7 @@ export const sin = (n: SchemeNumber): SchemeNumber => {
     const b = imaginary.coerce();
     return SchemeComplex.build(
       SchemeReal.build((Math.sin(a) * (Math.exp(-b) + Math.exp(b))) / 2),
-      SchemeReal.build((Math.cos(a) * (Math.exp(-b) - Math.exp(b))) / 2),
+      SchemeReal.build((Math.cos(a) * (Math.exp(-b) - Math.exp(b))) / 2)
     );
   }
   return SchemeReal.build(Math.sin(n.coerce()));
@@ -1361,7 +1359,7 @@ export const cos = (n: SchemeNumber): SchemeNumber => {
     const b = imaginary.coerce();
     return SchemeComplex.build(
       SchemeReal.build((Math.cos(a) * (Math.exp(-b) + Math.exp(b))) / 2),
-      SchemeReal.build((-Math.sin(a) * (Math.exp(-b) - Math.exp(b))) / 2),
+      SchemeReal.build((-Math.sin(a) * (Math.exp(-b) - Math.exp(b))) / 2)
     );
   }
   return SchemeReal.build(Math.cos(n.coerce()));
@@ -1390,16 +1388,16 @@ export const asin = (n: SchemeNumber): SchemeNumber => {
     // we already have the building blocks needed to compute this
     const i = SchemeComplex.build(
       SchemeInteger.EXACT_ZERO,
-      SchemeInteger.build(1),
+      SchemeInteger.build(1)
     );
     return atomic_multiply(
       atomic_negate(i),
       log(
         atomic_add(
           atomic_multiply(i, n),
-          sqrt(atomic_subtract(SchemeInteger.build(1), atomic_multiply(n, n))),
-        ),
-      ),
+          sqrt(atomic_subtract(SchemeInteger.build(1), atomic_multiply(n, n)))
+        )
+      )
     );
   }
   return SchemeReal.build(Math.asin(n.coerce()));
@@ -1415,16 +1413,16 @@ export const acos = (n: SchemeNumber): SchemeNumber => {
     // again, we have the building blocks needed to compute this
     const i = SchemeComplex.build(
       SchemeInteger.EXACT_ZERO,
-      SchemeInteger.build(1),
+      SchemeInteger.build(1)
     );
     return atomic_multiply(
       atomic_negate(i),
       log(
         atomic_add(
           n,
-          sqrt(atomic_subtract(atomic_multiply(n, n), SchemeInteger.build(1))),
-        ),
-      ),
+          sqrt(atomic_subtract(atomic_multiply(n, n), SchemeInteger.build(1)))
+        )
+      )
     );
   }
   return SchemeReal.build(Math.acos(n.coerce()));
@@ -1444,8 +1442,8 @@ export const atan = (n: SchemeNumber, m?: SchemeNumber): SchemeNumber => {
     return atan(
       SchemeComplex.build(
         n as SchemeInteger | SchemeRational | SchemeReal,
-        m as SchemeInteger | SchemeRational | SchemeReal,
-      ),
+        m as SchemeInteger | SchemeRational | SchemeReal
+      )
     );
   }
 
@@ -1454,7 +1452,7 @@ export const atan = (n: SchemeNumber, m?: SchemeNumber): SchemeNumber => {
     // atan(n) = 1/2 * i * ln((1 - i * n) / (1 + i * n))
     const i = SchemeComplex.build(
       SchemeInteger.EXACT_ZERO,
-      SchemeInteger.build(1),
+      SchemeInteger.build(1)
     );
     return atomic_multiply(
       // multiply is associative so the order here doesn't matter
@@ -1462,9 +1460,9 @@ export const atan = (n: SchemeNumber, m?: SchemeNumber): SchemeNumber => {
       log(
         atomic_divide(
           atomic_subtract(SchemeInteger.build(1), atomic_multiply(i, n)),
-          atomic_add(SchemeInteger.build(1), atomic_multiply(i, n)),
-        ),
-      ),
+          atomic_add(SchemeInteger.build(1), atomic_multiply(i, n))
+        )
+      )
     );
   }
   return SchemeReal.build(Math.atan(n.coerce()));
@@ -1557,7 +1555,7 @@ export const round = (n: SchemeNumber): SchemeNumber => {
 
 export const make$45$rectangular = (
   a: SchemeNumber,
-  b: SchemeNumber,
+  b: SchemeNumber
 ): SchemeNumber => {
   if (!is_number(a) || !is_number(b)) {
     throw new Error("make-rectangular: expected numbers");
@@ -1568,13 +1566,13 @@ export const make$45$rectangular = (
   }
   return SchemeComplex.build(
     a as SchemeReal | SchemeRational | SchemeInteger,
-    b as SchemeReal | SchemeRational | SchemeInteger,
+    b as SchemeReal | SchemeRational | SchemeInteger
   );
 };
 
 export const make$45$polar = (
   a: SchemeNumber,
-  b: SchemeNumber,
+  b: SchemeNumber
 ): SchemeNumber => {
   if (!is_number(a) || !is_number(b)) {
     throw new Error("make-polar: expected numbers");
@@ -1585,7 +1583,7 @@ export const make$45$polar = (
   }
   return SchemePolar.build(
     a.promote(NumberType.REAL) as SchemeReal,
-    b.promote(NumberType.REAL) as SchemeReal,
+    b.promote(NumberType.REAL) as SchemeReal
   ).toCartesian();
 };
 

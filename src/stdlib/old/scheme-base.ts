@@ -111,7 +111,7 @@ export let E = function (...args: number[]): boolean {
   for (let i: number = 0; i < args.length - 1; i++) {
     if (!numberQ(args[i])) {
       throw new Error(
-        "procedure =: expected number, got " + args[i].toString(),
+        "procedure =: expected number, got " + args[i].toString()
       );
     }
     acc = acc && args[i] === args[i + 1];
@@ -124,7 +124,7 @@ export let L = function (...args: number[]): boolean {
   for (let i = 0; i < args.length - 1; i++) {
     if (!numberQ(args[i])) {
       throw new Error(
-        "procedure <: expected number, got " + args[i].toString(),
+        "procedure <: expected number, got " + args[i].toString()
       );
     }
     acc = acc && args[i] < args[i + 1];
@@ -137,7 +137,7 @@ export let G = function (...args: number[]): boolean {
   for (let i = 0; i < args.length - 1; i++) {
     if (!numberQ(args[i])) {
       throw new Error(
-        "procedure >: expected number, got " + args[i].toString(),
+        "procedure >: expected number, got " + args[i].toString()
       );
     }
     acc = acc && args[i] > args[i + 1];
@@ -150,7 +150,7 @@ export let LE = function (...args: number[]): boolean {
   for (let i = 0; i < args.length - 1; i++) {
     if (!numberQ(args[i])) {
       throw new Error(
-        "procedure <=: expected number, got " + args[i].toString(),
+        "procedure <=: expected number, got " + args[i].toString()
       );
     }
     acc = acc && args[i] <= args[i + 1];
@@ -163,7 +163,7 @@ export let GE = function (...args: number[]): boolean {
   for (let i = 0; i < args.length - 1; i++) {
     if (!numberQ(args[i])) {
       throw new Error(
-        "procedure >=: expected number, got " + args[i].toString(),
+        "procedure >=: expected number, got " + args[i].toString()
       );
     }
     acc = acc && args[i] >= args[i + 1];
@@ -461,7 +461,7 @@ export let append = function (...args: (Pair | null)[]): Pair | null {
     } else {
       return cons(
         car(args[0] as Pair),
-        append(cdr(args[0] as Pair), ...args.slice(1)),
+        append(cdr(args[0] as Pair), ...args.slice(1))
       );
     }
   }
@@ -514,7 +514,7 @@ export let memv = function (item: any, p: Pair | null): Pair | null | boolean {
 
 export let member = function (
   item: any,
-  p: Pair | null,
+  p: Pair | null
 ): Pair | null | boolean {
   if (p === null) {
     return false;
@@ -650,7 +650,7 @@ export let stringGEQ = function (s1: string, s2: string): boolean {
 export let substring = function (
   s: string,
   start: number,
-  end: number = s.length,
+  end: number = s.length
 ): string {
   return s.slice(start, end);
 };
@@ -780,7 +780,7 @@ export let vector_copyB = function (
   at: number,
   from: Vector,
   start: number | undefined = undefined,
-  end: number | undefined = undefined,
+  end: number | undefined = undefined
 ): Vector {
   if (start === undefined) {
     start = 0;

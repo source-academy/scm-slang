@@ -16,7 +16,7 @@ function transpile(inputFilePath: string, outputFilePath: string) {
     const encodedAST = estreeEncode(transpiledAST);
     const transpiledProgram = escodegen.generate(encodedAST);
 
-    fs.writeFile(outputFilePath, transpiledProgram, (err) => {
+    fs.writeFile(outputFilePath, transpiledProgram, err => {
       if (err) {
         console.error(`Error writing file: ${err}`);
         return;

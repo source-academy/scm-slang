@@ -7,7 +7,7 @@ export abstract class LexerError extends SyntaxError {
     super(message);
     this.loc = {
       line: line,
-      column: col,
+      column: col
     };
   }
   toString(): string {

@@ -118,19 +118,19 @@ const atomic_equals: (a: core.SchemeNumber, b: core.SchemeNumber) => boolean =
   core.atomic_equals;
 const atomic_add: (
   a: core.SchemeNumber,
-  b: core.SchemeNumber,
+  b: core.SchemeNumber
 ) => core.SchemeNumber = core.atomic_add;
 const atomic_subtract: (
   a: core.SchemeNumber,
-  b: core.SchemeNumber,
+  b: core.SchemeNumber
 ) => core.SchemeNumber = core.atomic_subtract;
 const atomic_multiply: (
   a: core.SchemeNumber,
-  b: core.SchemeNumber,
+  b: core.SchemeNumber
 ) => core.SchemeNumber = core.atomic_multiply;
 const atomic_divide: (
   a: core.SchemeNumber,
-  b: core.SchemeNumber,
+  b: core.SchemeNumber
 ) => core.SchemeNumber = core.atomic_divide;
 
 export const $61$: Function = (
@@ -212,7 +212,7 @@ export const max: Function = (
   args.reduce(
     (max, current, index, array) =>
       atomic_greater_than(current, max) ? current : max,
-    first,
+    first
   );
 export const min: Function = (
   first: core.SchemeNumber,
@@ -221,7 +221,7 @@ export const min: Function = (
   args.reduce(
     (min, current, index, array) =>
       atomic_less_than(current, min) ? current : min,
-    first,
+    first
   );
 export const $43$: Function = (...args: core.SchemeNumber[]) =>
   args.reduce(atomic_add, make_number(0));
@@ -246,7 +246,7 @@ export const abs: Function = (n: core.SchemeNumber[]) =>
 
 export const quotient: Function = (
   a: core.SchemeInteger,
-  b: core.SchemeInteger,
+  b: core.SchemeInteger
 ) => {
   if (!integer$63$(a) || !integer$63$(b)) {
     error("quotient: expected integers");
@@ -259,7 +259,7 @@ export const quotient: Function = (
 
   let quotient = atomic_divide(
     atomic_subtract(a, remainder),
-    b,
+    b
   ) as core.SchemeInteger;
 
   if (atomic_equals(remainder, make_number(0))) {
@@ -298,7 +298,7 @@ export const quotient: Function = (
 
 export const remainder: Function = (
   a: core.SchemeInteger,
-  b: core.SchemeInteger,
+  b: core.SchemeInteger
 ) => {
   if (!integer$63$(a) || !integer$63$(b)) {
     error("remainder: expected integers");
@@ -311,7 +311,7 @@ export const remainder: Function = (
 
   let remainder = atomic_subtract(
     a,
-    atomic_multiply(q, b),
+    atomic_multiply(q, b)
   ) as core.SchemeInteger;
 
   return remainder;
@@ -319,7 +319,7 @@ export const remainder: Function = (
 
 export const modulo: Function = (
   a: core.SchemeInteger,
-  b: core.SchemeInteger,
+  b: core.SchemeInteger
 ) => {
   if (!integer$63$(a) || !integer$63$(b)) {
     error("modulo: expected integers");
@@ -373,7 +373,7 @@ export const modulo: Function = (
 
 function atomic_gcd(
   a: core.SchemeInteger,
-  b: core.SchemeInteger,
+  b: core.SchemeInteger
 ): core.SchemeInteger {
   if (atomic_equals(b, make_number(0))) {
     return abs(a);
@@ -395,7 +395,7 @@ export const gcd: Function = (...vals: core.SchemeInteger[]) => {
 
 function atomic_lcm(
   a: core.SchemeInteger,
-  b: core.SchemeInteger,
+  b: core.SchemeInteger
 ): core.SchemeInteger {
   return abs(atomic_multiply(quotient(a, gcd(a, b)), b)) as core.SchemeInteger;
 }
@@ -485,7 +485,7 @@ export const set$45$cdr$33$: Function = (p: core.Pair | core.List, v: any) => {
 // cxr operations
 
 export const car: (p: core.Pair | core.List) => any = (
-  p: core.Pair | core.List,
+  p: core.Pair | core.List
 ) => {
   if (pair$63$(p)) {
     return (p as core.Pair)[0];
@@ -493,7 +493,7 @@ export const car: (p: core.Pair | core.List) => any = (
   error("car: expected pair");
 };
 export const cdr: (p: core.Pair | core.List) => any = (
-  p: core.Pair | core.List,
+  p: core.Pair | core.List
 ) => {
   if (pair$63$(p)) {
     return (p as core.Pair)[1];
@@ -543,14 +543,14 @@ export const list$42$: Function = (curr: any, ...rest: any[]) =>
 export const cons$42$: Function = list$42$;
 export const make$45$list: Function = (
   n: core.SchemeNumber,
-  v: any = make_number(0),
+  v: any = make_number(0)
 ) =>
   $61$(n, make_number(0))
     ? null
     : cons(v, make$45$list(atomic_subtract(n, make_number(1)), v));
 export const list$45$tabulate: Function = (
   n: core.SchemeNumber,
-  f: (a: core.SchemeNumber) => any,
+  f: (a: core.SchemeNumber) => any
 ) =>
   $61$(n, make_number(0))
     ? null
@@ -598,7 +598,7 @@ export const tenth: Function = compose(cadr, cddddr, cddddr);
 export const list$45$set$33$: Function = (
   xs: core.List,
   k: core.SchemeNumber,
-  v: any,
+  v: any
 ) => set$45$car$33$(list$45$tail(xs, k), v);
 
 export const circular$45$list$63$: Function = (cxs: any) => {
@@ -704,7 +704,7 @@ export const reduce$45$left: Function = reduce;
 export const reduce$45$right: Function = (
   f: Function,
   ridentity: any,
-  xs: core.List,
+  xs: core.List
 ) => (null$63$(xs) ? ridentity : fold$45$right(f, car(xs), cdr(xs)));
 
 export const list$61$: Function = (
@@ -730,7 +730,7 @@ export const length: Function = (xs: core.List) =>
   fold$45$left(
     (acc: core.SchemeNumber, _: any) => atomic_add(acc, make_number(1)),
     make_number(0),
-    xs,
+    xs
   );
 
 export const length$43$: Function = (xs: core.List) =>
@@ -766,7 +766,7 @@ export const take: Function = (xs: core.List, i: core.SchemeNumber) => {
 
 export const take$45$right: Function = (
   xs: core.List,
-  i: core.SchemeNumber,
+  i: core.SchemeNumber
 ) => {
   const reversed_list = reverse(xs);
   return reverse(take(reversed_list, i));
@@ -782,7 +782,7 @@ export const drop: Function = (xs: core.List, i: core.SchemeNumber) => {
 
 export const drop$45$right: Function = (
   xs: core.List,
-  i: core.SchemeNumber,
+  i: core.SchemeNumber
 ) => {
   const reversed_list = reverse(xs);
   return reverse(drop(reversed_list, i));
@@ -823,7 +823,7 @@ export const $36$resolve$45$splice: Function = (xs: core.List) => {
 
 export const make$45$vector: Function = (
   size: core.SchemeNumber,
-  fill?: any,
+  fill?: any
 ) => {
   const vector = new Array(size);
   if (fill !== undefined) {
@@ -870,7 +870,7 @@ export const vector$45$length: Function = (v: any[]) => make_number(v.length);
 export const vector$45$set$33$: Function = (
   v: any[],
   i: core.SchemeNumber,
-  x: any,
+  x: any
 ) => {
   const index = core.coerce_to_number(i);
   if (index < 0 || index >= v.length) {
@@ -895,7 +895,7 @@ export const vector$45$fill$33$: Function = (
   v: any[],
   fill: any,
   start?: core.SchemeNumber,
-  end?: core.SchemeNumber,
+  end?: core.SchemeNumber
 ) => {
   const s = start === undefined ? 0 : core.coerce_to_number(start);
   const e = end === undefined ? v.length : core.coerce_to_number(end);
@@ -973,7 +973,7 @@ export const string$63$: Function = (s: any) => typeof s === "string";
 
 export const make$45$string: Function = (
   n: core.SchemeNumber,
-  ch: string = " ",
+  ch: string = " "
 ) => {
   // make sure that the character is a single character
   if (ch.length !== 1) {
@@ -1017,7 +1017,7 @@ export const string$62$$61$$63$: Function = (s1: string, s2: string) =>
 export const substring: Function = (
   s: string,
   start: core.SchemeNumber,
-  end?: core.SchemeNumber,
+  end?: core.SchemeNumber
 ) => {
   const s_start = core.coerce_to_number(start);
   const s_end = end === undefined ? s.length : core.coerce_to_number(end);

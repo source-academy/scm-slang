@@ -50,7 +50,7 @@ const JS_KEYWORDS: string[] = [
   "static",
   "interface",
   "private",
-  "public",
+  "public"
 ];
 
 /**
@@ -65,13 +65,13 @@ export function encode(identifier: string): string {
       "$scheme_" +
       b64Encode(identifier).replace(
         /([^a-zA-Z0-9_])/g,
-        (match: string) => `\$${match.charCodeAt(0)}\$`,
+        (match: string) => `\$${match.charCodeAt(0)}\$`
       )
     );
   } else {
     return identifier.replace(
       /([^a-zA-Z0-9_])/g,
-      (match: string) => `\$${match.charCodeAt(0)}\$`,
+      (match: string) => `\$${match.charCodeAt(0)}\$`
     );
   }
 }
@@ -88,12 +88,12 @@ export function decode(identifier: string): string {
       identifier
         .slice(8)
         .replace(/\$([0-9]+)\$/g, (_, code: string) =>
-          String.fromCharCode(parseInt(code)),
-        ),
+          String.fromCharCode(parseInt(code))
+        )
     );
   } else {
     return identifier.replace(/\$([0-9]+)\$/g, (_, code: string) =>
-      String.fromCharCode(parseInt(code)),
+      String.fromCharCode(parseInt(code))
     );
   }
 }

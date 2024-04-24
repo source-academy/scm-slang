@@ -3,7 +3,7 @@ import { SchemeLexer } from "../../lexer";
 import {
   Atomic,
   Extended,
-  Expression,
+  Expression
 } from "../../types/nodes/scheme-node-types";
 import { Location, Position } from "../../types/location";
 
@@ -35,7 +35,7 @@ function identifier(value: string) {
 function lambda(
   body: Expression,
   params: Atomic.Identifier[],
-  rest?: Atomic.Identifier,
+  rest?: Atomic.Identifier
 ) {
   return new Atomic.Lambda(dummyLocation, body, params, rest);
 }
@@ -52,14 +52,14 @@ function functionDefinition(
   name: Atomic.Identifier,
   body: Expression,
   params: Atomic.Identifier[],
-  rest?: Atomic.Identifier,
+  rest?: Atomic.Identifier
 ) {
   return new Extended.FunctionDefinition(
     dummyLocation,
     name,
     body,
     params,
-    rest,
+    rest
   );
 }
 
@@ -70,13 +70,13 @@ function application(operator: Expression, operands: Expression[]) {
 function conditional(
   test: Expression,
   consequent: Expression,
-  alternate?: Expression,
+  alternate?: Expression
 ) {
   return new Atomic.Conditional(
     dummyLocation,
     test,
     consequent,
-    alternate ? alternate : identifier("undefined"),
+    alternate ? alternate : identifier("undefined")
   );
 }
 
@@ -109,7 +109,7 @@ function importNode(from: Atomic.StringLiteral, imports: Atomic.Identifier[]) {
 }
 
 function exportNode(
-  definition: Atomic.Definition | Extended.FunctionDefinition,
+  definition: Atomic.Definition | Extended.FunctionDefinition
 ) {
   return new Atomic.Export(dummyLocation, definition);
 }
@@ -117,7 +117,7 @@ function exportNode(
 function letNode(
   identifiers: Atomic.Identifier[],
   values: Expression[],
-  body: Expression,
+  body: Expression
 ) {
   return new Extended.Let(dummyLocation, identifiers, values, body);
 }
@@ -125,7 +125,7 @@ function letNode(
 function cond(
   predicates: Expression[],
   consequents: Expression[],
-  elseClause?: Expression,
+  elseClause?: Expression
 ) {
   return new Extended.Cond(dummyLocation, predicates, consequents, elseClause);
 }
@@ -164,137 +164,137 @@ test("parses literals", () => {
 test("parses identifiers", () => {
   expect(parseFirst("hello").equals(identifier("hello"))).toEqual(true);
   expect(parseFirst("hello-world").equals(identifier("hello-world"))).toEqual(
-    true,
+    true
   );
   expect(parseFirst("hello?").equals(identifier("hello?"))).toEqual(true);
   expect(parseFirst("hello-world!").equals(identifier("hello-world!"))).toEqual(
-    true,
+    true
   );
 });
 
 test("parses lambda functions", () => {
   expect(
-    parseFirst("(lambda () 1)").equals(lambda(numericLiteral("1"), [])),
+    parseFirst("(lambda () 1)").equals(lambda(numericLiteral("1"), []))
   ).toEqual(true);
   expect(
     parseFirst("(lambda (x) x)").equals(
-      lambda(identifier("x"), [identifier("x")]),
-    ),
+      lambda(identifier("x"), [identifier("x")])
+    )
   ).toEqual(true);
   expect(
     parseFirst("(lambda (x y) x)").equals(
-      lambda(identifier("x"), [identifier("x"), identifier("y")]),
-    ),
+      lambda(identifier("x"), [identifier("x"), identifier("y")])
+    )
   ).toEqual(true);
   expect(
     parseFirst("(lambda (x y z) x)").equals(
       lambda(identifier("x"), [
         identifier("x"),
         identifier("y"),
-        identifier("z"),
-      ]),
-    ),
+        identifier("z")
+      ])
+    )
   ).toEqual(true);
 });
 
 test("parses variadic lambda functions", () => {
   expect(
     parseFirst("(lambda x x)").equals(
-      lambda(identifier("x"), [], identifier("x")),
-    ),
+      lambda(identifier("x"), [], identifier("x"))
+    )
   ).toEqual(true);
   expect(
     parseFirst("(lambda (x . y) x)").equals(
-      lambda(identifier("x"), [identifier("x")], identifier("y")),
-    ),
+      lambda(identifier("x"), [identifier("x")], identifier("y"))
+    )
   ).toEqual(true);
   expect(
     parseFirst("(lambda (x y . z) x)").equals(
       lambda(
         identifier("x"),
         [identifier("x"), identifier("y")],
-        identifier("z"),
-      ),
-    ),
+        identifier("z")
+      )
+    )
   ).toEqual(true);
 });
 
 test("parses functions with body", () => {
   expect(
     parseFirst("(lambda () x x)").equals(
-      lambda(sequence(identifier("x"), identifier("x")), []),
-    ),
+      lambda(sequence(identifier("x"), identifier("x")), [])
+    )
   ).toEqual(true);
 });
 
 test("parses definitions", () => {
   expect(
     parseFirst("(define x 1)").equals(
-      definition(identifier("x"), numericLiteral("1")),
-    ),
+      definition(identifier("x"), numericLiteral("1"))
+    )
   ).toEqual(true);
   expect(
     parseFirst("(define x 1.0)").equals(
-      definition(identifier("x"), numericLiteral("1.0")),
-    ),
+      definition(identifier("x"), numericLiteral("1.0"))
+    )
   ).toEqual(true);
   expect(
     parseFirst('(define x "hello")').equals(
-      definition(identifier("x"), stringLiteral("hello")),
-    ),
+      definition(identifier("x"), stringLiteral("hello"))
+    )
   ).toEqual(true);
   expect(
     parseFirst("(define x #t)").equals(
-      definition(identifier("x"), booleanLiteral(true)),
-    ),
+      definition(identifier("x"), booleanLiteral(true))
+    )
   ).toEqual(true);
   expect(
     parseFirst("(define x #f)").equals(
-      definition(identifier("x"), booleanLiteral(false)),
-    ),
+      definition(identifier("x"), booleanLiteral(false))
+    )
   ).toEqual(true);
   expect(
     parseFirst("(define x (lambda (x) x))").equals(
-      definition(identifier("x"), lambda(identifier("x"), [identifier("x")])),
-    ),
+      definition(identifier("x"), lambda(identifier("x"), [identifier("x")]))
+    )
   ).toEqual(true);
 });
 
 test("parses function definitions", () => {
   expect(
     parseFirst("(define (f x) x)").equals(
-      functionDefinition(identifier("f"), identifier("x"), [identifier("x")]),
-    ),
+      functionDefinition(identifier("f"), identifier("x"), [identifier("x")])
+    )
   ).toEqual(true);
   expect(
     parseFirst("(define (f x y) x y)").equals(
       functionDefinition(
         identifier("f"),
         sequence(identifier("x"), identifier("y")),
-        [identifier("x"), identifier("y")],
-      ),
-    ),
+        [identifier("x"), identifier("y")]
+      )
+    )
   ).toEqual(true);
 });
 
 test("parses applications", () => {
   expect(parseFirst("(f)").equals(application(identifier("f"), []))).toEqual(
-    true,
+    true
   );
   expect(
-    parseFirst("(f x)").equals(application(identifier("f"), [identifier("x")])),
+    parseFirst("(f x)").equals(application(identifier("f"), [identifier("x")]))
   ).toEqual(true);
   expect(
     parseFirst("(f x y)").equals(
-      application(identifier("f"), [identifier("x"), identifier("y")]),
-    ),
+      application(identifier("f"), [identifier("x"), identifier("y")])
+    )
   ).toEqual(true);
   expect(
     parseFirst("((lambda (x) x) 1)").equals(
       application(lambda(identifier("x"), [identifier("x")]), [
-        numericLiteral("1"),
-      ]),
-    ),
+        numericLiteral("1")
+      ])
+    )
   ).toEqual(true);
 });
 
@@ -304,14 +304,14 @@ test("parses conditionals", () => {
       conditional(
         booleanLiteral(true),
         numericLiteral("1"),
-        numericLiteral("2"),
-      ),
-    ),
+        numericLiteral("2")
+      )
+    )
   ).toEqual(true);
   expect(
     parseFirst("(if #f 1)").equals(
-      conditional(booleanLiteral(false), numericLiteral("1")),
-    ),
+      conditional(booleanLiteral(false), numericLiteral("1"))
+    )
   ).toEqual(true);
 });
 
@@ -325,8 +325,8 @@ test("parses quoted literals and identifiers", () => {
 test("parses quoted vectors (everything inside should be quoted)", () => {
   expect(
     parseFirst("'#(1 2 3)").equals(
-      vector(numericLiteral("1"), numericLiteral("2"), numericLiteral("3")),
-    ),
+      vector(numericLiteral("1"), numericLiteral("2"), numericLiteral("3"))
+    )
   ).toEqual(true);
   expect(
     parseFirst("'#(1 2 3 4)").equals(
@@ -334,9 +334,9 @@ test("parses quoted vectors (everything inside should be quoted)", () => {
         numericLiteral("1"),
         numericLiteral("2"),
         numericLiteral("3"),
-        numericLiteral("4"),
-      ),
-    ),
+        numericLiteral("4")
+      )
+    )
   ).toEqual(true);
   expect(
     parseFirst("'#(1 testy 3 4 5)").equals(
@@ -345,26 +345,26 @@ test("parses quoted vectors (everything inside should be quoted)", () => {
         symbol("testy"),
         numericLiteral("3"),
         numericLiteral("4"),
-        numericLiteral("5"),
-      ),
-    ),
+        numericLiteral("5")
+      )
+    )
   ).toEqual(true);
 });
 
 test("parses quotations in lists", () => {
   expect(
     parseFirst("'(1 2 3)").equals(
-      list(numericLiteral("1"), numericLiteral("2"), numericLiteral("3")),
-    ),
+      list(numericLiteral("1"), numericLiteral("2"), numericLiteral("3"))
+    )
   ).toEqual(true);
   expect(
     parseFirst('\'("1" (2 3) 4)').equals(
       list(
         stringLiteral("1"),
         list(numericLiteral("2"), numericLiteral("3")),
-        numericLiteral("4"),
-      ),
-    ),
+        numericLiteral("4")
+      )
+    )
   ).toEqual(true);
   expect(
     parseFirst("'(1 (2 (3 will-this be a symbol)) 5)").equals(
@@ -377,12 +377,12 @@ test("parses quotations in lists", () => {
             symbol("will-this"),
             symbol("be"),
             symbol("a"),
-            symbol("symbol"),
-          ),
+            symbol("symbol")
+          )
         ),
-        numericLiteral("5"),
-      ),
-    ),
+        numericLiteral("5")
+      )
+    )
   ).toEqual(true);
 });
 
@@ -393,16 +393,16 @@ test("parses the empty list", () => {
 test("parses dotted lists", () => {
   expect(
     parseFirst("'(1 . 2)").equals(
-      dottedList([numericLiteral("1")], numericLiteral("2")),
-    ),
+      dottedList([numericLiteral("1")], numericLiteral("2"))
+    )
   ).toEqual(true);
   expect(
     parseFirst("'(1 2 . 3)").equals(
       dottedList(
         [numericLiteral("1"), numericLiteral("2")],
-        numericLiteral("3"),
-      ),
-    ),
+        numericLiteral("3")
+      )
+    )
   ).toEqual(true);
   expect(
     parseFirst("'((1 2 . 3) 2 3 . 4)").equals(
@@ -410,14 +410,14 @@ test("parses dotted lists", () => {
         [
           dottedList(
             [numericLiteral("1"), numericLiteral("2")],
-            numericLiteral("3"),
+            numericLiteral("3")
           ),
           numericLiteral("2"),
-          numericLiteral("3"),
+          numericLiteral("3")
         ],
-        numericLiteral("4"),
-      ),
-    ),
+        numericLiteral("4")
+      )
+    )
   ).toEqual(true);
 });
 
@@ -427,17 +427,17 @@ test("parses nested lists", () => {
       list(
         numericLiteral("1"),
         list(numericLiteral("2"), numericLiteral("3")),
-        numericLiteral("4"),
-      ),
-    ),
+        numericLiteral("4")
+      )
+    )
   ).toEqual(true);
 });
 
 test("parses quasiquoted lists", () => {
   expect(
     parseFirst("`(1 2 3)").equals(
-      list(numericLiteral("1"), numericLiteral("2"), numericLiteral("3")),
-    ),
+      list(numericLiteral("1"), numericLiteral("2"), numericLiteral("3"))
+    )
   ).toEqual(true);
   // the application is unquoted!
   expect(
@@ -448,12 +448,12 @@ test("parses quasiquoted lists", () => {
           numericLiteral("2"),
           application(identifier("+"), [
             numericLiteral("1"),
-            numericLiteral("2"),
-          ]),
+            numericLiteral("2")
+          ])
         ),
-        numericLiteral("4"),
-      ),
-    ),
+        numericLiteral("4")
+      )
+    )
   ).toEqual(true);
 });
 
@@ -474,8 +474,8 @@ test("should throw on a unquote without an external quote", () => {
 test("parses reassignments", () => {
   expect(
     parseFirst("(set! x 1)").equals(
-      reassignment(identifier("x"), numericLiteral("1")),
-    ),
+      reassignment(identifier("x"), numericLiteral("1"))
+    )
   ).toEqual(true);
 });
 
@@ -487,9 +487,9 @@ test("parses nested reassignments", () => {
     parseFirst("(set! x (set! y 1))").equals(
       reassignment(
         identifier("x"),
-        reassignment(identifier("y"), numericLiteral("1")),
-      ),
-    ),
+        reassignment(identifier("y"), numericLiteral("1"))
+      )
+    )
   ).toEqual(true);
 });
 
@@ -500,24 +500,24 @@ test("parses import statements", () => {
         identifier("a"),
         identifier("b"),
         identifier("c"),
-        identifier("d"),
-      ]),
-    ),
+        identifier("d")
+      ])
+    )
   ).toEqual(true);
 });
 
 test("parses export statements", () => {
   expect(
     parseFirst("(export (define a 1))").equals(
-      exportNode(definition(identifier("a"), numericLiteral("1"))),
-    ),
+      exportNode(definition(identifier("a"), numericLiteral("1")))
+    )
   ).toEqual(true);
 });
 
 test("parses vector literals (which are equal to their quoted equivalents - everything is quoted)", () => {
   expect(parseFirst("#(1 2 3)").equals(parseFirst("'#(1 2 3)"))).toEqual(true);
   expect(
-    parseFirst("#(1 testy 3 4 5)").equals(parseFirst("'#(1 testy 3 4 5)")),
+    parseFirst("#(1 testy 3 4 5)").equals(parseFirst("'#(1 testy 3 4 5)"))
   ).toEqual(true);
 });
 
@@ -525,23 +525,23 @@ test("parses vector literals with nested lists", () => {
   // observe - (testy) is not treated as an application, but a list
   expect(
     parseFirst("#(1 (testy) 4)").equals(
-      vector(numericLiteral("1"), list(symbol("testy")), numericLiteral("4")),
-    ),
+      vector(numericLiteral("1"), list(symbol("testy")), numericLiteral("4"))
+    )
   ).toEqual(true);
 });
 
 test("parses let expressions", () => {
   expect(
-    parseFirst("(let () 1)").equals(letNode([], [], numericLiteral("1"))),
+    parseFirst("(let () 1)").equals(letNode([], [], numericLiteral("1")))
   ).toEqual(true);
   expect(
     parseFirst("(let ((x 3)) (= x 1))").equals(
       letNode(
         [identifier("x")],
         [numericLiteral("3")],
-        application(identifier("="), [identifier("x"), numericLiteral("1")]),
-      ),
-    ),
+        application(identifier("="), [identifier("x"), numericLiteral("1")])
+      )
+    )
   ).toEqual(true);
 });
 
@@ -552,15 +552,15 @@ test("parses cond expressions", () => {
         [
           application(identifier("="), [
             numericLiteral("1"),
-            numericLiteral("1"),
-          ]),
+            numericLiteral("1")
+          ])
         ],
-        [numericLiteral("1")],
-      ),
-    ),
+        [numericLiteral("1")]
+      )
+    )
   ).toEqual(true);
   expect(
-    parseFirst("(cond (else 1))").equals(cond([], [], numericLiteral("1"))),
+    parseFirst("(cond (else 1))").equals(cond([], [], numericLiteral("1")))
   ).toEqual(true);
 
   // more than one "return value" becomes a sequence
@@ -571,11 +571,11 @@ test("parses cond expressions", () => {
         [
           sequence(
             application(identifier("bar"), []),
-            application(identifier("baz"), []),
-          ),
-        ],
-      ),
-    ),
+            application(identifier("baz"), [])
+          )
+        ]
+      )
+    )
   ).toEqual(true);
 
   // testing all features
@@ -585,42 +585,42 @@ test("parses cond expressions", () => {
         [
           application(identifier("="), [
             numericLiteral("1"),
-            numericLiteral("1"),
+            numericLiteral("1")
           ]),
           application(identifier("="), [
             numericLiteral("2"),
-            numericLiteral("2"),
-          ]),
+            numericLiteral("2")
+          ])
         ],
         [
           numericLiteral("1"),
-          sequence(numericLiteral("2"), numericLiteral("2")),
+          sequence(numericLiteral("2"), numericLiteral("2"))
         ],
-        numericLiteral("3"),
-      ),
-    ),
+        numericLiteral("3")
+      )
+    )
   ).toEqual(true);
 });
 
 test("parses begin expressions", () => {
   expect(parseFirst("(begin 1)").equals(begin(numericLiteral("1")))).toEqual(
-    true,
+    true
   );
   expect(
     parseFirst("(begin 1 2)").equals(
-      begin(numericLiteral("1"), numericLiteral("2")),
-    ),
+      begin(numericLiteral("1"), numericLiteral("2"))
+    )
   ).toEqual(true);
 });
 
 test("parses delay expressions", () => {
   expect(parseFirst("(delay 1)").equals(delay(numericLiteral("1")))).toEqual(
-    true,
+    true
   );
   expect(
     parseFirst("(delay (begin 1 2))").equals(
-      delay(begin(numericLiteral("1"), numericLiteral("2"))),
-    ),
+      delay(begin(numericLiteral("1"), numericLiteral("2")))
+    )
   ).toEqual(true);
 });
 
@@ -631,14 +631,14 @@ test("ignores datum comments", () => {
   // only (but-this-should-not) should be parsed
   expect(
     parseFirst("#; (this-should-be-ignored) (but-this-should-not)").equals(
-      application(identifier("but-this-should-not"), []),
-    ),
+      application(identifier("but-this-should-not"), [])
+    )
   ).toEqual(true);
 });
 
 test("ignores line comments", () => {
   expect(
-    parseFirst("; this is a comment\n1").equals(numericLiteral("1")),
+    parseFirst("; this is a comment\n1").equals(numericLiteral("1"))
   ).toEqual(true);
 });
 
@@ -649,9 +649,9 @@ test("ignores block comments", () => {
   `).equals(
       application(identifier("you-won't-see-2"), [
         numericLiteral("1"),
-        numericLiteral("3"),
-      ]),
-    ),
+        numericLiteral("3")
+      ])
+    )
   ).toEqual(true);
 });
 
@@ -717,7 +717,7 @@ a\`
 (((((((((1)))))))))
 
 (= #t true)
-`),
+`)
   ).not.toThrow();
 });
 

@@ -3,7 +3,7 @@ import * as math from "../core-math";
 function batchNumberTypeTest(
   numberType: string,
   fn: (a: string) => math.Match,
-  expected_output_tests: { test: string; expected: boolean }[],
+  expected_output_tests: { test: string; expected: boolean }[]
 ) {
   for (const numTest of expected_output_tests) {
     test(`"${numTest.test}" ${numTest.expected ? "correctly parses" : "does not parse"} as ${numberType}`, () => {
@@ -26,7 +26,7 @@ batchNumberTypeTest("integer", math.isInteger, [
   { test: "123.123", expected: false },
   { test: "123.123.123", expected: false },
   { test: "123.", expected: false },
-  { test: ".", expected: false },
+  { test: ".", expected: false }
 ]);
 
 batchNumberTypeTest("rational", math.isRational, [
@@ -45,7 +45,7 @@ batchNumberTypeTest("rational", math.isRational, [
   { test: "", expected: false },
   { test: "0", expected: false },
   { test: "123/", expected: false },
-  { test: "/123", expected: false },
+  { test: "/123", expected: false }
 ]);
 
 batchNumberTypeTest("real", math.isReal, [
@@ -93,7 +93,7 @@ batchNumberTypeTest("real", math.isReal, [
   { test: "1e1/2", expected: true },
   { test: "1e1e1", expected: true },
   { test: "1e1e1e1", expected: true },
-  { test: "1e1e1e1e1", expected: true },
+  { test: "1e1e1e1e1", expected: true }
 ]);
 
 batchNumberTypeTest("complex", math.isComplex, [
@@ -129,7 +129,7 @@ batchNumberTypeTest("complex", math.isComplex, [
   { test: "inf.0i", expected: false },
   { test: "1+inf.0i", expected: true },
   { test: "1-inf.0i", expected: true },
-  { test: "12", expected: false },
+  { test: "12", expected: false }
 ]);
 
 // make_number tests
@@ -141,7 +141,7 @@ test("make_number should parse integers", () => {
 test("make_number should parse rationals", () => {
   const match = math.make_number("123/234");
   expect(math.atomic_equals(match, math.SchemeRational.build(123n, 234n))).toBe(
-    true,
+    true
   );
 });
 
@@ -154,7 +154,7 @@ test("make_number should parse reals", () => {
 test("make_number should parse reals with exponents", () => {
   const match = math.make_number("123.123e123");
   expect(math.atomic_equals(match, math.SchemeReal.build(123.123e123))).toBe(
-    true,
+    true
   );
 });
 
@@ -170,8 +170,8 @@ test("make_number should parse complex numbers", () => {
       match,
       math.SchemeComplex.build(
         math.SchemeInteger.build(123n),
-        math.SchemeInteger.build(123n),
-      ),
-    ),
+        math.SchemeInteger.build(123n)
+      )
+    )
   ).toBe(true);
 });

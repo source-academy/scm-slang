@@ -40,7 +40,7 @@ export class Printer implements Visitor {
   visitSequence(node: Atomic.Sequence): void {
     this.indent();
     const indentedPrinter = this.increment();
-    node.expressions.forEach((expression) => {
+    node.expressions.forEach(expression => {
       this.indent();
       expression.accept(indentedPrinter);
       this.display("\n");
@@ -68,7 +68,7 @@ export class Printer implements Visitor {
     //   this.indent();
     this.display("( lambda ");
     this.display("( ");
-    node.params.forEach((parameter) => {
+    node.params.forEach(parameter => {
       parameter.accept(this.increment());
       this.display(" ");
     });
@@ -98,7 +98,7 @@ export class Printer implements Visitor {
     // this.indent();
     this.display("( ");
     node.operator.accept(this.increment());
-    node.operands.forEach((operand) => {
+    node.operands.forEach(operand => {
       this.display(" ");
       operand.accept(this.increment());
     });
@@ -158,7 +158,7 @@ export class Printer implements Visitor {
   visitVector(node: Atomic.Vector) {
     // this.indent();
     this.display("#( ");
-    node.elements.forEach((element) => {
+    node.elements.forEach(element => {
       this.display(" ");
       element.accept(this.increment());
     });
@@ -172,7 +172,7 @@ export class Printer implements Visitor {
     this.display("( ");
     node.name.accept(this);
     this.display(" ");
-    node.params.forEach((parameter) => {
+    node.params.forEach(parameter => {
       parameter.accept(this.increment());
       this.display(" ");
     });
@@ -197,7 +197,7 @@ export class Printer implements Visitor {
   visitList(node: Extended.List): any {
     // this.indent();
     this.display("( list ");
-    node.elements.forEach((value) => {
+    node.elements.forEach(value => {
       this.display(" ");
       value.accept(this.increment());
     });
@@ -210,7 +210,7 @@ export class Printer implements Visitor {
   visitBegin(node: Extended.Begin): any {
     // this.indent();
     this.display("( begin ");
-    node.expressions.forEach((expression) => {
+    node.expressions.forEach(expression => {
       this.display(" ");
       expression.accept(this.increment());
     });

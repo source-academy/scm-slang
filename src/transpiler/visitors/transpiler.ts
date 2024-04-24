@@ -8,7 +8,7 @@ import * as estreeBuilder from "../../utils/estree-nodes";
 import {
   Atomic,
   Extended,
-  Expression as scmExpression,
+  Expression as scmExpression
 } from "../types/nodes/scheme-node-types";
 import { Visitor } from ".";
 
@@ -37,11 +37,11 @@ export class Transpiler implements Visitor {
 
   public transpile(program: scmExpression[]): es.Program {
     // create an array of expressions
-    const expressions = program.flatMap((e) => e.accept(this));
+    const expressions = program.flatMap(e => e.accept(this));
 
     // then create an array of statements
-    const statements = expressions.map((e) =>
-      isExpression(e) ? wrapInStatement(e) : e,
+    const statements = expressions.map(e =>
+      isExpression(e) ? wrapInStatement(e) : e
     );
 
     // then wrap the whole thing in a program
@@ -51,11 +51,11 @@ export class Transpiler implements Visitor {
 
   // iife
   visitSequence(node: Atomic.Sequence): [es.CallExpression] {
-    const expressions = node.expressions.flatMap((e) => e.accept(this));
+    const expressions = node.expressions.flatMap(e => e.accept(this));
 
     // wrap each expression into an expression statement if required
-    const statements = expressions.map((e) =>
-      isExpression(e) ? wrapInStatement(e) : e,
+    const statements = expressions.map(e =>
+      isExpression(e) ? wrapInStatement(e) : e
     );
 
     // promote the last expression to a return statement
@@ -67,13 +67,13 @@ export class Transpiler implements Visitor {
       statements.push(
         // always remember that undefined is an identifier
         wrapInStatement(
-          estreeBuilder.makeIdentifier("undefined", node.location),
-        ),
+          estreeBuilder.makeIdentifier("undefined", node.location)
+        )
       );
     } else {
       // if the last expression is an expression statement, we should promote it to a return statement
       statements[statements.length - 1] = wrapInReturn(
-        lastExpression.expression,
+        lastExpression.expression
       );
     }
 
@@ -84,7 +84,7 @@ export class Transpiler implements Visitor {
     const iife = estreeBuilder.makeCallExpression(
       estreeBuilder.makeArrowFunctionExpression([], body, node.location),
       [],
-      node.location,
+      node.location
     );
 
     // if other parts of the program want to optimize their code, eliminating
@@ -98,12 +98,12 @@ export class Transpiler implements Visitor {
     // we need to wrap the number in a call to make-number
     const makeNumber = estreeBuilder.makeIdentifier(
       "make_number",
-      node.location,
+      node.location
     );
     // we turn the number into a literal
     const number = estreeBuilder.makeLiteral(node.value, node.location);
     return [
-      estreeBuilder.makeCallExpression(makeNumber, [number], node.location),
+      estreeBuilder.makeCallExpression(makeNumber, [number], node.location)
     ];
   }
 
@@ -116,7 +116,7 @@ export class Transpiler implements Visitor {
   }
 
   visitLambda(node: Atomic.Lambda): [es.ArrowFunctionExpression] {
-    const parameters: any[] = node.params.flatMap((p) => p.accept(this));
+    const parameters: any[] = node.params.flatMap(p => p.accept(this));
     const [fnBody] = node.body.accept(this);
 
     // if the inner body is a sequence, we can optimize it by removing the sequence
@@ -134,8 +134,8 @@ export class Transpiler implements Visitor {
         estreeBuilder.makeArrowFunctionExpression(
           parameters,
           finalBody,
-          node.location,
-        ),
+          node.location
+        )
       ];
     }
 
@@ -150,21 +150,21 @@ export class Transpiler implements Visitor {
     // this is to ensure that the rest parameter is always a list
     const vectorToList = estreeBuilder.makeIdentifier(
       "vector->list",
-      node.location,
+      node.location
     );
 
     // we make a call to it with the rest parameter as the argument
     const restParameterConversion = estreeBuilder.makeCallExpression(
       vectorToList,
       [restParameter],
-      node.location,
+      node.location
     );
 
     // then we reassign the rest parameter to the result of the call
     const restParameterAssignment = estreeBuilder.makeAssignmentExpression(
       restParameter,
       restParameterConversion,
-      node.location,
+      node.location
     );
 
     // then we inject it into the final body
@@ -174,8 +174,8 @@ export class Transpiler implements Visitor {
         estreeBuilder.makeArrowFunctionExpression(
           parameters,
           finalBody,
-          node.location,
-        ),
+          node.location
+        )
       ];
     }
 
@@ -183,15 +183,15 @@ export class Transpiler implements Visitor {
     // and then inject the vectorToList call
     finalBody = estreeBuilder.makeBlockStatement([
       wrapInStatement(restParameterAssignment),
-      wrapInReturn(finalBody),
+      wrapInReturn(finalBody)
     ]);
 
     return [
       estreeBuilder.makeArrowFunctionExpression(
         parameters,
         finalBody,
-        node.location,
-      ),
+        node.location
+      )
     ];
   }
 
@@ -212,9 +212,9 @@ export class Transpiler implements Visitor {
   // expressions
   visitApplication(node: Atomic.Application): [es.CallExpression] {
     const [operator] = node.operator.accept(this);
-    const operands = node.operands.flatMap((o) => o.accept(this));
+    const operands = node.operands.flatMap(o => o.accept(this));
     return [
-      estreeBuilder.makeCallExpression(operator, operands, node.location),
+      estreeBuilder.makeCallExpression(operator, operands, node.location)
     ];
   }
 
@@ -226,7 +226,7 @@ export class Transpiler implements Visitor {
     const schemeTest = estreeBuilder.makeCallExpression(
       truthy,
       [test],
-      node.location,
+      node.location
     );
     const [consequent] = node.consequent.accept(this);
     const [alternate] = node.alternate.accept(this);
@@ -235,8 +235,8 @@ export class Transpiler implements Visitor {
         schemeTest,
         consequent,
         alternate,
-        node.location,
-      ),
+        node.location
+      )
     ];
   }
 
@@ -260,11 +260,11 @@ export class Transpiler implements Visitor {
     const str = estreeBuilder.makeLiteral(node.value, node.location);
     const stringToSymbol = estreeBuilder.makeIdentifier(
       "string->symbol",
-      node.location,
+      node.location
     );
 
     return [
-      estreeBuilder.makeCallExpression(stringToSymbol, [str], node.location),
+      estreeBuilder.makeCallExpression(stringToSymbol, [str], node.location)
     ];
   }
 
@@ -276,7 +276,7 @@ export class Transpiler implements Visitor {
 
     const makeSplice = estreeBuilder.makeIdentifier(
       "make-splice",
-      node.location,
+      node.location
     );
 
     return [estreeBuilder.makeCallExpression(makeSplice, expr, node.location)];
@@ -295,8 +295,8 @@ export class Transpiler implements Visitor {
   // and separate from nodes
   visitImport(node: Atomic.Import): (es.Statement | es.ModuleDeclaration)[] {
     // first we make the importDeclaration
-    const newIdentifiers = node.identifiers.flatMap((i) => i.accept(this));
-    const mappedIdentifierNames = newIdentifiers.map((i) => {
+    const newIdentifiers = node.identifiers.flatMap(i => i.accept(this));
+    const mappedIdentifierNames = newIdentifiers.map(i => {
       const copy = Object.assign({}, i);
       copy.name = "imported" + copy.name;
       return copy;
@@ -304,15 +304,15 @@ export class Transpiler implements Visitor {
 
     const makeSpecifiers = (
       importeds: es.Identifier[],
-      locals: es.Identifier[],
+      locals: es.Identifier[]
     ) =>
       importeds.map((imported: es.Identifier, i: number) =>
         // safe to cast as we are assured all source locations are present
         estreeBuilder.makeImportSpecifier(
           imported,
           locals[i],
-          imported.loc as es.SourceLocation,
-        ),
+          imported.loc as es.SourceLocation
+        )
       );
 
     const specifiers = makeSpecifiers(newIdentifiers, mappedIdentifierNames);
@@ -322,7 +322,7 @@ export class Transpiler implements Visitor {
     const importDeclaration = estreeBuilder.makeImportDeclaration(
       specifiers,
       source,
-      node.location,
+      node.location
     );
 
     // then for each imported function, we define their proper
@@ -330,7 +330,7 @@ export class Transpiler implements Visitor {
 
     const makeRedefinitions = (
       importeds: es.Identifier[],
-      locals: es.Identifier[],
+      locals: es.Identifier[]
     ) =>
       importeds.flatMap((imported: es.Identifier, i: number) =>
         estreeBuilder.makeDeclaration(
@@ -338,13 +338,13 @@ export class Transpiler implements Visitor {
           imported,
           locals[i],
           // we are assured that all source locations are present
-          imported.loc as es.SourceLocation,
-        ),
+          imported.loc as es.SourceLocation
+        )
       );
 
     const redefinitions = makeRedefinitions(
       newIdentifiers,
-      mappedIdentifierNames,
+      mappedIdentifierNames
     );
 
     return [importDeclaration, ...redefinitions];
@@ -353,13 +353,13 @@ export class Transpiler implements Visitor {
   visitExport(node: Atomic.Export): [es.ModuleDeclaration] {
     const [newDefinition] = node.definition.accept(this);
     return [
-      estreeBuilder.makeExportNamedDeclaration(newDefinition, node.location),
+      estreeBuilder.makeExportNamedDeclaration(newDefinition, node.location)
     ];
   }
 
   // turn into an array
   visitVector(node: Atomic.Vector): [es.ArrayExpression] {
-    const newElements = node.elements.flatMap((e) => e.accept(this));
+    const newElements = node.elements.flatMap(e => e.accept(this));
     return [estreeBuilder.makeArrayExpression(newElements, node.location)];
   }
 
@@ -367,7 +367,7 @@ export class Transpiler implements Visitor {
 
   // this is in the extended AST, but useful enough to keep.
   visitList(node: Extended.List): [es.CallExpression] {
-    const newElements = node.elements.flatMap((e) => e.accept(this));
+    const newElements = node.elements.flatMap(e => e.accept(this));
     const [newTerminator] = node.terminator
       ? node.terminator.accept(this)
       : [undefined];
@@ -380,8 +380,8 @@ export class Transpiler implements Visitor {
         estreeBuilder.makeCallExpression(
           dottedList,
           [...newElements, newTerminator],
-          node.location,
-        ),
+          node.location
+        )
       ];
     }
 
@@ -394,7 +394,7 @@ export class Transpiler implements Visitor {
   // if any of these are called, its an error. the simplifier
   // should be called first.
   visitFunctionDefinition(
-    node: Extended.FunctionDefinition,
+    node: Extended.FunctionDefinition
   ): [es.VariableDeclaration] {
     throw new Error("The AST should be simplified!");
   }

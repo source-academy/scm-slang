@@ -141,7 +141,7 @@ export namespace Atomic {
       location: Location,
       body: Expression,
       params: Identifier[],
-      rest: Identifier | undefined = undefined,
+      rest: Identifier | undefined = undefined
     ) {
       this.location = location;
       this.params = params;
@@ -229,7 +229,7 @@ export namespace Atomic {
     constructor(
       location: Location,
       operator: Expression,
-      operands: Expression[],
+      operands: Expression[]
     ) {
       this.location = location;
       this.operator = operator;
@@ -269,7 +269,7 @@ export namespace Atomic {
       location: Location,
       test: Expression,
       consequent: Expression,
-      alternate: Expression,
+      alternate: Expression
     ) {
       this.location = location;
       this.test = test;
@@ -416,7 +416,7 @@ export namespace Atomic {
     constructor(
       location: Location,
       source: StringLiteral,
-      identifiers: Identifier[],
+      identifiers: Identifier[]
     ) {
       this.location = location;
       this.source = source;
@@ -454,7 +454,7 @@ export namespace Atomic {
     definition: Definition | Extended.FunctionDefinition;
     constructor(
       location: Location,
-      definition: Definition | Extended.FunctionDefinition,
+      definition: Definition | Extended.FunctionDefinition
     ) {
       this.location = location;
       this.definition = definition;
@@ -523,7 +523,7 @@ export namespace Extended {
       name: Atomic.Identifier,
       body: Expression,
       params: Atomic.Identifier[],
-      rest: Atomic.Identifier | undefined = undefined,
+      rest: Atomic.Identifier | undefined = undefined
     ) {
       this.location = location;
       this.name = name;
@@ -570,7 +570,7 @@ export namespace Extended {
       location: Location,
       identifiers: Atomic.Identifier[],
       values: Expression[],
-      body: Expression,
+      body: Expression
     ) {
       this.location = location;
       this.identifiers = identifiers;
@@ -617,7 +617,7 @@ export namespace Extended {
       location: Location,
       predicates: Expression[],
       consequents: Expression[],
-      catchall?: Expression,
+      catchall?: Expression
     ) {
       this.location = location;
       this.predicates = predicates;
@@ -668,7 +668,7 @@ export namespace Extended {
     constructor(
       location: Location,
       elements: Expression[],
-      terminator: Expression | undefined = undefined,
+      terminator: Expression | undefined = undefined
     ) {
       this.location = location;
       this.elements = elements;

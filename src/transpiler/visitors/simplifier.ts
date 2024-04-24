@@ -34,15 +34,15 @@ export class Simplifier implements Visitor {
 
   public simplify(node: Expression[]): Expression[] {
     const flattenedExpressions = node.flatMap(flattenBegin);
-    return flattenedExpressions.map((expression) => expression.accept(this));
+    return flattenedExpressions.map(expression => expression.accept(this));
   }
 
   // Atomic AST
   visitSequence(node: Atomic.Sequence): Atomic.Sequence {
     const location = node.location;
     const flattenedExpressions = node.expressions.flatMap(flattenBegin);
-    const newExpressions = flattenedExpressions.map((expression) =>
-      expression.accept(this),
+    const newExpressions = flattenedExpressions.map(expression =>
+      expression.accept(this)
     );
     return new Atomic.Sequence(location, newExpressions);
   }
@@ -83,7 +83,7 @@ export class Simplifier implements Visitor {
   visitApplication(node: Atomic.Application): Atomic.Application {
     const location = node.location;
     const newOperator = node.operator.accept(this);
-    const newOperands = node.operands.map((operand) => operand.accept(this));
+    const newOperands = node.operands.map(operand => operand.accept(this));
 
     return new Atomic.Application(location, newOperator, newOperands);
   }
@@ -98,7 +98,7 @@ export class Simplifier implements Visitor {
       location,
       newTest,
       newConsequent,
-      newAlternate,
+      newAlternate
     );
   }
 
@@ -149,14 +149,14 @@ export class Simplifier implements Visitor {
     const location = node.location;
 
     // Simplify the elements of the vector
-    const newElements = node.elements.map((element) => element.accept(this));
+    const newElements = node.elements.map(element => element.accept(this));
 
     return new Atomic.Vector(location, newElements);
   }
 
   // Extended AST
   visitFunctionDefinition(
-    node: Extended.FunctionDefinition,
+    node: Extended.FunctionDefinition
   ): Atomic.Definition {
     const location = node.location;
     const name = node.name;
@@ -171,7 +171,7 @@ export class Simplifier implements Visitor {
   visitLet(node: Extended.Let): Atomic.Application {
     const location = node.location;
     const identifiers = node.identifiers;
-    const newValues = node.values.map((value) => value.accept(this));
+    const newValues = node.values.map(value => value.accept(this));
     const newBody = node.body.accept(this);
 
     const newLambda = new Atomic.Lambda(location, newBody, identifiers);
@@ -180,11 +180,11 @@ export class Simplifier implements Visitor {
 
   visitCond(node: Extended.Cond): Expression {
     const location = node.location;
-    const newPredicates = node.predicates.map((predicate) =>
-      predicate.accept(this),
+    const newPredicates = node.predicates.map(predicate =>
+      predicate.accept(this)
     );
-    const newConsequents = node.consequents.map((consequent) =>
-      consequent.accept(this),
+    const newConsequents = node.consequents.map(consequent =>
+      consequent.accept(this)
     );
     const newCatchall = node.catchall
       ? node.catchall.accept(this)
@@ -196,7 +196,7 @@ export class Simplifier implements Visitor {
         location,
         new Atomic.BooleanLiteral(location, false),
         new Atomic.Nil(location),
-        node.catchall ? newCatchall : new Atomic.Nil(location),
+        node.catchall ? newCatchall : new Atomic.Nil(location)
       );
     }
 
@@ -217,7 +217,7 @@ export class Simplifier implements Visitor {
         newLocation,
         predicate,
         consequent,
-        newConditional,
+        newConditional
       );
     }
 
@@ -227,7 +227,7 @@ export class Simplifier implements Visitor {
   // we will keep list as it is useful in its current state.
   visitList(node: Extended.List): Expression {
     const location = node.location;
-    const newElements = node.elements.map((element) => element.accept(this));
+    const newElements = node.elements.map(element => element.accept(this));
     const newTerminator = node.terminator
       ? node.terminator.accept(this)
       : undefined;
@@ -240,8 +240,8 @@ export class Simplifier implements Visitor {
   visitBegin(node: Extended.Begin): Atomic.Sequence {
     const location = node.location;
     const flattenedExpressions = node.expressions.flatMap(flattenBegin);
-    const newExpressions = flattenedExpressions.map((expression) =>
-      expression.accept(this),
+    const newExpressions = flattenedExpressions.map(expression =>
+      expression.accept(this)
     );
 
     return new Atomic.Sequence(location, newExpressions);

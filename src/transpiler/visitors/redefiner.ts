@@ -15,14 +15,14 @@ export class Redefiner implements Visitor {
 
   redefineScope(scope: Expression[]): Expression[] {
     const names = new Set<string>();
-    const newScope = scope.map((expression) => {
+    const newScope = scope.map(expression => {
       if (expression instanceof Atomic.Definition) {
         const exprName = expression.name.name;
         if (names.has(exprName)) {
           return new Atomic.Reassignment(
             expression.location,
             expression.name,
-            expression.value,
+            expression.value
           );
         }
         names.add(exprName);
@@ -35,15 +35,15 @@ export class Redefiner implements Visitor {
   public redefine(nodes: Expression[]): Expression[] {
     // recursivly redefine the scope of the nodes
     // then work directly on the new nodes
-    const newNodes = nodes.map((node) => node.accept(this));
+    const newNodes = nodes.map(node => node.accept(this));
     return this.redefineScope(newNodes);
   }
 
   // Atomic AST
   visitSequence(node: Atomic.Sequence): Atomic.Sequence {
     const location = node.location;
-    const newExpressions = node.expressions.map((expression) =>
-      expression.accept(this),
+    const newExpressions = node.expressions.map(expression =>
+      expression.accept(this)
     );
     return new Atomic.Sequence(location, this.redefineScope(newExpressions));
   }
@@ -84,7 +84,7 @@ export class Redefiner implements Visitor {
   visitApplication(node: Atomic.Application): Atomic.Application {
     const location = node.location;
     const newOperator = node.operator.accept(this);
-    const newOperands = node.operands.map((operand) => operand.accept(this));
+    const newOperands = node.operands.map(operand => operand.accept(this));
 
     return new Atomic.Application(location, newOperator, newOperands);
   }
@@ -99,7 +99,7 @@ export class Redefiner implements Visitor {
       location,
       newTest,
       newConsequent,
-      newAlternate,
+      newAlternate
     );
   }
 
@@ -150,14 +150,14 @@ export class Redefiner implements Visitor {
     const location = node.location;
 
     // Simplify the elements of the vector
-    const newElements = node.elements.map((element) => element.accept(this));
+    const newElements = node.elements.map(element => element.accept(this));
 
     return new Atomic.Vector(location, newElements);
   }
 
   // Extended AST
   visitFunctionDefinition(
-    node: Extended.FunctionDefinition,
+    node: Extended.FunctionDefinition
   ): Extended.FunctionDefinition {
     const location = node.location;
     const name = node.name;
@@ -170,14 +170,14 @@ export class Redefiner implements Visitor {
       name,
       newBody,
       params,
-      rest,
+      rest
     );
   }
 
   visitLet(node: Extended.Let): Extended.Let {
     const location = node.location;
     const identifiers = node.identifiers;
-    const newValues = node.values.map((value) => value.accept(this));
+    const newValues = node.values.map(value => value.accept(this));
     const newBody = node.body.accept(this);
 
     return new Extended.Let(location, identifiers, newValues, newBody);
@@ -185,11 +185,11 @@ export class Redefiner implements Visitor {
 
   visitCond(node: Extended.Cond): Extended.Cond {
     const location = node.location;
-    const newPredicates = node.predicates.map((predicate) =>
-      predicate.accept(this),
+    const newPredicates = node.predicates.map(predicate =>
+      predicate.accept(this)
     );
-    const newConsequents = node.consequents.map((consequent) =>
-      consequent.accept(this),
+    const newConsequents = node.consequents.map(consequent =>
+      consequent.accept(this)
     );
     const newCatchall = node.catchall
       ? node.catchall.accept(this)
@@ -198,13 +198,13 @@ export class Redefiner implements Visitor {
       location,
       newPredicates,
       newConsequents,
-      newCatchall,
+      newCatchall
     );
   }
 
   visitList(node: Extended.List): Extended.List {
     const location = node.location;
-    const newElements = node.elements.map((element) => element.accept(this));
+    const newElements = node.elements.map(element => element.accept(this));
     const newTerminator = node.terminator
       ? node.terminator.accept(this)
       : undefined;
@@ -213,8 +213,8 @@ export class Redefiner implements Visitor {
 
   visitBegin(node: Extended.Begin): Extended.Begin {
     const location = node.location;
-    const newExpressions = node.expressions.map((expression) =>
-      expression.accept(this),
+    const newExpressions = node.expressions.map(expression =>
+      expression.accept(this)
     );
 
     return new Extended.Begin(location, this.redefineScope(newExpressions));

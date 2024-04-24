@@ -11,7 +11,7 @@ const dummyToken = new Token(
   1,
   1,
   1,
-  1,
+  1
 );
 const quoteToken = new Token(TokenType.APOSTROPHE, "'", "'", 1, 1, 1, 1);
 const lParen = new Token(TokenType.LEFT_PAREN, "(", "(", 1, 1, 1, 1);

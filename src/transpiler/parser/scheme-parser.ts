@@ -14,7 +14,7 @@ import { isGroup, isToken } from "../types/tokens";
 enum QuoteMode {
   NONE,
   QUOTE,
-  QUASIQUOTE,
+  QUASIQUOTE
 }
 
 export class SchemeParser implements Parser {
@@ -59,7 +59,7 @@ export class SchemeParser implements Parser {
         this.source,
         c.pos,
         c,
-        this.chapter,
+        this.chapter
       );
     }
   }
@@ -79,7 +79,7 @@ export class SchemeParser implements Parser {
    */
   private destructureList(
     list: Datum[],
-    verifier = (_x: any) => {},
+    verifier = (_x: any) => {}
   ): [Expression[], Expression | undefined] {
     // check if the list is an empty list
     if (list.length === 0) {
@@ -105,7 +105,7 @@ export class SchemeParser implements Parser {
       listElements.forEach(verifier);
       return [
         listElements.map(this.parseExpression.bind(this)),
-        this.parseExpression(cdrElement),
+        this.parseExpression(cdrElement)
       ];
     }
 
@@ -213,7 +213,7 @@ export class SchemeParser implements Parser {
           this.source,
           e.loc,
           e.form,
-          e.expected,
+          e.expected
         );
       }
       throw e;
@@ -259,17 +259,17 @@ export class SchemeParser implements Parser {
       case TokenType.NUMBER:
         return new Atomic.NumericLiteral(
           this.toLocation(token),
-          token.literal as string,
+          token.literal as string
         );
       case TokenType.BOOLEAN:
         return new Atomic.BooleanLiteral(
           this.toLocation(token),
-          token.literal as boolean,
+          token.literal as boolean
         );
       case TokenType.STRING:
         return new Atomic.StringLiteral(
           this.toLocation(token),
-          token.literal as string,
+          token.literal as string
         );
       default:
         // if in a quoting context, any keyword is instead treated as a symbol
@@ -279,7 +279,7 @@ export class SchemeParser implements Parser {
         throw new ParserError.UnexpectedFormError(
           this.source,
           token.pos,
-          token,
+          token
         );
     }
   }
@@ -321,7 +321,7 @@ export class SchemeParser implements Parser {
           const innerGroup = this.parseExpression(target);
           const newSymbol = new Atomic.Symbol(
             this.toLocation(<Token>affector),
-            "quote",
+            "quote"
           );
 
           const newLocation = newSymbol.location.merge(innerGroup.location);
@@ -339,7 +339,7 @@ export class SchemeParser implements Parser {
           const innerGroup = this.parseExpression(target);
           const newSymbol = new Atomic.Symbol(
             this.toLocation(<Token>affector),
-            "quasiquote",
+            "quasiquote"
           );
 
           const newLocation = newSymbol.location.merge(innerGroup.location);
@@ -358,14 +358,14 @@ export class SchemeParser implements Parser {
           throw new ParserError.UnsupportedTokenError(
             this.source,
             (<Token>affector).pos,
-            <Token>affector,
+            <Token>affector
           );
         }
         if (preUnquoteMode === QuoteMode.QUOTE) {
           const innerGroup = this.parseExpression(target);
           const newSymbol = new Atomic.Symbol(
             this.toLocation(<Token>affector),
-            "unquote",
+            "unquote"
           );
 
           const newLocation = newSymbol.location.merge(innerGroup.location);
@@ -387,14 +387,14 @@ export class SchemeParser implements Parser {
           throw new ParserError.UnexpectedFormError(
             this.source,
             (<Token>affector).pos,
-            <Token>affector,
+            <Token>affector
           );
         }
         if (preUnquoteSplicingMode === QuoteMode.QUOTE) {
           const innerGroup = this.parseExpression(target);
           const newSymbol = new Atomic.Symbol(
             this.toLocation(<Token>affector),
-            "unquote-splicing",
+            "unquote-splicing"
           );
 
           const newLocation = newSymbol.location.merge(innerGroup.location);
@@ -404,13 +404,13 @@ export class SchemeParser implements Parser {
         throw new ParserError.UnsupportedTokenError(
           this.source,
           (<Token>affector).pos,
-          <Token>affector,
+          <Token>affector
         );
         this.quoteMode = QuoteMode.NONE;
         const unquoteSplicedExpression = this.parseExpression(target);
         this.quoteMode = preUnquoteSplicingMode;
         const newLocation = this.toLocation(<Token>affector).merge(
-          unquoteSplicedExpression.location,
+          unquoteSplicedExpression.location
         );
         return new Atomic.SpliceMarker(newLocation, unquoteSplicedExpression);
       case TokenType.HASH_VECTOR:
@@ -425,7 +425,7 @@ export class SchemeParser implements Parser {
         throw new ParserError.UnexpectedFormError(
           this.source,
           (<Token>affector).pos,
-          <Token>affector,
+          <Token>affector
         );
     }
   }
@@ -437,7 +437,7 @@ export class SchemeParser implements Parser {
         this.source,
         group.location.start,
         group,
-        "non-empty group",
+        "non-empty group"
       );
     }
 
@@ -550,7 +550,7 @@ export class SchemeParser implements Parser {
         this.source,
         group.location.start,
         group,
-        "(lambda (<identifier>* . <rest-identifier>?) <body>+) | (lambda <rest-identifer> <body>+)",
+        "(lambda (<identifier>* . <rest-identifier>?) <body>+) | (lambda <rest-identifer> <body>+)"
       );
     }
     const elements = group.unwrap();
@@ -567,12 +567,12 @@ export class SchemeParser implements Parser {
           this.source,
           formals.pos,
           formals,
-          "<rest-identifier>",
+          "<rest-identifier>"
         );
       }
       convertedRest = new Atomic.Identifier(
         this.toLocation(formals),
-        formals.lexeme,
+        formals.lexeme
       );
     } else {
       // it is a group
@@ -580,13 +580,13 @@ export class SchemeParser implements Parser {
       [convertedFormals, convertedRest] = this.destructureList(
         formalsElements,
         // pass in a verifier that checks if the elements are identifiers
-        (formal) => {
+        formal => {
           if (!isToken(formal)) {
             throw new ParserError.ExpectedFormError(
               this.source,
               formal.pos,
               formal,
-              "<identifier>",
+              "<identifier>"
             );
           }
           if (formal.type !== TokenType.IDENTIFIER) {
@@ -594,16 +594,16 @@ export class SchemeParser implements Parser {
               this.source,
               formal.pos,
               formal,
-              "<identifier>",
+              "<identifier>"
             );
           }
-        },
+        }
       ) as [Atomic.Identifier[], Atomic.Identifier | undefined];
     }
 
     // Body is treated as a group of expressions
     const convertedBody = body.map(
-      this.parseExpression.bind(this),
+      this.parseExpression.bind(this)
     ) as Expression[];
 
     // assert that body is not empty
@@ -612,7 +612,7 @@ export class SchemeParser implements Parser {
         this.source,
         group.location.start,
         group,
-        "(lambda ... <body>+)",
+        "(lambda ... <body>+)"
       );
     }
 
@@ -621,7 +621,7 @@ export class SchemeParser implements Parser {
         group.location,
         convertedBody[0],
         convertedFormals,
-        convertedRest,
+        convertedRest
       );
     }
 
@@ -633,7 +633,7 @@ export class SchemeParser implements Parser {
       group.location,
       bodySequence,
       convertedFormals,
-      convertedRest,
+      convertedRest
     );
   }
 
@@ -643,7 +643,7 @@ export class SchemeParser implements Parser {
    * @returns
    */
   private parseDefinition(
-    group: Group,
+    group: Group
   ): Atomic.Definition | Extended.FunctionDefinition {
     // Form: (define <identifier> <expr>)
     //     | (define (<identifier> <formals>) <body>)
@@ -654,7 +654,7 @@ export class SchemeParser implements Parser {
         this.source,
         group.location.start,
         group,
-        "(define <identifier> <expr>) | (define (<identifier> <formals>) <body>+)",
+        "(define <identifier> <expr>) | (define (<identifier> <formals>) <body>+)"
       );
     }
     const elements = group.unwrap();
@@ -680,7 +680,7 @@ export class SchemeParser implements Parser {
           this.source,
           functionName.location.start,
           functionName,
-          "<identifier>",
+          "<identifier>"
         );
       }
       if (functionName.type !== TokenType.IDENTIFIER) {
@@ -688,26 +688,26 @@ export class SchemeParser implements Parser {
           this.source,
           functionName.pos,
           functionName,
-          "<identifier>",
+          "<identifier>"
         );
       }
 
       // convert the first element to an identifier
       convertedIdentifier = new Atomic.Identifier(
         this.toLocation(functionName),
-        functionName.lexeme,
+        functionName.lexeme
       );
 
       // Formals should be a group of identifiers
       [convertedFormals, convertedRest] = this.destructureList(
         formals,
-        (formal) => {
+        formal => {
           if (!isToken(formal)) {
             throw new ParserError.ExpectedFormError(
               this.source,
               formal.pos,
               formal,
-              "<identifier>",
+              "<identifier>"
             );
           }
           if (formal.type !== TokenType.IDENTIFIER) {
@@ -715,23 +715,23 @@ export class SchemeParser implements Parser {
               this.source,
               formal.pos,
               formal,
-              "<identifier>",
+              "<identifier>"
             );
           }
-        },
+        }
       ) as [Atomic.Identifier[], Atomic.Identifier | undefined];
     } else if (identifier.type !== TokenType.IDENTIFIER) {
       throw new ParserError.ExpectedFormError(
         this.source,
         identifier.pos,
         identifier,
-        "<identifier>",
+        "<identifier>"
       );
     } else {
       // its a normal definition
       convertedIdentifier = new Atomic.Identifier(
         this.toLocation(identifier),
-        identifier.lexeme,
+        identifier.lexeme
       );
       isFunctionDefinition = false;
     }
@@ -742,14 +742,14 @@ export class SchemeParser implements Parser {
         this.source,
         group.location.start,
         group,
-        "(define ... <body>+)",
+        "(define ... <body>+)"
       );
     }
 
     if (isFunctionDefinition) {
       // Body is treated as a group of expressions
       const convertedBody = expr.map(
-        this.parseExpression.bind(this),
+        this.parseExpression.bind(this)
       ) as Expression[];
 
       if (convertedBody.length === 1) {
@@ -758,7 +758,7 @@ export class SchemeParser implements Parser {
           convertedIdentifier,
           convertedBody[0],
           convertedFormals,
-          convertedRest,
+          convertedRest
         );
       }
 
@@ -772,7 +772,7 @@ export class SchemeParser implements Parser {
         convertedIdentifier,
         bodySequence,
         convertedFormals,
-        convertedRest,
+        convertedRest
       );
     }
 
@@ -783,7 +783,7 @@ export class SchemeParser implements Parser {
         this.source,
         group.location.start,
         group,
-        "(define <identifier> <expr>)",
+        "(define <identifier> <expr>)"
       );
     }
 
@@ -793,7 +793,7 @@ export class SchemeParser implements Parser {
     return new Atomic.Definition(
       group.location,
       convertedIdentifier,
-      convertedExpr,
+      convertedExpr
     );
   }
 
@@ -812,7 +812,7 @@ export class SchemeParser implements Parser {
         this.source,
         group.location.start,
         group,
-        "(if <pred> <cons> <alt>?)",
+        "(if <pred> <cons> <alt>?)"
       );
     }
     const elements = group.unwrap();
@@ -836,7 +836,7 @@ export class SchemeParser implements Parser {
       group.location,
       convertedTest,
       convertedConsequent,
-      convertedAlternate,
+      convertedAlternate
     );
   }
 
@@ -851,7 +851,7 @@ export class SchemeParser implements Parser {
         this.source,
         group.location.start,
         group,
-        "(<func> <args>*)",
+        "(<func> <args>*)"
       );
     }
     const elements = group.unwrap();
@@ -870,7 +870,7 @@ export class SchemeParser implements Parser {
     return new Atomic.Application(
       group.location,
       convertedOperator,
-      convertedOperands,
+      convertedOperands
     );
   }
 
@@ -887,7 +887,7 @@ export class SchemeParser implements Parser {
         this.source,
         group.location.start,
         group,
-        "(let ((<identifier> <value>)*) <body>+)",
+        "(let ((<identifier> <value>)*) <body>+)"
       );
     }
     const elements = group.unwrap();
@@ -900,7 +900,7 @@ export class SchemeParser implements Parser {
         this.source,
         bindings.pos,
         bindings,
-        "((<identifier> <value>)*)",
+        "((<identifier> <value>)*)"
       );
     }
 
@@ -916,7 +916,7 @@ export class SchemeParser implements Parser {
           this.source,
           bindingElement.pos,
           bindingElement,
-          "(<identifier> <value>)",
+          "(<identifier> <value>)"
         );
       }
       if (bindingElement.length() !== 2) {
@@ -924,7 +924,7 @@ export class SchemeParser implements Parser {
           this.source,
           bindingElement.location.start,
           bindingElement,
-          "(<identifier> <value>)",
+          "(<identifier> <value>)"
         );
       }
 
@@ -936,7 +936,7 @@ export class SchemeParser implements Parser {
           this.source,
           identifier.location.start,
           identifier,
-          "<identifier>",
+          "<identifier>"
         );
       }
       if (identifier.type !== TokenType.IDENTIFIER) {
@@ -944,18 +944,18 @@ export class SchemeParser implements Parser {
           this.source,
           identifier.pos,
           identifier,
-          "<identifier>",
+          "<identifier>"
         );
       }
       convertedIdentifiers.push(
-        new Atomic.Identifier(this.toLocation(identifier), identifier.lexeme),
+        new Atomic.Identifier(this.toLocation(identifier), identifier.lexeme)
       );
       convertedValues.push(this.parseExpression(value));
     }
 
     // Body is treated as a group of expressions
     const convertedBody = body.map(
-      this.parseExpression.bind(this),
+      this.parseExpression.bind(this)
     ) as Expression[];
 
     // assert that body is not empty
@@ -964,7 +964,7 @@ export class SchemeParser implements Parser {
         this.source,
         group.location.start,
         group,
-        "(let ... <body>+)",
+        "(let ... <body>+)"
       );
     }
 
@@ -973,7 +973,7 @@ export class SchemeParser implements Parser {
         group.location,
         convertedIdentifiers,
         convertedValues,
-        convertedBody[0],
+        convertedBody[0]
       );
     }
 
@@ -986,7 +986,7 @@ export class SchemeParser implements Parser {
       group.location,
       convertedIdentifiers,
       convertedValues,
-      bodySequence,
+      bodySequence
     );
   }
 
@@ -1004,7 +1004,7 @@ export class SchemeParser implements Parser {
         this.source,
         group.location.start,
         group,
-        "(cond (<pred> <body>*)* (else <val>)?)",
+        "(cond (<pred> <body>*)* (else <val>)?)"
       );
     }
     const elements = group.unwrap();
@@ -1024,7 +1024,7 @@ export class SchemeParser implements Parser {
           this.source,
           clause.pos,
           clause,
-          "(<pred> <body>*)",
+          "(<pred> <body>*)"
         );
       }
       if (clause.length() < 1) {
@@ -1032,7 +1032,7 @@ export class SchemeParser implements Parser {
           this.source,
           clause.firstToken().pos,
           clause.firstToken(),
-          "(<pred> <body>*)",
+          "(<pred> <body>*)"
         );
       }
 
@@ -1044,7 +1044,7 @@ export class SchemeParser implements Parser {
           this.source,
           test.pos,
           test,
-          "<predicate>",
+          "<predicate>"
         );
       }
 
@@ -1053,7 +1053,7 @@ export class SchemeParser implements Parser {
 
       // Consequent is treated as a group of expressions
       const consequentExpressions = consequent.map(
-        this.parseExpression.bind(this),
+        this.parseExpression.bind(this)
       ) as Expression[];
       const consequentLocation =
         consequent.length < 1
@@ -1083,7 +1083,7 @@ export class SchemeParser implements Parser {
         this.source,
         lastClause.pos,
         lastClause,
-        "(<pred> <body>+) | (else <val>)",
+        "(<pred> <body>+) | (else <val>)"
       );
     }
 
@@ -1092,7 +1092,7 @@ export class SchemeParser implements Parser {
         this.source,
         lastClause.firstToken().pos,
         lastClause.firstToken(),
-        "(<pred> <body>+) | (else <val>)",
+        "(<pred> <body>+) | (else <val>)"
       );
     }
 
@@ -1109,7 +1109,7 @@ export class SchemeParser implements Parser {
           this.source,
           lastClause.location.start,
           lastClause,
-          "(else <val>)",
+          "(else <val>)"
         );
       }
     }
@@ -1120,13 +1120,13 @@ export class SchemeParser implements Parser {
         this.source,
         lastClause.location.start,
         lastClause,
-        "(<pred> <body>+)",
+        "(<pred> <body>+)"
       );
     }
 
     // Consequent is treated as a group of expressions
     const consequentExpressions = consequent.map(
-      this.parseExpression.bind(this),
+      this.parseExpression.bind(this)
     ) as Expression[];
     const consequentLocation = consequentExpressions
       .at(0)!
@@ -1141,7 +1141,7 @@ export class SchemeParser implements Parser {
         group.location,
         convertedClauses,
         convertedConsequents,
-        lastConsequent,
+        lastConsequent
       );
     }
 
@@ -1155,7 +1155,7 @@ export class SchemeParser implements Parser {
     return new Extended.Cond(
       group.location,
       convertedClauses,
-      convertedConsequents,
+      convertedConsequents
     );
   }
 
@@ -1174,7 +1174,7 @@ export class SchemeParser implements Parser {
         this.source,
         group.location.start,
         group,
-        "(set! <identifier> <expr>)",
+        "(set! <identifier> <expr>)"
       );
     }
     const elements = group.unwrap();
@@ -1187,7 +1187,7 @@ export class SchemeParser implements Parser {
         this.source,
         identifier.location.start,
         identifier,
-        "<identifier>",
+        "<identifier>"
       );
     }
     if (identifier.type !== TokenType.IDENTIFIER) {
@@ -1195,18 +1195,18 @@ export class SchemeParser implements Parser {
         this.source,
         identifier.pos,
         identifier,
-        "<identifier>",
+        "<identifier>"
       );
     }
     const convertedIdentifier = new Atomic.Identifier(
       this.toLocation(identifier),
-      identifier.lexeme,
+      identifier.lexeme
     );
     const convertedExpr = this.parseExpression(expr);
     return new Atomic.Reassignment(
       group.location,
       convertedIdentifier,
-      convertedExpr,
+      convertedExpr
     );
   }
 
@@ -1223,7 +1223,7 @@ export class SchemeParser implements Parser {
         this.source,
         group.location.start,
         group,
-        "(begin <body>+)",
+        "(begin <body>+)"
       );
     }
     const sequence = group.unwrap();
@@ -1248,7 +1248,7 @@ export class SchemeParser implements Parser {
         this.source,
         group.location.start,
         group,
-        "(delay <expr>)",
+        "(delay <expr>)"
       );
     }
     const elements = group.unwrap();
@@ -1275,7 +1275,7 @@ export class SchemeParser implements Parser {
         this.source,
         group.firstToken().pos,
         group.firstToken(),
-        '(import "<source>" (<identifier>*))',
+        '(import "<source>" (<identifier>*))'
       );
     }
     const elements = group.unwrap();
@@ -1288,7 +1288,7 @@ export class SchemeParser implements Parser {
         this.source,
         source.location.start,
         source,
-        '"<source>"',
+        '"<source>"'
       );
     }
     if (source.type !== TokenType.STRING) {
@@ -1296,7 +1296,7 @@ export class SchemeParser implements Parser {
         this.source,
         source.pos,
         source,
-        '"<source>"',
+        '"<source>"'
       );
     }
 
@@ -1306,7 +1306,7 @@ export class SchemeParser implements Parser {
         this.source,
         identifiers.pos,
         identifiers,
-        "(<identifier>*)",
+        "(<identifier>*)"
       );
     }
     const identifierElements = identifiers.unwrap();
@@ -1317,7 +1317,7 @@ export class SchemeParser implements Parser {
           this.source,
           identifierElement.location.start,
           identifierElement,
-          "<identifier>",
+          "<identifier>"
         );
       }
       if (identifierElement.type !== TokenType.IDENTIFIER) {
@@ -1325,24 +1325,24 @@ export class SchemeParser implements Parser {
           this.source,
           identifierElement.pos,
           identifierElement,
-          "<identifier>",
+          "<identifier>"
         );
       }
       convertedIdentifiers.push(
         new Atomic.Identifier(
           this.toLocation(identifierElement),
-          identifierElement.lexeme,
-        ),
+          identifierElement.lexeme
+        )
       );
     }
     const convertedSource = new Atomic.StringLiteral(
       this.toLocation(source),
-      source.literal,
+      source.literal
     );
     return new Atomic.Import(
       group.location,
       convertedSource,
-      convertedIdentifiers,
+      convertedIdentifiers
     );
   }
 
@@ -1359,7 +1359,7 @@ export class SchemeParser implements Parser {
         this.source,
         group.firstToken().pos,
         group.firstToken(),
-        "(export (<definition>))",
+        "(export (<definition>))"
       );
     }
     const elements = group.unwrap();
@@ -1371,7 +1371,7 @@ export class SchemeParser implements Parser {
         this.source,
         definition.pos,
         definition,
-        "(<definition>)",
+        "(<definition>)"
       );
     }
 
@@ -1387,7 +1387,7 @@ export class SchemeParser implements Parser {
         this.source,
         definition.location.start,
         definition,
-        "(<definition>)",
+        "(<definition>)"
       );
     }
 

@@ -15,7 +15,7 @@ export function unparse(node: es.Node): string {
       return `(${callee} ${args})`;
 
     case "ArrayExpression":
-      const elements = node.elements.map((s) => unparse(s as any)).join(" ");
+      const elements = node.elements.map(s => unparse(s as any)).join(" ");
       return `(vector ${elements})`;
 
     case "ArrowFunctionExpression":
