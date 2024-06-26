@@ -20,7 +20,7 @@
   "private": true,
   "dependencies": {
     "@types/estree": "^1.0.0",
-    "acorn": "^8.8.2",
+    "acorn": "^8.12.0",
     "acorn-walk": "^8.2.0",
     "js-base64": "^3.7.7"
   },
