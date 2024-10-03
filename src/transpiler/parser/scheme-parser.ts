@@ -7,6 +7,13 @@ import { Datum } from "../types/tokens/datum";
 import { Group } from "../types/tokens/group";
 import { Parser } from "./parser";
 import { isGroup, isToken } from "../types/tokens";
+import {
+  BASIC_CHAPTER,
+  MACRO_CHAPTER,
+  MUTABLE_CHAPTER,
+  QUOTING_CHAPTER,
+  VECTOR_CHAPTER,
+} from "../types/constants";
 
 /**
  * An enum representing the current quoting mode of the parser.
@@ -23,13 +30,6 @@ export class SchemeParser implements Parser {
   private readonly chapter: number;
   private current: number = 0;
   private quoteMode: QuoteMode = QuoteMode.NONE;
-
-  // We can group syntactical elements by their chapter
-  private readonly BASIC_CHAPTER = 1;
-  private readonly QUOTING_CHAPTER = 2;
-  private readonly VECTOR_CHAPTER = 3;
-  private readonly MUTABLE_CHAPTER = 3;
-  private readonly MACRO_CHAPTER = 5;
 
   constructor(source: string, tokens: Token[], chapter: number = Infinity) {
     this.source = source;
@@ -317,7 +317,7 @@ export class SchemeParser implements Parser {
     switch ((<Token>affector).type) {
       case TokenType.APOSTROPHE:
       case TokenType.QUOTE:
-        this.validateChapter(<Token>affector, this.QUOTING_CHAPTER);
+        this.validateChapter(<Token>affector, QUOTING_CHAPTER);
         if (this.quoteMode !== QuoteMode.NONE) {
           const innerGroup = this.parseExpression(target);
           const newSymbol = new Atomic.Symbol(
@@ -335,7 +335,7 @@ export class SchemeParser implements Parser {
         return quotedExpression;
       case TokenType.BACKTICK:
       case TokenType.QUASIQUOTE:
-        this.validateChapter(<Token>affector, this.QUOTING_CHAPTER);
+        this.validateChapter(<Token>affector, QUOTING_CHAPTER);
         if (this.quoteMode !== QuoteMode.NONE) {
           const innerGroup = this.parseExpression(target);
           const newSymbol = new Atomic.Symbol(
@@ -353,7 +353,7 @@ export class SchemeParser implements Parser {
         return quasiquotedExpression;
       case TokenType.COMMA:
       case TokenType.UNQUOTE:
-        this.validateChapter(<Token>affector, this.QUOTING_CHAPTER);
+        this.validateChapter(<Token>affector, QUOTING_CHAPTER);
         let preUnquoteMode = this.quoteMode;
         if (preUnquoteMode === QuoteMode.NONE) {
           throw new ParserError.UnsupportedTokenError(
@@ -382,7 +382,7 @@ export class SchemeParser implements Parser {
         // Unquote-splicing will be evaluated at runtime,
         // Proper unquote splicing will be dealt with in semester 2.
 
-        this.validateChapter(<Token>affector, this.QUOTING_CHAPTER);
+        this.validateChapter(<Token>affector, QUOTING_CHAPTER);
         let preUnquoteSplicingMode = this.quoteMode;
         if (preUnquoteSplicingMode === QuoteMode.NONE) {
           throw new ParserError.UnexpectedFormError(
@@ -416,7 +416,7 @@ export class SchemeParser implements Parser {
         return new Atomic.SpliceMarker(newLocation, unquoteSplicedExpression);
       case TokenType.HASH_VECTOR:
         // vectors quote over all elements inside.
-        this.validateChapter(<Token>affector, this.VECTOR_CHAPTER);
+        this.validateChapter(<Token>affector, VECTOR_CHAPTER);
         let preVectorQuoteMode = this.quoteMode;
         this.quoteMode = QuoteMode.QUOTE;
         const vector = this.parseVector(group);
@@ -450,19 +450,19 @@ export class SchemeParser implements Parser {
       switch (firstElement.type) {
         // Scheme chapter 1
         case TokenType.LAMBDA:
-          this.validateChapter(firstElement, this.BASIC_CHAPTER);
+          this.validateChapter(firstElement, BASIC_CHAPTER);
           return this.parseLambda(group);
         case TokenType.DEFINE:
-          this.validateChapter(firstElement, this.BASIC_CHAPTER);
+          this.validateChapter(firstElement, BASIC_CHAPTER);
           return this.parseDefinition(group);
         case TokenType.IF:
-          this.validateChapter(firstElement, this.BASIC_CHAPTER);
+          this.validateChapter(firstElement, BASIC_CHAPTER);
           return this.parseConditional(group);
         case TokenType.LET:
-          this.validateChapter(firstElement, this.BASIC_CHAPTER);
+          this.validateChapter(firstElement, BASIC_CHAPTER);
           return this.parseLet(group);
         case TokenType.COND:
-          this.validateChapter(firstElement, this.BASIC_CHAPTER);
+          this.validateChapter(firstElement, BASIC_CHAPTER);
           return this.parseExtendedCond(group);
 
         // Scheme chapter 2
@@ -474,30 +474,30 @@ export class SchemeParser implements Parser {
         case TokenType.COMMA:
         case TokenType.UNQUOTE_SPLICING:
         case TokenType.COMMA_AT:
-          this.validateChapter(firstElement, this.QUOTING_CHAPTER);
+          this.validateChapter(firstElement, QUOTING_CHAPTER);
           // we can reuse the affector group method to control the quote mode
           return this.parseAffectorGroup(group);
 
         // Scheme chapter 3
         case TokenType.BEGIN:
-          this.validateChapter(firstElement, this.MUTABLE_CHAPTER);
+          this.validateChapter(firstElement, MUTABLE_CHAPTER);
           return this.parseBegin(group);
         case TokenType.DELAY:
-          this.validateChapter(firstElement, this.MUTABLE_CHAPTER);
+          this.validateChapter(firstElement, MUTABLE_CHAPTER);
           return this.parseDelay(group);
         case TokenType.SET:
-          this.validateChapter(firstElement, this.MUTABLE_CHAPTER);
+          this.validateChapter(firstElement, MUTABLE_CHAPTER);
           return this.parseSet(group);
 
         // Scm-slang misc
         case TokenType.IMPORT:
-          this.validateChapter(firstElement, this.BASIC_CHAPTER);
+          this.validateChapter(firstElement, BASIC_CHAPTER);
           return this.parseImport(group);
         case TokenType.EXPORT:
-          this.validateChapter(firstElement, this.BASIC_CHAPTER);
+          this.validateChapter(firstElement, BASIC_CHAPTER);
           return this.parseExport(group);
         case TokenType.VECTOR:
-          this.validateChapter(firstElement, this.VECTOR_CHAPTER);
+          this.validateChapter(firstElement, VECTOR_CHAPTER);
           // same as above, this is an affector group
           return this.parseAffectorGroup(group);
 
@@ -1444,45 +1444,34 @@ export class SchemeParser implements Parser {
     // everything we have done so far was only to verify the program.
     // we return everything as an s-expression - that is, we quote the
     // entire program.
-    if (this.chapter >= this.MACRO_CHAPTER && !reparseAsSexpr) {
+    if (this.chapter >= MACRO_CHAPTER && !reparseAsSexpr) {
       // so, redo the entire parsing, but now with the quote mode on.
       // we do need to remove the imports from the top level elements,
       // and append them here.
 
-      // assumption - imports are the top level forms, and so we are aware that no matter what, the first n forms will include the n imports.
-      // take the n imports from the topElements,
-
-      // TODO: to allow the CSEP machine to work properly, we should force imports to be the first elements in the program.
-      //       find a way to enforce this.
-
+      // assumption - all imports are top level forms. We will hoist all imports to the top.
+      // TODO: Figure out how to assert imports as top level forms.
       const importElements: Expression[] = topElements.filter(
-        x => x instanceof Atomic.Import
+        e => e instanceof Atomic.Import
       );
-      const numImports = importElements.length;
       const sexprElements = this.parse(true);
-      // then take the rest of the top level elements (total - n) from the restElements.
-      const restElements = sexprElements.slice(numImports);
 
-      // It would be convenient to map the entire restElements to a single sequence, using begin.
-      //       We should accomodate for an empty restElements array (leave as is),
-      //       a single element (leave as is),
-      //       and multiple elements (wrap in begin, represented as a list).
-      const finalRestElements =
-        restElements.length === 0
-          ? restElements
-          : restElements.length === 1
-            ? restElements
-            : [
-                new Extended.List(restElements[0].location, [
-                  new Atomic.Symbol(restElements[0].location, "begin"),
-                  ...restElements,
-                ]),
-              ];
+      // we remove all of the quoted imports from the sexprElements.
+      // an import can be detected as a list
+      // that is not empty
+      // whose first element is a symbol
+      // in which the name is "import".
+      const restElements = sexprElements.filter(
+        e =>
+          !(
+            e instanceof Extended.List &&
+            e.elements &&
+            e.elements[0] instanceof Atomic.Symbol &&
+            e.elements[0].value === "import"
+          )
+      );
 
-      // add the imports to the restElements
-      const finalElements = importElements.concat(restElements);
-
-      return finalElements;
+      return [...importElements, ...restElements];
     }
     return topElements;
   }

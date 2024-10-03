@@ -4,14 +4,37 @@
 
 import { SchemeLexer } from "./lexer";
 import { SchemeParser } from "./parser";
-import { Expression } from "./types/nodes/scheme-node-types";
+import { Atomic, Expression, Extended } from "./types/nodes/scheme-node-types";
 import { Program } from "estree";
 
 import { Simplifier, Transpiler, Redefiner } from "./visitors";
 import { estreeEncode } from "..";
+import { MACRO_CHAPTER } from "./types/constants";
 
 export { LexerError } from "./lexer";
 export { ParserError } from "./parser";
+
+/**
+ * wrap an s-expression in an eval call.
+ */
+function wrapInEval(body: Expression): Expression {
+  const evalObj = new Atomic.Identifier(body.location, "eval");
+  return new Atomic.Application(body.location, evalObj, [body]);
+}
+
+/**
+ * wrap an s-expression in a begin statement.
+ * since we want an s-expression as return,
+ * begin is represented as a list of expressions starting with "begin".
+ */
+function wrapInBegin(expressions: Expression[]): Expression {
+  // use the total location of the first and last expressions
+  const dummyloc = expressions[0].location.merge(
+    expressions[expressions.length - 1].location
+  );
+  const begin = new Atomic.Symbol(dummyloc, "begin");
+  return new Extended.List(dummyloc, [begin, ...expressions]);
+}
 
 /**
  * Transpiles Scheme source code into an ESTree program.
@@ -22,7 +45,7 @@ export { ParserError } from "./parser";
  */
 export function schemeParse(
   source: string,
-  chapter?: number,
+  chapter: number = Infinity,
   encode?: boolean
 ): Program {
   // Instantiate the lexer
@@ -37,6 +60,8 @@ export function schemeParse(
   // The Scheme AST is represented as an
   // array of expressions, which is all top-level expressions
 
+  let finalAST: Expression[];
+
   // Generate the first AST
   const firstAST: Expression[] = parser.parse();
 
@@ -44,16 +69,42 @@ export function schemeParse(
   const simplifier = Simplifier.create();
   const redefiner = Redefiner.create();
   const transpiler = Transpiler.create();
-  // TODO: Then we macro-expand the AST
 
-  // Then we simplify the AST
-  const simplifiedAST: Expression[] = simplifier.simplify(firstAST);
+  if (chapter < MACRO_CHAPTER) {
+    // Then we simplify the AST
+    const simplifiedAST: Expression[] = simplifier.simplify(firstAST);
 
-  // Then we redefine the AST
-  const redefinedAST: Expression[] = redefiner.redefine(simplifiedAST);
+    // Then we redefine the AST
+    const redefinedAST: Expression[] = redefiner.redefine(simplifiedAST);
+
+    finalAST = redefinedAST;
+  } else {
+    // Then we prepare the AST for evaluation within the CSEP machine.
+    // Take the imports from the AST
+    const macroASTImports: Expression[] = firstAST.filter(
+      e => e instanceof Atomic.Import
+    );
+    const macroASTRest: Expression[] = firstAST.filter(
+      e => !(e instanceof Atomic.Import)
+    );
+
+    // On the rest elements,
+    // 1. If empty, do nothing
+    // 2. If 1 element, wrap in eval call
+    // 3. If more than one element, sequence as one begin statement, then wrap in eval call
+    const macroASTformattedRest: Expression[] =
+      macroASTRest.length === 0
+        ? []
+        : macroASTRest.length === 1
+          ? [wrapInEval(macroASTRest[0])]
+          : [wrapInEval(wrapInBegin(macroASTRest))];
+
+    // Concatenate the imports and the rest
+    finalAST = [...macroASTImports, ...macroASTformattedRest];
+  }
 
   // Finally we transpile the AST
-  const program: Program = transpiler.transpile(redefinedAST);
+  const program: Program = transpiler.transpile(finalAST);
 
   return encode ? (estreeEncode(program) as Program) : program;
 }
