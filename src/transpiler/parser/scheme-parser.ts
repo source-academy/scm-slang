@@ -9,7 +9,7 @@ import { Parser } from "./parser";
 import { isGroup, isToken } from "../types/tokens";
 
 /**
- * An enum representing the current quoting mode of the parser
+ * An enum representing the current quoting mode of the parser.
  */
 enum QuoteMode {
   NONE,
@@ -29,6 +29,7 @@ export class SchemeParser implements Parser {
   private readonly QUOTING_CHAPTER = 2;
   private readonly VECTOR_CHAPTER = 3;
   private readonly MUTABLE_CHAPTER = 3;
+  private readonly MACRO_CHAPTER = 5;
 
   constructor(source: string, tokens: Token[], chapter: number = Infinity) {
     this.source = source;
@@ -1421,7 +1422,11 @@ export class SchemeParser implements Parser {
    * @param group A group of tokens.
    * @returns An AST.
    */
-  parse(): Expression[] {
+  parse(reparseAsSexpr: boolean = false): Expression[] {
+    if (reparseAsSexpr) {
+      this.quoteMode = QuoteMode.QUOTE;
+      this.current = 0;
+    }
     // collect all top-level elements
     const topElements: Expression[] = [];
     while (!this.isAtEnd()) {
@@ -1434,6 +1439,33 @@ export class SchemeParser implements Parser {
       }
       const convertedElement = this.parseExpression(currentElement);
       topElements.push(convertedElement);
+    }
+    // if we are in the macro chapter,
+    // everything we have done so far was only to verify the program.
+    // we return everything as an s-expression - that is, we quote the
+    // entire program.
+    if (this.chapter >= this.MACRO_CHAPTER && !reparseAsSexpr) {
+      // so, redo the entire parsing, but now with the quote mode on.
+      // we do need to remove the imports from the top level elements,
+      // and append them here.
+
+      // assumption - imports are the top level forms, and so we are aware that no matter what, the first n forms will include the n imports.
+      // take the n imports from the topElements,
+
+      // TODO: to allow the CSEP machine to work properly, we should force imports to be the first elements in the program.
+      //       find a way to enforce this.
+
+      const importElements: Expression[] = topElements.filter(
+        x => x instanceof Atomic.Import
+      );
+      const numImports = importElements.length;
+      const sexprElements = this.parse(true);
+      // then take the rest of the top level elements (total - n) from the restElements.
+      const restElements = sexprElements.slice(numImports);
+      // add the imports to the restElements
+      const finalElements = importElements.concat(restElements);
+
+      return finalElements;
     }
     return topElements;
   }
