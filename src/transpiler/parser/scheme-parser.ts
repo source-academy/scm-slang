@@ -1462,6 +1462,23 @@ export class SchemeParser implements Parser {
       const sexprElements = this.parse(true);
       // then take the rest of the top level elements (total - n) from the restElements.
       const restElements = sexprElements.slice(numImports);
+
+      // It would be convenient to map the entire restElements to a single sequence, using begin.
+      //       We should accomodate for an empty restElements array (leave as is),
+      //       a single element (leave as is),
+      //       and multiple elements (wrap in begin, represented as a list).
+      const finalRestElements =
+        restElements.length === 0
+          ? restElements
+          : restElements.length === 1
+            ? restElements
+            : [
+                new Extended.List(restElements[0].location, [
+                  new Atomic.Symbol(restElements[0].location, "begin"),
+                  ...restElements,
+                ]),
+              ];
+
       // add the imports to the restElements
       const finalElements = importElements.concat(restElements);
 
