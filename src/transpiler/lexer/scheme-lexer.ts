@@ -27,6 +27,8 @@ let keywords = new Map<string, TokenType>([
   ["import", TokenType.IMPORT],
   ["define", TokenType.DEFINE],
   ["lambda", TokenType.LAMBDA],
+  ["define-syntax", TokenType.DEFINE_SYNTAX],
+  ["syntax-rules", TokenType.SYNTAX_RULES],
 ]);
 
 export class SchemeLexer implements Lexer {

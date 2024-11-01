@@ -184,6 +184,8 @@ export class SchemeParser implements Parser {
         case TokenType.DELAY:
         case TokenType.IMPORT:
         case TokenType.EXPORT:
+        case TokenType.DEFINE_SYNTAX:
+        case TokenType.SYNTAX_RULES: // Chapter 4
           elements.push(c);
           break;
         case TokenType.HASH_SEMICOLON:
@@ -488,6 +490,14 @@ export class SchemeParser implements Parser {
         case TokenType.SET:
           this.validateChapter(firstElement, MUTABLE_CHAPTER);
           return this.parseSet(group);
+
+        // Scheme full (macros)
+        case TokenType.DEFINE_SYNTAX:
+          this.validateChapter(firstElement, MACRO_CHAPTER);
+          return this.parseDefineSyntax(group);
+        case TokenType.SYNTAX_RULES:
+          this.validateChapter(firstElement, MACRO_CHAPTER);
+          return this.parseSyntaxRules(group);
 
         // Scm-slang misc
         case TokenType.IMPORT:
@@ -1259,6 +1269,386 @@ export class SchemeParser implements Parser {
     const convertedExpr = this.parseExpression(expr);
 
     return new Extended.Delay(group.location, convertedExpr);
+  }
+
+  // _____________________CHAPTER 3_____________________
+
+  /**
+   * Parse a define-syntax expression.
+   * @param group
+   * @returns nothing, this is for verification only.
+   */
+  private parseDefineSyntax(group: Group): Atomic.DefineSyntax {
+    // Form: (define-syntax <identifier> <transformer>)
+    // ensure that the group has 3 elements
+    if (group.length() !== 3) {
+      throw new ParserError.ExpectedFormError(
+        this.source,
+        group.location.start,
+        group,
+        "(define-syntax <identifier> <transformer>)"
+      );
+    }
+    const elements = group.unwrap();
+    const identifier = elements[1];
+    const transformer = elements[2];
+
+    // Identifier is treated as a single identifier
+    if (isGroup(identifier)) {
+      throw new ParserError.ExpectedFormError(
+        this.source,
+        identifier.location.start,
+        identifier,
+        "<identifier>"
+      );
+    }
+
+    if (identifier.type !== TokenType.IDENTIFIER) {
+      throw new ParserError.ExpectedFormError(
+        this.source,
+        identifier.pos,
+        identifier,
+        "<identifier>"
+      );
+    }
+
+    // Transformer is treated as a group
+    // it should be syntax-rules
+    if (!isGroup(transformer)) {
+      throw new ParserError.ExpectedFormError(
+        this.source,
+        transformer.pos,
+        transformer,
+        "<transformer>"
+      );
+    }
+
+    if (transformer.length() < 2) {
+      throw new ParserError.ExpectedFormError(
+        this.source,
+        transformer.firstToken().pos,
+        transformer,
+        "(syntax-rules ...)"
+      );
+    }
+    const transformerToken = transformer.unwrap()[0];
+    if (!isToken(transformer.unwrap()[0])) {
+      throw new ParserError.ExpectedFormError(
+        this.source,
+        transformer.firstToken().pos,
+        transformerToken,
+        "syntax-rules"
+      );
+    }
+
+    if ((transformerToken as Token).type !== TokenType.SYNTAX_RULES) {
+      throw new ParserError.ExpectedFormError(
+        this.source,
+        (transformerToken as Token).pos,
+        transformerToken,
+        "syntax-rules"
+      );
+    }
+
+    // parse both the identifier and the transformer
+    const convertedIdentifier = this.parseExpression(
+      identifier
+    ) as Atomic.Identifier;
+    const convertedTransformer = this.parseExpression(
+      transformer
+    ) as Atomic.SyntaxRules;
+
+    return new Atomic.DefineSyntax(
+      group.location,
+      convertedIdentifier,
+      convertedTransformer
+    );
+  }
+
+  /**
+   * Helper function to verify the validity of a pattern.
+   * @param pattern
+   * @returns validity of the pattern
+   */
+  private isValidPattern(pattern: Expression): boolean {
+    // a pattern is either a symbol, a literal or
+    // a list (<pattern>+), (<pattern>+ . <pattern>), (<pattern>+ ... <pattern>*)
+    // or (<pattern>+ ... <pattern>+ . <pattern>)
+    if (pattern instanceof Extended.List) {
+      // check if the list is a proper list
+      const isProper = pattern.terminator === undefined;
+      if (isProper) {
+        // scan to make sure that only one ellipsis is present
+        const ellipsisCount = pattern.elements.filter(
+          item => item instanceof Atomic.Symbol && item.value === "..."
+        ).length;
+
+        if (ellipsisCount > 1) {
+          return false;
+        }
+
+        const ellipsisIndex = pattern.elements.findIndex(
+          item => item instanceof Atomic.Symbol && item.value === "..."
+        );
+
+        if (ellipsisIndex != -1) {
+          // check if the ellipsis is behind any other element
+          // (ie it's not the first element)
+          if (ellipsisIndex === 0) {
+            return false;
+          }
+        }
+
+        // recursively check the elements
+        for (const element of pattern.elements) {
+          if (!this.isValidPattern(element)) {
+            return false;
+          }
+        }
+
+        return true;
+      } else {
+        // scan to make sure that only one ellipsis is present
+        const ellipsisCount = pattern.elements.filter(
+          item => item instanceof Atomic.Symbol && item.value === "..."
+        ).length;
+
+        if (ellipsisCount > 1) {
+          return false;
+        }
+
+        const ellipsisIndex = pattern.elements.findIndex(
+          item => item instanceof Atomic.Symbol && item.value === "..."
+        );
+
+        if (ellipsisIndex != -1) {
+          // check if the ellipsis is behind any other element
+          // (ie it's not the first element)
+          if (ellipsisIndex === 0) {
+            return false;
+          }
+
+          // since this is an improper list, the ellipsis must not
+          // be the last element either
+          if (ellipsisIndex === pattern.elements.length - 1) {
+            return false;
+          }
+        }
+
+        // recursively check the elements
+        for (const element of pattern.elements) {
+          if (!this.isValidPattern(element)) {
+            return false;
+          }
+        }
+
+        return this.isValidPattern(pattern.terminator as Expression);
+      }
+    } else if (
+      pattern instanceof Atomic.Symbol ||
+      pattern instanceof Atomic.BooleanLiteral ||
+      pattern instanceof Atomic.NumericLiteral ||
+      pattern instanceof Atomic.StringLiteral
+    ) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  /**
+   * Helper function to verify the validity of a template.
+   * @param template
+   * @returns validity of the template
+   */
+  private isValidTemplate(template: Expression): boolean {
+    // a template is either a symbol, a literal or
+    // a list (<element>+), (<element>+ . <template>), (... <template>)
+    // where <element> is a template optionally followed by ...
+    if (template instanceof Extended.List) {
+      // check if the list is a proper list
+      const isProper = template.terminator === undefined;
+      if (isProper) {
+        // should have at least 1 element
+        if (template.elements.length === 0) {
+          return false;
+        }
+
+        // (... <template>) case
+        if (
+          template.elements.length === 2 &&
+          template.elements[0] instanceof Atomic.Symbol &&
+          template.elements[0].value === "..."
+        ) {
+          return this.isValidTemplate(template.elements[1]);
+        }
+
+        let ellipsisWorksOnLastElement = false;
+        // check each element for validity except for ellipses.
+        // for those, check if they follow a valid template.
+        for (let i = 0; i < template.elements.length; i++) {
+          const element = template.elements[i];
+          if (element instanceof Atomic.Symbol && element.value === "...") {
+            if (ellipsisWorksOnLastElement) {
+              ellipsisWorksOnLastElement = false;
+              continue;
+            }
+            // either consecutive ellipses or the first element is an ellipsis
+            return false;
+          } else {
+            if (!this.isValidTemplate(element)) {
+              return false;
+            }
+            ellipsisWorksOnLastElement = true;
+          }
+        }
+        return true;
+      } else {
+        if (template.elements.length === 0) {
+          return false;
+        }
+
+        let ellipsisWorksOnLastElement = false;
+        // check each element for validity except for ellipses.
+        // for those, check if they follow a valid template.
+        for (let i = 0; i < template.elements.length; i++) {
+          const element = template.elements[i];
+          if (element instanceof Atomic.Symbol && element.value === "...") {
+            if (ellipsisWorksOnLastElement) {
+              ellipsisWorksOnLastElement = false;
+              continue;
+            }
+            // either consecutive ellipses or the first element is an ellipsis
+            return false;
+          } else {
+            if (!this.isValidTemplate(element)) {
+              return false;
+            }
+            ellipsisWorksOnLastElement = true;
+          }
+        }
+        return this.isValidTemplate(template.terminator as Expression);
+      }
+    } else if (
+      template instanceof Atomic.Symbol ||
+      template instanceof Atomic.BooleanLiteral ||
+      template instanceof Atomic.NumericLiteral ||
+      template instanceof Atomic.StringLiteral
+    ) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  /**
+   * Parse a syntax-rules expression.
+   * @param group
+   * @returns nothing, this is for verification only.
+   */
+  private parseSyntaxRules(group: Group): Atomic.SyntaxRules {
+    // syntax rules is of form
+    // (syntax-rules (<literal>*) <syntax-rule>+)
+    // where syntax-rule is of form
+    // (<pattern> <template>)
+    // ensure that the group has at least 3 elements
+    if (group.length() < 3) {
+      throw new ParserError.ExpectedFormError(
+        this.source,
+        group.location.start,
+        group,
+        "(syntax-rules (<literal>*) <syntax-rule>+)"
+      );
+    }
+
+    const elements = group.unwrap();
+    const literals = elements[1];
+    const rules = elements.slice(2);
+
+    const finalLiterals: Atomic.Symbol[] = [];
+    // verify that literals is a group
+    if (!isGroup(literals)) {
+      throw new ParserError.ExpectedFormError(
+        this.source,
+        literals.pos,
+        literals,
+        "(<literal>*)"
+      );
+    }
+
+    // parse each literal as a symbol
+    this.quoteMode = QuoteMode.QUOTE;
+    for (const literal of literals.unwrap()) {
+      if (!isToken(literal)) {
+        throw new ParserError.ExpectedFormError(
+          this.source,
+          literal.location.start,
+          literal,
+          "<literal>"
+        );
+      }
+
+      const convertedLiteral = this.parseExpression(literal);
+      if (!(convertedLiteral instanceof Atomic.Symbol)) {
+        throw new ParserError.ExpectedFormError(
+          this.source,
+          literal.pos,
+          literal,
+          "<literal>"
+        );
+      }
+      finalLiterals.push(convertedLiteral);
+    }
+
+    const finalRules: [Expression, Expression][] = [];
+
+    // each rule is a group of size 2
+    for (const rule of rules) {
+      if (!isGroup(rule)) {
+        throw new ParserError.ExpectedFormError(
+          this.source,
+          rule.pos,
+          rule,
+          "(<pattern> <template>)"
+        );
+      }
+      if (rule.length() !== 2) {
+        throw new ParserError.ExpectedFormError(
+          this.source,
+          rule.location.start,
+          rule,
+          "(<pattern> <template>)"
+        );
+      }
+      // verify the validity of the pattern and template
+      const [pattern, template] = rule.unwrap();
+
+      const convertedPattern = this.parseExpression(pattern);
+      const convertedTemplate = this.parseExpression(template);
+
+      if (!this.isValidPattern(convertedPattern)) {
+        throw new ParserError.ExpectedFormError(
+          this.source,
+          convertedPattern.location.start,
+          pattern,
+          "<symbol> | <literal> | (<pattern>+) | (<pattern>+ ... <pattern>*) | (<pattern>+ ... <pattern>+ . <pattern>)"
+        );
+      }
+
+      if (!this.isValidTemplate(convertedTemplate)) {
+        throw new ParserError.ExpectedFormError(
+          this.source,
+          convertedTemplate.location.start,
+          template,
+          "<symbol> | <literal> | (<element>+) | (<element>+ . <template>) | (... <template>)"
+        );
+      }
+
+      finalRules.push([convertedPattern, convertedTemplate]);
+    }
+
+    this.quoteMode = QuoteMode.NONE;
+    return new Atomic.SyntaxRules(group.location, finalLiterals, finalRules);
   }
 
   // ___________________MISCELLANEOUS___________________
