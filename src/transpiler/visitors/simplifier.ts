@@ -255,4 +255,13 @@ export class Simplifier implements Visitor {
     const makePromise = new Atomic.Identifier(location, "make-promise");
     return new Atomic.Application(location, makePromise, [delayedLambda]);
   }
+
+  // these nodes are already in their simplest form
+  visitDefineSyntax(node: Atomic.DefineSyntax) {
+    return node;
+  }
+
+  visitSyntaxRules(node: Atomic.SyntaxRules) {
+    return node;
+  }
 }

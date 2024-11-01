@@ -32,6 +32,9 @@ export interface Visitor {
 
   visitVector(node: Atomic.Vector): any;
 
+  visitSyntaxRules(node: Atomic.SyntaxRules): any;
+  visitDefineSyntax(node: Atomic.DefineSyntax): any;
+
   // Extended AST
   visitFunctionDefinition(node: Extended.FunctionDefinition): any;
   visitLet(node: Extended.Let): any;
