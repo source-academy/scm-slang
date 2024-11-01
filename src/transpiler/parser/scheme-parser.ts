@@ -381,9 +381,6 @@ export class SchemeParser implements Parser {
         return unquotedExpression;
       case TokenType.COMMA_AT:
       case TokenType.UNQUOTE_SPLICING:
-        // Unquote-splicing will be evaluated at runtime,
-        // Proper unquote splicing will be dealt with in semester 2.
-
         this.validateChapter(<Token>affector, QUOTING_CHAPTER);
         let preUnquoteSplicingMode = this.quoteMode;
         if (preUnquoteSplicingMode === QuoteMode.NONE) {
@@ -404,11 +401,6 @@ export class SchemeParser implements Parser {
           // wrap the entire expression in a list
           return new Extended.List(newLocation, [newSymbol, innerGroup]);
         }
-        throw new ParserError.UnsupportedTokenError(
-          this.source,
-          (<Token>affector).pos,
-          <Token>affector
-        );
         this.quoteMode = QuoteMode.NONE;
         const unquoteSplicedExpression = this.parseExpression(target);
         this.quoteMode = preUnquoteSplicingMode;
@@ -496,8 +488,12 @@ export class SchemeParser implements Parser {
           this.validateChapter(firstElement, MACRO_CHAPTER);
           return this.parseDefineSyntax(group);
         case TokenType.SYNTAX_RULES:
-          this.validateChapter(firstElement, MACRO_CHAPTER);
-          return this.parseSyntaxRules(group);
+          // should not be called outside of define-syntax!
+          throw new ParserError.UnexpectedFormError(
+            this.source,
+            firstElement.pos,
+            firstElement
+          );
 
         // Scm-slang misc
         case TokenType.IMPORT:
@@ -1293,20 +1289,18 @@ export class SchemeParser implements Parser {
     const identifier = elements[1];
     const transformer = elements[2];
 
-    // Identifier is treated as a single identifier
-    if (isGroup(identifier)) {
-      throw new ParserError.ExpectedFormError(
-        this.source,
-        identifier.location.start,
-        identifier,
-        "<identifier>"
-      );
-    }
+    // parse the identifier using quote mode
+    // (to capture redefinitions of syntax)
+    this.quoteMode = QuoteMode.QUOTE;
+    const convertedIdentifier = this.parseExpression(
+      identifier
+    ) as Atomic.Identifier;
+    this.quoteMode = QuoteMode.NONE;
 
-    if (identifier.type !== TokenType.IDENTIFIER) {
+    if (!(convertedIdentifier instanceof Atomic.Symbol)) {
       throw new ParserError.ExpectedFormError(
         this.source,
-        identifier.pos,
+        convertedIdentifier.location.start,
         identifier,
         "<identifier>"
       );
@@ -1350,11 +1344,8 @@ export class SchemeParser implements Parser {
       );
     }
 
-    // parse both the identifier and the transformer
-    const convertedIdentifier = this.parseExpression(
-      identifier
-    ) as Atomic.Identifier;
-    const convertedTransformer = this.parseExpression(
+    // parse the transformer
+    const convertedTransformer = this.parseSyntaxRules(
       transformer
     ) as Atomic.SyntaxRules;
 
