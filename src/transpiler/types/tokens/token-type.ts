@@ -47,6 +47,10 @@ export enum TokenType {
   IMPORT,
   EXPORT,
 
+  // keywords associated with macros
+  DEFINE_SYNTAX,
+  SYNTAX_RULES,
+
   // Not in scope at the moment
   HASH_VECTOR, // vector
   VECTOR, // depreciated, as i believe

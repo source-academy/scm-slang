@@ -498,6 +498,82 @@ export namespace Atomic {
       return false;
     }
   }
+
+  /**
+   * A node representing a Scheme define-syntax expression.
+   */
+  export class DefineSyntax implements Expression {
+    location: Location;
+    name: Identifier;
+    transformer: SyntaxRules;
+    constructor(
+      location: Location,
+      name: Identifier,
+      transformer: SyntaxRules
+    ) {
+      this.location = location;
+      this.name = name;
+      this.transformer = transformer;
+    }
+    accept(visitor: Visitor): any {
+      return visitor.visitDefineSyntax(this);
+    }
+    equals(other: Expression): boolean {
+      if (other instanceof DefineSyntax) {
+        return (
+          this.name.equals(other.name) &&
+          this.transformer.equals(other.transformer)
+        );
+      }
+      return false;
+    }
+  }
+
+  /**
+   * A node representing a Scheme syntax-rules expression.
+   */
+  export class SyntaxRules implements Expression {
+    location: Location;
+    literals: Symbol[];
+    rules: [Expression, Expression][];
+    constructor(
+      location: Location,
+      literals: Symbol[],
+      rules: [Expression, Expression][]
+    ) {
+      this.location = location;
+      this.literals = literals;
+      this.rules = rules;
+    }
+    accept(visitor: Visitor): any {
+      return visitor.visitSyntaxRules(this);
+    }
+    equals(other: Expression): boolean {
+      if (other instanceof SyntaxRules) {
+        if (this.literals.length !== other.literals.length) {
+          return false;
+        }
+        for (let i = 0; i < this.literals.length; i++) {
+          if (!this.literals[i].equals(other.literals[i])) {
+            return false;
+          }
+        }
+        if (this.rules.length !== other.rules.length) {
+          return false;
+        }
+        for (let i = 0; i < this.rules.length; i++) {
+          if (
+            !this.rules[i][0].equals(other.rules[i][0]) ||
+            !this.rules[i][1].equals(other.rules[i][1])
+          ) {
+            return false;
+          }
+        }
+        return true;
+      }
+      return false;
+    }
+  }
 }
 
 /**

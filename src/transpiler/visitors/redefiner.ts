@@ -226,4 +226,13 @@ export class Redefiner implements Visitor {
 
     return new Extended.Delay(location, newBody);
   }
+
+  // there are no redefinitions in the following nodes.
+  visitDefineSyntax(node: Atomic.DefineSyntax) {
+    return node;
+  }
+
+  visitSyntaxRules(node: Atomic.SyntaxRules) {
+    return node;
+  }
 }

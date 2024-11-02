@@ -7,9 +7,16 @@ import { Datum } from "../types/tokens/datum";
 import { Group } from "../types/tokens/group";
 import { Parser } from "./parser";
 import { isGroup, isToken } from "../types/tokens";
+import {
+  BASIC_CHAPTER,
+  MACRO_CHAPTER,
+  MUTABLE_CHAPTER,
+  QUOTING_CHAPTER,
+  VECTOR_CHAPTER,
+} from "../types/constants";
 
 /**
- * An enum representing the current quoting mode of the parser
+ * An enum representing the current quoting mode of the parser.
  */
 enum QuoteMode {
   NONE,
@@ -23,12 +30,6 @@ export class SchemeParser implements Parser {
   private readonly chapter: number;
   private current: number = 0;
   private quoteMode: QuoteMode = QuoteMode.NONE;
-
-  // We can group syntactical elements by their chapter
-  private readonly BASIC_CHAPTER = 1;
-  private readonly QUOTING_CHAPTER = 2;
-  private readonly VECTOR_CHAPTER = 3;
-  private readonly MUTABLE_CHAPTER = 3;
 
   constructor(source: string, tokens: Token[], chapter: number = Infinity) {
     this.source = source;
@@ -183,6 +184,8 @@ export class SchemeParser implements Parser {
         case TokenType.DELAY:
         case TokenType.IMPORT:
         case TokenType.EXPORT:
+        case TokenType.DEFINE_SYNTAX:
+        case TokenType.SYNTAX_RULES: // Chapter 4
           elements.push(c);
           break;
         case TokenType.HASH_SEMICOLON:
@@ -316,7 +319,7 @@ export class SchemeParser implements Parser {
     switch ((<Token>affector).type) {
       case TokenType.APOSTROPHE:
       case TokenType.QUOTE:
-        this.validateChapter(<Token>affector, this.QUOTING_CHAPTER);
+        this.validateChapter(<Token>affector, QUOTING_CHAPTER);
         if (this.quoteMode !== QuoteMode.NONE) {
           const innerGroup = this.parseExpression(target);
           const newSymbol = new Atomic.Symbol(
@@ -334,7 +337,7 @@ export class SchemeParser implements Parser {
         return quotedExpression;
       case TokenType.BACKTICK:
       case TokenType.QUASIQUOTE:
-        this.validateChapter(<Token>affector, this.QUOTING_CHAPTER);
+        this.validateChapter(<Token>affector, QUOTING_CHAPTER);
         if (this.quoteMode !== QuoteMode.NONE) {
           const innerGroup = this.parseExpression(target);
           const newSymbol = new Atomic.Symbol(
@@ -352,7 +355,7 @@ export class SchemeParser implements Parser {
         return quasiquotedExpression;
       case TokenType.COMMA:
       case TokenType.UNQUOTE:
-        this.validateChapter(<Token>affector, this.QUOTING_CHAPTER);
+        this.validateChapter(<Token>affector, QUOTING_CHAPTER);
         let preUnquoteMode = this.quoteMode;
         if (preUnquoteMode === QuoteMode.NONE) {
           throw new ParserError.UnsupportedTokenError(
@@ -378,10 +381,7 @@ export class SchemeParser implements Parser {
         return unquotedExpression;
       case TokenType.COMMA_AT:
       case TokenType.UNQUOTE_SPLICING:
-        // Unquote-splicing will be evaluated at runtime,
-        // Proper unquote splicing will be dealt with in semester 2.
-
-        this.validateChapter(<Token>affector, this.QUOTING_CHAPTER);
+        this.validateChapter(<Token>affector, QUOTING_CHAPTER);
         let preUnquoteSplicingMode = this.quoteMode;
         if (preUnquoteSplicingMode === QuoteMode.NONE) {
           throw new ParserError.UnexpectedFormError(
@@ -401,11 +401,6 @@ export class SchemeParser implements Parser {
           // wrap the entire expression in a list
           return new Extended.List(newLocation, [newSymbol, innerGroup]);
         }
-        throw new ParserError.UnsupportedTokenError(
-          this.source,
-          (<Token>affector).pos,
-          <Token>affector
-        );
         this.quoteMode = QuoteMode.NONE;
         const unquoteSplicedExpression = this.parseExpression(target);
         this.quoteMode = preUnquoteSplicingMode;
@@ -415,7 +410,7 @@ export class SchemeParser implements Parser {
         return new Atomic.SpliceMarker(newLocation, unquoteSplicedExpression);
       case TokenType.HASH_VECTOR:
         // vectors quote over all elements inside.
-        this.validateChapter(<Token>affector, this.VECTOR_CHAPTER);
+        this.validateChapter(<Token>affector, VECTOR_CHAPTER);
         let preVectorQuoteMode = this.quoteMode;
         this.quoteMode = QuoteMode.QUOTE;
         const vector = this.parseVector(group);
@@ -449,19 +444,19 @@ export class SchemeParser implements Parser {
       switch (firstElement.type) {
         // Scheme chapter 1
         case TokenType.LAMBDA:
-          this.validateChapter(firstElement, this.BASIC_CHAPTER);
+          this.validateChapter(firstElement, BASIC_CHAPTER);
           return this.parseLambda(group);
         case TokenType.DEFINE:
-          this.validateChapter(firstElement, this.BASIC_CHAPTER);
+          this.validateChapter(firstElement, BASIC_CHAPTER);
           return this.parseDefinition(group);
         case TokenType.IF:
-          this.validateChapter(firstElement, this.BASIC_CHAPTER);
+          this.validateChapter(firstElement, BASIC_CHAPTER);
           return this.parseConditional(group);
         case TokenType.LET:
-          this.validateChapter(firstElement, this.BASIC_CHAPTER);
+          this.validateChapter(firstElement, BASIC_CHAPTER);
           return this.parseLet(group);
         case TokenType.COND:
-          this.validateChapter(firstElement, this.BASIC_CHAPTER);
+          this.validateChapter(firstElement, BASIC_CHAPTER);
           return this.parseExtendedCond(group);
 
         // Scheme chapter 2
@@ -473,30 +468,42 @@ export class SchemeParser implements Parser {
         case TokenType.COMMA:
         case TokenType.UNQUOTE_SPLICING:
         case TokenType.COMMA_AT:
-          this.validateChapter(firstElement, this.QUOTING_CHAPTER);
+          this.validateChapter(firstElement, QUOTING_CHAPTER);
           // we can reuse the affector group method to control the quote mode
           return this.parseAffectorGroup(group);
 
         // Scheme chapter 3
         case TokenType.BEGIN:
-          this.validateChapter(firstElement, this.MUTABLE_CHAPTER);
+          this.validateChapter(firstElement, MUTABLE_CHAPTER);
           return this.parseBegin(group);
         case TokenType.DELAY:
-          this.validateChapter(firstElement, this.MUTABLE_CHAPTER);
+          this.validateChapter(firstElement, MUTABLE_CHAPTER);
           return this.parseDelay(group);
         case TokenType.SET:
-          this.validateChapter(firstElement, this.MUTABLE_CHAPTER);
+          this.validateChapter(firstElement, MUTABLE_CHAPTER);
           return this.parseSet(group);
+
+        // Scheme full (macros)
+        case TokenType.DEFINE_SYNTAX:
+          this.validateChapter(firstElement, MACRO_CHAPTER);
+          return this.parseDefineSyntax(group);
+        case TokenType.SYNTAX_RULES:
+          // should not be called outside of define-syntax!
+          throw new ParserError.UnexpectedFormError(
+            this.source,
+            firstElement.pos,
+            firstElement
+          );
 
         // Scm-slang misc
         case TokenType.IMPORT:
-          this.validateChapter(firstElement, this.BASIC_CHAPTER);
+          this.validateChapter(firstElement, BASIC_CHAPTER);
           return this.parseImport(group);
         case TokenType.EXPORT:
-          this.validateChapter(firstElement, this.BASIC_CHAPTER);
+          this.validateChapter(firstElement, BASIC_CHAPTER);
           return this.parseExport(group);
         case TokenType.VECTOR:
-          this.validateChapter(firstElement, this.VECTOR_CHAPTER);
+          this.validateChapter(firstElement, VECTOR_CHAPTER);
           // same as above, this is an affector group
           return this.parseAffectorGroup(group);
 
@@ -1260,6 +1267,381 @@ export class SchemeParser implements Parser {
     return new Extended.Delay(group.location, convertedExpr);
   }
 
+  // _____________________CHAPTER 3_____________________
+
+  /**
+   * Parse a define-syntax expression.
+   * @param group
+   * @returns nothing, this is for verification only.
+   */
+  private parseDefineSyntax(group: Group): Atomic.DefineSyntax {
+    // Form: (define-syntax <identifier> <transformer>)
+    // ensure that the group has 3 elements
+    if (group.length() !== 3) {
+      throw new ParserError.ExpectedFormError(
+        this.source,
+        group.location.start,
+        group,
+        "(define-syntax <identifier> <transformer>)"
+      );
+    }
+    const elements = group.unwrap();
+    const identifier = elements[1];
+    const transformer = elements[2];
+
+    // parse the identifier using quote mode
+    // (to capture redefinitions of syntax)
+    this.quoteMode = QuoteMode.QUOTE;
+    const convertedIdentifier = this.parseExpression(
+      identifier
+    ) as Atomic.Identifier;
+    this.quoteMode = QuoteMode.NONE;
+
+    if (!(convertedIdentifier instanceof Atomic.Symbol)) {
+      throw new ParserError.ExpectedFormError(
+        this.source,
+        convertedIdentifier.location.start,
+        identifier,
+        "<identifier>"
+      );
+    }
+
+    // Transformer is treated as a group
+    // it should be syntax-rules
+    if (!isGroup(transformer)) {
+      throw new ParserError.ExpectedFormError(
+        this.source,
+        transformer.pos,
+        transformer,
+        "<transformer>"
+      );
+    }
+
+    if (transformer.length() < 2) {
+      throw new ParserError.ExpectedFormError(
+        this.source,
+        transformer.firstToken().pos,
+        transformer,
+        "(syntax-rules ...)"
+      );
+    }
+    const transformerToken = transformer.unwrap()[0];
+    if (!isToken(transformer.unwrap()[0])) {
+      throw new ParserError.ExpectedFormError(
+        this.source,
+        transformer.firstToken().pos,
+        transformerToken,
+        "syntax-rules"
+      );
+    }
+
+    if ((transformerToken as Token).type !== TokenType.SYNTAX_RULES) {
+      throw new ParserError.ExpectedFormError(
+        this.source,
+        (transformerToken as Token).pos,
+        transformerToken,
+        "syntax-rules"
+      );
+    }
+
+    // parse the transformer
+    const convertedTransformer = this.parseSyntaxRules(
+      transformer
+    ) as Atomic.SyntaxRules;
+
+    return new Atomic.DefineSyntax(
+      group.location,
+      convertedIdentifier,
+      convertedTransformer
+    );
+  }
+
+  /**
+   * Helper function to verify the validity of a pattern.
+   * @param pattern
+   * @returns validity of the pattern
+   */
+  private isValidPattern(pattern: Expression): boolean {
+    // a pattern is either a symbol, a literal or
+    // a list (<pattern>+), (<pattern>+ . <pattern>), (<pattern>+ ... <pattern>*)
+    // or (<pattern>+ ... <pattern>+ . <pattern>)
+    if (pattern instanceof Extended.List) {
+      // check if the list is a proper list
+      const isProper = pattern.terminator === undefined;
+      if (isProper) {
+        // scan to make sure that only one ellipsis is present
+        const ellipsisCount = pattern.elements.filter(
+          item => item instanceof Atomic.Symbol && item.value === "..."
+        ).length;
+
+        if (ellipsisCount > 1) {
+          return false;
+        }
+
+        const ellipsisIndex = pattern.elements.findIndex(
+          item => item instanceof Atomic.Symbol && item.value === "..."
+        );
+
+        if (ellipsisIndex != -1) {
+          // check if the ellipsis is behind any other element
+          // (ie it's not the first element)
+          if (ellipsisIndex === 0) {
+            return false;
+          }
+        }
+
+        // recursively check the elements
+        for (const element of pattern.elements) {
+          if (!this.isValidPattern(element)) {
+            return false;
+          }
+        }
+
+        return true;
+      } else {
+        // scan to make sure that only one ellipsis is present
+        const ellipsisCount = pattern.elements.filter(
+          item => item instanceof Atomic.Symbol && item.value === "..."
+        ).length;
+
+        if (ellipsisCount > 1) {
+          return false;
+        }
+
+        const ellipsisIndex = pattern.elements.findIndex(
+          item => item instanceof Atomic.Symbol && item.value === "..."
+        );
+
+        if (ellipsisIndex != -1) {
+          // check if the ellipsis is behind any other element
+          // (ie it's not the first element)
+          if (ellipsisIndex === 0) {
+            return false;
+          }
+
+          // since this is an improper list, the ellipsis must not
+          // be the last element either
+          if (ellipsisIndex === pattern.elements.length - 1) {
+            return false;
+          }
+        }
+
+        // recursively check the elements
+        for (const element of pattern.elements) {
+          if (!this.isValidPattern(element)) {
+            return false;
+          }
+        }
+
+        return this.isValidPattern(pattern.terminator as Expression);
+      }
+    } else if (
+      pattern instanceof Atomic.Symbol ||
+      pattern instanceof Atomic.BooleanLiteral ||
+      pattern instanceof Atomic.NumericLiteral ||
+      pattern instanceof Atomic.StringLiteral
+    ) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  /**
+   * Helper function to verify the validity of a template.
+   * @param template
+   * @returns validity of the template
+   */
+  private isValidTemplate(template: Expression): boolean {
+    // a template is either a symbol, a literal or
+    // a list (<element>+), (<element>+ . <template>), (... <template>)
+    // where <element> is a template optionally followed by ...
+    if (template instanceof Extended.List) {
+      // check if the list is a proper list
+      const isProper = template.terminator === undefined;
+      if (isProper) {
+        // should have at least 1 element
+        if (template.elements.length === 0) {
+          return false;
+        }
+
+        // (... <template>) case
+        if (
+          template.elements.length === 2 &&
+          template.elements[0] instanceof Atomic.Symbol &&
+          template.elements[0].value === "..."
+        ) {
+          return this.isValidTemplate(template.elements[1]);
+        }
+
+        let ellipsisWorksOnLastElement = false;
+        // check each element for validity except for ellipses.
+        // for those, check if they follow a valid template.
+        for (let i = 0; i < template.elements.length; i++) {
+          const element = template.elements[i];
+          if (element instanceof Atomic.Symbol && element.value === "...") {
+            if (ellipsisWorksOnLastElement) {
+              ellipsisWorksOnLastElement = false;
+              continue;
+            }
+            // either consecutive ellipses or the first element is an ellipsis
+            return false;
+          } else {
+            if (!this.isValidTemplate(element)) {
+              return false;
+            }
+            ellipsisWorksOnLastElement = true;
+          }
+        }
+        return true;
+      } else {
+        if (template.elements.length === 0) {
+          return false;
+        }
+
+        let ellipsisWorksOnLastElement = false;
+        // check each element for validity except for ellipses.
+        // for those, check if they follow a valid template.
+        for (let i = 0; i < template.elements.length; i++) {
+          const element = template.elements[i];
+          if (element instanceof Atomic.Symbol && element.value === "...") {
+            if (ellipsisWorksOnLastElement) {
+              ellipsisWorksOnLastElement = false;
+              continue;
+            }
+            // either consecutive ellipses or the first element is an ellipsis
+            return false;
+          } else {
+            if (!this.isValidTemplate(element)) {
+              return false;
+            }
+            ellipsisWorksOnLastElement = true;
+          }
+        }
+        return this.isValidTemplate(template.terminator as Expression);
+      }
+    } else if (
+      template instanceof Atomic.Symbol ||
+      template instanceof Atomic.BooleanLiteral ||
+      template instanceof Atomic.NumericLiteral ||
+      template instanceof Atomic.StringLiteral
+    ) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  /**
+   * Parse a syntax-rules expression.
+   * @param group
+   * @returns nothing, this is for verification only.
+   */
+  private parseSyntaxRules(group: Group): Atomic.SyntaxRules {
+    // syntax rules is of form
+    // (syntax-rules (<literal>*) <syntax-rule>+)
+    // where syntax-rule is of form
+    // (<pattern> <template>)
+    // ensure that the group has at least 3 elements
+    if (group.length() < 3) {
+      throw new ParserError.ExpectedFormError(
+        this.source,
+        group.location.start,
+        group,
+        "(syntax-rules (<literal>*) <syntax-rule>+)"
+      );
+    }
+
+    const elements = group.unwrap();
+    const literals = elements[1];
+    const rules = elements.slice(2);
+
+    const finalLiterals: Atomic.Symbol[] = [];
+    // verify that literals is a group
+    if (!isGroup(literals)) {
+      throw new ParserError.ExpectedFormError(
+        this.source,
+        literals.pos,
+        literals,
+        "(<literal>*)"
+      );
+    }
+
+    // parse each literal as a symbol
+    this.quoteMode = QuoteMode.QUOTE;
+    for (const literal of literals.unwrap()) {
+      if (!isToken(literal)) {
+        throw new ParserError.ExpectedFormError(
+          this.source,
+          literal.location.start,
+          literal,
+          "<literal>"
+        );
+      }
+
+      const convertedLiteral = this.parseExpression(literal);
+      if (!(convertedLiteral instanceof Atomic.Symbol)) {
+        throw new ParserError.ExpectedFormError(
+          this.source,
+          literal.pos,
+          literal,
+          "<literal>"
+        );
+      }
+      finalLiterals.push(convertedLiteral);
+    }
+
+    const finalRules: [Expression, Expression][] = [];
+
+    // each rule is a group of size 2
+    for (const rule of rules) {
+      if (!isGroup(rule)) {
+        throw new ParserError.ExpectedFormError(
+          this.source,
+          rule.pos,
+          rule,
+          "(<pattern> <template>)"
+        );
+      }
+      if (rule.length() !== 2) {
+        throw new ParserError.ExpectedFormError(
+          this.source,
+          rule.location.start,
+          rule,
+          "(<pattern> <template>)"
+        );
+      }
+      // verify the validity of the pattern and template
+      const [pattern, template] = rule.unwrap();
+
+      const convertedPattern = this.parseExpression(pattern);
+      const convertedTemplate = this.parseExpression(template);
+
+      if (!this.isValidPattern(convertedPattern)) {
+        throw new ParserError.ExpectedFormError(
+          this.source,
+          convertedPattern.location.start,
+          pattern,
+          "<symbol> | <literal> | (<pattern>+) | (<pattern>+ ... <pattern>*) | (<pattern>+ ... <pattern>+ . <pattern>)"
+        );
+      }
+
+      if (!this.isValidTemplate(convertedTemplate)) {
+        throw new ParserError.ExpectedFormError(
+          this.source,
+          convertedTemplate.location.start,
+          template,
+          "<symbol> | <literal> | (<element>+) | (<element>+ . <template>) | (... <template>)"
+        );
+      }
+
+      finalRules.push([convertedPattern, convertedTemplate]);
+    }
+
+    this.quoteMode = QuoteMode.NONE;
+    return new Atomic.SyntaxRules(group.location, finalLiterals, finalRules);
+  }
+
   // ___________________MISCELLANEOUS___________________
 
   /**
@@ -1421,7 +1803,11 @@ export class SchemeParser implements Parser {
    * @param group A group of tokens.
    * @returns An AST.
    */
-  parse(): Expression[] {
+  parse(reparseAsSexpr: boolean = false): Expression[] {
+    if (reparseAsSexpr) {
+      this.quoteMode = QuoteMode.QUOTE;
+      this.current = 0;
+    }
     // collect all top-level elements
     const topElements: Expression[] = [];
     while (!this.isAtEnd()) {
@@ -1434,6 +1820,39 @@ export class SchemeParser implements Parser {
       }
       const convertedElement = this.parseExpression(currentElement);
       topElements.push(convertedElement);
+    }
+    // if we are in the macro chapter,
+    // everything we have done so far was only to verify the program.
+    // we return everything as an s-expression - that is, we quote the
+    // entire program.
+    if (this.chapter >= MACRO_CHAPTER && !reparseAsSexpr) {
+      // so, redo the entire parsing, but now with the quote mode on.
+      // we do need to remove the imports from the top level elements,
+      // and append them here.
+
+      // assumption - all imports are top level forms. We will hoist all imports to the top.
+      // TODO: Figure out how to assert imports as top level forms.
+      const importElements: Expression[] = topElements.filter(
+        e => e instanceof Atomic.Import
+      );
+      const sexprElements = this.parse(true);
+
+      // we remove all of the quoted imports from the sexprElements.
+      // an import can be detected as a list
+      // that is not empty
+      // whose first element is a symbol
+      // in which the name is "import".
+      const restElements = sexprElements.filter(
+        e =>
+          !(
+            e instanceof Extended.List &&
+            e.elements &&
+            e.elements[0] instanceof Atomic.Symbol &&
+            e.elements[0].value === "import"
+          )
+      );
+
+      return [...importElements, ...restElements];
     }
     return topElements;
   }

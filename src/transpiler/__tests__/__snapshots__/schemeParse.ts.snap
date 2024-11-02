@@ -1,8 +1,2087 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`schemeParse 1`] = `
+exports[`schemeParse (s-expression) 1`] = `
 {
   "body": [
+    {
+      "loc": Location {
+        "end": Position {
+          "column": 27,
+          "line": 2,
+        },
+        "start": Position {
+          "column": 3,
+          "line": 2,
+        },
+      },
+      "source": {
+        "loc": Location {
+          "end": Position {
+            "column": 19,
+            "line": 2,
+          },
+          "start": Position {
+            "column": 15,
+            "line": 2,
+          },
+        },
+        "raw": ""std"",
+        "type": "Literal",
+        "value": "std",
+      },
+      "specifiers": [
+        {
+          "imported": {
+            "loc": Location {
+              "end": Position {
+                "column": 24,
+                "line": 2,
+              },
+              "start": Position {
+                "column": 21,
+                "line": 2,
+              },
+            },
+            "name": "list",
+            "type": "Identifier",
+          },
+          "loc": Location {
+            "end": Position {
+              "column": 24,
+              "line": 2,
+            },
+            "start": Position {
+              "column": 21,
+              "line": 2,
+            },
+          },
+          "local": {
+            "loc": Location {
+              "end": Position {
+                "column": 24,
+                "line": 2,
+              },
+              "start": Position {
+                "column": 21,
+                "line": 2,
+              },
+            },
+            "name": "importedlist",
+            "type": "Identifier",
+          },
+          "type": "ImportSpecifier",
+        },
+        {
+          "imported": {
+            "loc": Location {
+              "end": Position {
+                "column": 27,
+                "line": 2,
+              },
+              "start": Position {
+                "column": 25,
+                "line": 2,
+              },
+            },
+            "name": "map",
+            "type": "Identifier",
+          },
+          "loc": Location {
+            "end": Position {
+              "column": 27,
+              "line": 2,
+            },
+            "start": Position {
+              "column": 25,
+              "line": 2,
+            },
+          },
+          "local": {
+            "loc": Location {
+              "end": Position {
+                "column": 27,
+                "line": 2,
+              },
+              "start": Position {
+                "column": 25,
+                "line": 2,
+              },
+            },
+            "name": "importedmap",
+            "type": "Identifier",
+          },
+          "type": "ImportSpecifier",
+        },
+      ],
+      "type": "ImportDeclaration",
+    },
+    {
+      "declarations": [
+        {
+          "id": {
+            "loc": Location {
+              "end": Position {
+                "column": 24,
+                "line": 2,
+              },
+              "start": Position {
+                "column": 21,
+                "line": 2,
+              },
+            },
+            "name": "list",
+            "type": "Identifier",
+          },
+          "init": {
+            "loc": Location {
+              "end": Position {
+                "column": 24,
+                "line": 2,
+              },
+              "start": Position {
+                "column": 21,
+                "line": 2,
+              },
+            },
+            "name": "importedlist",
+            "type": "Identifier",
+          },
+          "type": "VariableDeclarator",
+        },
+      ],
+      "kind": "let",
+      "loc": Location {
+        "end": Position {
+          "column": 24,
+          "line": 2,
+        },
+        "start": Position {
+          "column": 21,
+          "line": 2,
+        },
+      },
+      "type": "VariableDeclaration",
+    },
+    {
+      "declarations": [
+        {
+          "id": {
+            "loc": Location {
+              "end": Position {
+                "column": 27,
+                "line": 2,
+              },
+              "start": Position {
+                "column": 25,
+                "line": 2,
+              },
+            },
+            "name": "map",
+            "type": "Identifier",
+          },
+          "init": {
+            "loc": Location {
+              "end": Position {
+                "column": 27,
+                "line": 2,
+              },
+              "start": Position {
+                "column": 25,
+                "line": 2,
+              },
+            },
+            "name": "importedmap",
+            "type": "Identifier",
+          },
+          "type": "VariableDeclarator",
+        },
+      ],
+      "kind": "let",
+      "loc": Location {
+        "end": Position {
+          "column": 27,
+          "line": 2,
+        },
+        "start": Position {
+          "column": 25,
+          "line": 2,
+        },
+      },
+      "type": "VariableDeclaration",
+    },
+    {
+      "expression": {
+        "arguments": [
+          {
+            "arguments": [
+              {
+                "arguments": [
+                  {
+                    "loc": Location {
+                      "end": Position {
+                        "column": 50,
+                        "line": 6,
+                      },
+                      "start": Position {
+                        "column": 3,
+                        "line": 3,
+                      },
+                    },
+                    "raw": ""begin"",
+                    "type": "Literal",
+                    "value": "begin",
+                  },
+                ],
+                "callee": {
+                  "loc": Location {
+                    "end": Position {
+                      "column": 50,
+                      "line": 6,
+                    },
+                    "start": Position {
+                      "column": 3,
+                      "line": 3,
+                    },
+                  },
+                  "name": "string->symbol",
+                  "type": "Identifier",
+                },
+                "loc": Location {
+                  "end": Position {
+                    "column": 50,
+                    "line": 6,
+                  },
+                  "start": Position {
+                    "column": 3,
+                    "line": 3,
+                  },
+                },
+                "optional": false,
+                "type": "CallExpression",
+              },
+              {
+                "arguments": [
+                  {
+                    "arguments": [
+                      {
+                        "loc": Location {
+                          "end": Position {
+                            "column": 14,
+                            "line": 3,
+                          },
+                          "start": Position {
+                            "column": 9,
+                            "line": 3,
+                          },
+                        },
+                        "raw": ""define"",
+                        "type": "Literal",
+                        "value": "define",
+                      },
+                    ],
+                    "callee": {
+                      "loc": Location {
+                        "end": Position {
+                          "column": 14,
+                          "line": 3,
+                        },
+                        "start": Position {
+                          "column": 9,
+                          "line": 3,
+                        },
+                      },
+                      "name": "string->symbol",
+                      "type": "Identifier",
+                    },
+                    "loc": Location {
+                      "end": Position {
+                        "column": 14,
+                        "line": 3,
+                      },
+                      "start": Position {
+                        "column": 9,
+                        "line": 3,
+                      },
+                    },
+                    "optional": false,
+                    "type": "CallExpression",
+                  },
+                  {
+                    "arguments": [
+                      {
+                        "arguments": [
+                          {
+                            "loc": Location {
+                              "end": Position {
+                                "column": 22,
+                                "line": 3,
+                              },
+                              "start": Position {
+                                "column": 17,
+                                "line": 3,
+                              },
+                            },
+                            "raw": ""square"",
+                            "type": "Literal",
+                            "value": "square",
+                          },
+                        ],
+                        "callee": {
+                          "loc": Location {
+                            "end": Position {
+                              "column": 22,
+                              "line": 3,
+                            },
+                            "start": Position {
+                              "column": 17,
+                              "line": 3,
+                            },
+                          },
+                          "name": "string->symbol",
+                          "type": "Identifier",
+                        },
+                        "loc": Location {
+                          "end": Position {
+                            "column": 22,
+                            "line": 3,
+                          },
+                          "start": Position {
+                            "column": 17,
+                            "line": 3,
+                          },
+                        },
+                        "optional": false,
+                        "type": "CallExpression",
+                      },
+                      {
+                        "arguments": [
+                          {
+                            "loc": Location {
+                              "end": Position {
+                                "column": 19,
+                                "line": 3,
+                              },
+                              "start": Position {
+                                "column": 19,
+                                "line": 3,
+                              },
+                            },
+                            "raw": ""x"",
+                            "type": "Literal",
+                            "value": "x",
+                          },
+                        ],
+                        "callee": {
+                          "loc": Location {
+                            "end": Position {
+                              "column": 19,
+                              "line": 3,
+                            },
+                            "start": Position {
+                              "column": 19,
+                              "line": 3,
+                            },
+                          },
+                          "name": "string->symbol",
+                          "type": "Identifier",
+                        },
+                        "loc": Location {
+                          "end": Position {
+                            "column": 19,
+                            "line": 3,
+                          },
+                          "start": Position {
+                            "column": 19,
+                            "line": 3,
+                          },
+                        },
+                        "optional": false,
+                        "type": "CallExpression",
+                      },
+                    ],
+                    "callee": {
+                      "loc": Location {
+                        "end": Position {
+                          "column": 20,
+                          "line": 3,
+                        },
+                        "start": Position {
+                          "column": 11,
+                          "line": 3,
+                        },
+                      },
+                      "name": "list",
+                      "type": "Identifier",
+                    },
+                    "loc": Location {
+                      "end": Position {
+                        "column": 20,
+                        "line": 3,
+                      },
+                      "start": Position {
+                        "column": 11,
+                        "line": 3,
+                      },
+                    },
+                    "optional": false,
+                    "type": "CallExpression",
+                  },
+                  {
+                    "arguments": [
+                      {
+                        "arguments": [
+                          {
+                            "loc": Location {
+                              "end": Position {
+                                "column": 23,
+                                "line": 3,
+                              },
+                              "start": Position {
+                                "column": 23,
+                                "line": 3,
+                              },
+                            },
+                            "raw": ""*"",
+                            "type": "Literal",
+                            "value": "*",
+                          },
+                        ],
+                        "callee": {
+                          "loc": Location {
+                            "end": Position {
+                              "column": 23,
+                              "line": 3,
+                            },
+                            "start": Position {
+                              "column": 23,
+                              "line": 3,
+                            },
+                          },
+                          "name": "string->symbol",
+                          "type": "Identifier",
+                        },
+                        "loc": Location {
+                          "end": Position {
+                            "column": 23,
+                            "line": 3,
+                          },
+                          "start": Position {
+                            "column": 23,
+                            "line": 3,
+                          },
+                        },
+                        "optional": false,
+                        "type": "CallExpression",
+                      },
+                      {
+                        "arguments": [
+                          {
+                            "loc": Location {
+                              "end": Position {
+                                "column": 25,
+                                "line": 3,
+                              },
+                              "start": Position {
+                                "column": 25,
+                                "line": 3,
+                              },
+                            },
+                            "raw": ""x"",
+                            "type": "Literal",
+                            "value": "x",
+                          },
+                        ],
+                        "callee": {
+                          "loc": Location {
+                            "end": Position {
+                              "column": 25,
+                              "line": 3,
+                            },
+                            "start": Position {
+                              "column": 25,
+                              "line": 3,
+                            },
+                          },
+                          "name": "string->symbol",
+                          "type": "Identifier",
+                        },
+                        "loc": Location {
+                          "end": Position {
+                            "column": 25,
+                            "line": 3,
+                          },
+                          "start": Position {
+                            "column": 25,
+                            "line": 3,
+                          },
+                        },
+                        "optional": false,
+                        "type": "CallExpression",
+                      },
+                      {
+                        "arguments": [
+                          {
+                            "loc": Location {
+                              "end": Position {
+                                "column": 27,
+                                "line": 3,
+                              },
+                              "start": Position {
+                                "column": 27,
+                                "line": 3,
+                              },
+                            },
+                            "raw": ""x"",
+                            "type": "Literal",
+                            "value": "x",
+                          },
+                        ],
+                        "callee": {
+                          "loc": Location {
+                            "end": Position {
+                              "column": 27,
+                              "line": 3,
+                            },
+                            "start": Position {
+                              "column": 27,
+                              "line": 3,
+                            },
+                          },
+                          "name": "string->symbol",
+                          "type": "Identifier",
+                        },
+                        "loc": Location {
+                          "end": Position {
+                            "column": 27,
+                            "line": 3,
+                          },
+                          "start": Position {
+                            "column": 27,
+                            "line": 3,
+                          },
+                        },
+                        "optional": false,
+                        "type": "CallExpression",
+                      },
+                    ],
+                    "callee": {
+                      "loc": Location {
+                        "end": Position {
+                          "column": 28,
+                          "line": 3,
+                        },
+                        "start": Position {
+                          "column": 22,
+                          "line": 3,
+                        },
+                      },
+                      "name": "list",
+                      "type": "Identifier",
+                    },
+                    "loc": Location {
+                      "end": Position {
+                        "column": 28,
+                        "line": 3,
+                      },
+                      "start": Position {
+                        "column": 22,
+                        "line": 3,
+                      },
+                    },
+                    "optional": false,
+                    "type": "CallExpression",
+                  },
+                ],
+                "callee": {
+                  "loc": Location {
+                    "end": Position {
+                      "column": 29,
+                      "line": 3,
+                    },
+                    "start": Position {
+                      "column": 3,
+                      "line": 3,
+                    },
+                  },
+                  "name": "list",
+                  "type": "Identifier",
+                },
+                "loc": Location {
+                  "end": Position {
+                    "column": 29,
+                    "line": 3,
+                  },
+                  "start": Position {
+                    "column": 3,
+                    "line": 3,
+                  },
+                },
+                "optional": false,
+                "type": "CallExpression",
+              },
+              {
+                "arguments": [
+                  {
+                    "arguments": [
+                      {
+                        "loc": Location {
+                          "end": Position {
+                            "column": 14,
+                            "line": 4,
+                          },
+                          "start": Position {
+                            "column": 9,
+                            "line": 4,
+                          },
+                        },
+                        "raw": ""square"",
+                        "type": "Literal",
+                        "value": "square",
+                      },
+                    ],
+                    "callee": {
+                      "loc": Location {
+                        "end": Position {
+                          "column": 14,
+                          "line": 4,
+                        },
+                        "start": Position {
+                          "column": 9,
+                          "line": 4,
+                        },
+                      },
+                      "name": "string->symbol",
+                      "type": "Identifier",
+                    },
+                    "loc": Location {
+                      "end": Position {
+                        "column": 14,
+                        "line": 4,
+                      },
+                      "start": Position {
+                        "column": 9,
+                        "line": 4,
+                      },
+                    },
+                    "optional": false,
+                    "type": "CallExpression",
+                  },
+                  {
+                    "arguments": [
+                      {
+                        "loc": Location {
+                          "end": Position {
+                            "column": 15,
+                            "line": 4,
+                          },
+                          "start": Position {
+                            "column": 13,
+                            "line": 4,
+                          },
+                        },
+                        "raw": ""5/8"",
+                        "type": "Literal",
+                        "value": "5/8",
+                      },
+                    ],
+                    "callee": {
+                      "loc": Location {
+                        "end": Position {
+                          "column": 15,
+                          "line": 4,
+                        },
+                        "start": Position {
+                          "column": 13,
+                          "line": 4,
+                        },
+                      },
+                      "name": "make_number",
+                      "type": "Identifier",
+                    },
+                    "loc": Location {
+                      "end": Position {
+                        "column": 15,
+                        "line": 4,
+                      },
+                      "start": Position {
+                        "column": 13,
+                        "line": 4,
+                      },
+                    },
+                    "optional": false,
+                    "type": "CallExpression",
+                  },
+                ],
+                "callee": {
+                  "loc": Location {
+                    "end": Position {
+                      "column": 14,
+                      "line": 4,
+                    },
+                    "start": Position {
+                      "column": 3,
+                      "line": 4,
+                    },
+                  },
+                  "name": "list",
+                  "type": "Identifier",
+                },
+                "loc": Location {
+                  "end": Position {
+                    "column": 14,
+                    "line": 4,
+                  },
+                  "start": Position {
+                    "column": 3,
+                    "line": 4,
+                  },
+                },
+                "optional": false,
+                "type": "CallExpression",
+              },
+              {
+                "arguments": [
+                  {
+                    "arguments": [
+                      {
+                        "loc": Location {
+                          "end": Position {
+                            "column": 12,
+                            "line": 5,
+                          },
+                          "start": Position {
+                            "column": 8,
+                            "line": 5,
+                          },
+                        },
+                        "raw": ""begin"",
+                        "type": "Literal",
+                        "value": "begin",
+                      },
+                    ],
+                    "callee": {
+                      "loc": Location {
+                        "end": Position {
+                          "column": 12,
+                          "line": 5,
+                        },
+                        "start": Position {
+                          "column": 8,
+                          "line": 5,
+                        },
+                      },
+                      "name": "string->symbol",
+                      "type": "Identifier",
+                    },
+                    "loc": Location {
+                      "end": Position {
+                        "column": 12,
+                        "line": 5,
+                      },
+                      "start": Position {
+                        "column": 8,
+                        "line": 5,
+                      },
+                    },
+                    "optional": false,
+                    "type": "CallExpression",
+                  },
+                  {
+                    "arguments": [
+                      {
+                        "arguments": [
+                          {
+                            "loc": Location {
+                              "end": Position {
+                                "column": 21,
+                                "line": 5,
+                              },
+                              "start": Position {
+                                "column": 16,
+                                "line": 5,
+                              },
+                            },
+                            "raw": ""define"",
+                            "type": "Literal",
+                            "value": "define",
+                          },
+                        ],
+                        "callee": {
+                          "loc": Location {
+                            "end": Position {
+                              "column": 21,
+                              "line": 5,
+                            },
+                            "start": Position {
+                              "column": 16,
+                              "line": 5,
+                            },
+                          },
+                          "name": "string->symbol",
+                          "type": "Identifier",
+                        },
+                        "loc": Location {
+                          "end": Position {
+                            "column": 21,
+                            "line": 5,
+                          },
+                          "start": Position {
+                            "column": 16,
+                            "line": 5,
+                          },
+                        },
+                        "optional": false,
+                        "type": "CallExpression",
+                      },
+                      {
+                        "arguments": [
+                          {
+                            "loc": Location {
+                              "end": Position {
+                                "column": 18,
+                                "line": 5,
+                              },
+                              "start": Position {
+                                "column": 18,
+                                "line": 5,
+                              },
+                            },
+                            "raw": ""x"",
+                            "type": "Literal",
+                            "value": "x",
+                          },
+                        ],
+                        "callee": {
+                          "loc": Location {
+                            "end": Position {
+                              "column": 18,
+                              "line": 5,
+                            },
+                            "start": Position {
+                              "column": 18,
+                              "line": 5,
+                            },
+                          },
+                          "name": "string->symbol",
+                          "type": "Identifier",
+                        },
+                        "loc": Location {
+                          "end": Position {
+                            "column": 18,
+                            "line": 5,
+                          },
+                          "start": Position {
+                            "column": 18,
+                            "line": 5,
+                          },
+                        },
+                        "optional": false,
+                        "type": "CallExpression",
+                      },
+                      {
+                        "arguments": [
+                          {
+                            "loc": Location {
+                              "end": Position {
+                                "column": 20,
+                                "line": 5,
+                              },
+                              "start": Position {
+                                "column": 20,
+                                "line": 5,
+                              },
+                            },
+                            "raw": ""5"",
+                            "type": "Literal",
+                            "value": "5",
+                          },
+                        ],
+                        "callee": {
+                          "loc": Location {
+                            "end": Position {
+                              "column": 20,
+                              "line": 5,
+                            },
+                            "start": Position {
+                              "column": 20,
+                              "line": 5,
+                            },
+                          },
+                          "name": "make_number",
+                          "type": "Identifier",
+                        },
+                        "loc": Location {
+                          "end": Position {
+                            "column": 20,
+                            "line": 5,
+                          },
+                          "start": Position {
+                            "column": 20,
+                            "line": 5,
+                          },
+                        },
+                        "optional": false,
+                        "type": "CallExpression",
+                      },
+                    ],
+                    "callee": {
+                      "loc": Location {
+                        "end": Position {
+                          "column": 21,
+                          "line": 5,
+                        },
+                        "start": Position {
+                          "column": 10,
+                          "line": 5,
+                        },
+                      },
+                      "name": "list",
+                      "type": "Identifier",
+                    },
+                    "loc": Location {
+                      "end": Position {
+                        "column": 21,
+                        "line": 5,
+                      },
+                      "start": Position {
+                        "column": 10,
+                        "line": 5,
+                      },
+                    },
+                    "optional": false,
+                    "type": "CallExpression",
+                  },
+                  {
+                    "arguments": [
+                      {
+                        "arguments": [
+                          {
+                            "loc": Location {
+                              "end": Position {
+                                "column": 30,
+                                "line": 5,
+                              },
+                              "start": Position {
+                                "column": 27,
+                                "line": 5,
+                              },
+                            },
+                            "raw": ""set!"",
+                            "type": "Literal",
+                            "value": "set!",
+                          },
+                        ],
+                        "callee": {
+                          "loc": Location {
+                            "end": Position {
+                              "column": 30,
+                              "line": 5,
+                            },
+                            "start": Position {
+                              "column": 27,
+                              "line": 5,
+                            },
+                          },
+                          "name": "string->symbol",
+                          "type": "Identifier",
+                        },
+                        "loc": Location {
+                          "end": Position {
+                            "column": 30,
+                            "line": 5,
+                          },
+                          "start": Position {
+                            "column": 27,
+                            "line": 5,
+                          },
+                        },
+                        "optional": false,
+                        "type": "CallExpression",
+                      },
+                      {
+                        "arguments": [
+                          {
+                            "loc": Location {
+                              "end": Position {
+                                "column": 29,
+                                "line": 5,
+                              },
+                              "start": Position {
+                                "column": 29,
+                                "line": 5,
+                              },
+                            },
+                            "raw": ""x"",
+                            "type": "Literal",
+                            "value": "x",
+                          },
+                        ],
+                        "callee": {
+                          "loc": Location {
+                            "end": Position {
+                              "column": 29,
+                              "line": 5,
+                            },
+                            "start": Position {
+                              "column": 29,
+                              "line": 5,
+                            },
+                          },
+                          "name": "string->symbol",
+                          "type": "Identifier",
+                        },
+                        "loc": Location {
+                          "end": Position {
+                            "column": 29,
+                            "line": 5,
+                          },
+                          "start": Position {
+                            "column": 29,
+                            "line": 5,
+                          },
+                        },
+                        "optional": false,
+                        "type": "CallExpression",
+                      },
+                      {
+                        "arguments": [
+                          {
+                            "loc": Location {
+                              "end": Position {
+                                "column": 33,
+                                "line": 5,
+                              },
+                              "start": Position {
+                                "column": 32,
+                                "line": 5,
+                              },
+                            },
+                            "raw": ""10"",
+                            "type": "Literal",
+                            "value": "10",
+                          },
+                        ],
+                        "callee": {
+                          "loc": Location {
+                            "end": Position {
+                              "column": 33,
+                              "line": 5,
+                            },
+                            "start": Position {
+                              "column": 32,
+                              "line": 5,
+                            },
+                          },
+                          "name": "make_number",
+                          "type": "Identifier",
+                        },
+                        "loc": Location {
+                          "end": Position {
+                            "column": 33,
+                            "line": 5,
+                          },
+                          "start": Position {
+                            "column": 32,
+                            "line": 5,
+                          },
+                        },
+                        "optional": false,
+                        "type": "CallExpression",
+                      },
+                    ],
+                    "callee": {
+                      "loc": Location {
+                        "end": Position {
+                          "column": 33,
+                          "line": 5,
+                        },
+                        "start": Position {
+                          "column": 23,
+                          "line": 5,
+                        },
+                      },
+                      "name": "list",
+                      "type": "Identifier",
+                    },
+                    "loc": Location {
+                      "end": Position {
+                        "column": 33,
+                        "line": 5,
+                      },
+                      "start": Position {
+                        "column": 23,
+                        "line": 5,
+                      },
+                    },
+                    "optional": false,
+                    "type": "CallExpression",
+                  },
+                  {
+                    "arguments": [
+                      {
+                        "loc": Location {
+                          "end": Position {
+                            "column": 35,
+                            "line": 5,
+                          },
+                          "start": Position {
+                            "column": 35,
+                            "line": 5,
+                          },
+                        },
+                        "raw": ""x"",
+                        "type": "Literal",
+                        "value": "x",
+                      },
+                    ],
+                    "callee": {
+                      "loc": Location {
+                        "end": Position {
+                          "column": 35,
+                          "line": 5,
+                        },
+                        "start": Position {
+                          "column": 35,
+                          "line": 5,
+                        },
+                      },
+                      "name": "string->symbol",
+                      "type": "Identifier",
+                    },
+                    "loc": Location {
+                      "end": Position {
+                        "column": 35,
+                        "line": 5,
+                      },
+                      "start": Position {
+                        "column": 35,
+                        "line": 5,
+                      },
+                    },
+                    "optional": false,
+                    "type": "CallExpression",
+                  },
+                ],
+                "callee": {
+                  "loc": Location {
+                    "end": Position {
+                      "column": 36,
+                      "line": 5,
+                    },
+                    "start": Position {
+                      "column": 3,
+                      "line": 5,
+                    },
+                  },
+                  "name": "list",
+                  "type": "Identifier",
+                },
+                "loc": Location {
+                  "end": Position {
+                    "column": 36,
+                    "line": 5,
+                  },
+                  "start": Position {
+                    "column": 3,
+                    "line": 5,
+                  },
+                },
+                "optional": false,
+                "type": "CallExpression",
+              },
+              {
+                "arguments": [
+                  {
+                    "arguments": [
+                      {
+                        "loc": Location {
+                          "end": Position {
+                            "column": 14,
+                            "line": 6,
+                          },
+                          "start": Position {
+                            "column": 9,
+                            "line": 6,
+                          },
+                        },
+                        "raw": ""define"",
+                        "type": "Literal",
+                        "value": "define",
+                      },
+                    ],
+                    "callee": {
+                      "loc": Location {
+                        "end": Position {
+                          "column": 14,
+                          "line": 6,
+                        },
+                        "start": Position {
+                          "column": 9,
+                          "line": 6,
+                        },
+                      },
+                      "name": "string->symbol",
+                      "type": "Identifier",
+                    },
+                    "loc": Location {
+                      "end": Position {
+                        "column": 14,
+                        "line": 6,
+                      },
+                      "start": Position {
+                        "column": 9,
+                        "line": 6,
+                      },
+                    },
+                    "optional": false,
+                    "type": "CallExpression",
+                  },
+                  {
+                    "arguments": [
+                      {
+                        "arguments": [
+                          {
+                            "loc": Location {
+                              "end": Position {
+                                "column": 22,
+                                "line": 6,
+                              },
+                              "start": Position {
+                                "column": 17,
+                                "line": 6,
+                              },
+                            },
+                            "raw": ""square"",
+                            "type": "Literal",
+                            "value": "square",
+                          },
+                        ],
+                        "callee": {
+                          "loc": Location {
+                            "end": Position {
+                              "column": 22,
+                              "line": 6,
+                            },
+                            "start": Position {
+                              "column": 17,
+                              "line": 6,
+                            },
+                          },
+                          "name": "string->symbol",
+                          "type": "Identifier",
+                        },
+                        "loc": Location {
+                          "end": Position {
+                            "column": 22,
+                            "line": 6,
+                          },
+                          "start": Position {
+                            "column": 17,
+                            "line": 6,
+                          },
+                        },
+                        "optional": false,
+                        "type": "CallExpression",
+                      },
+                      {
+                        "arguments": [
+                          {
+                            "loc": Location {
+                              "end": Position {
+                                "column": 19,
+                                "line": 6,
+                              },
+                              "start": Position {
+                                "column": 19,
+                                "line": 6,
+                              },
+                            },
+                            "raw": ""x"",
+                            "type": "Literal",
+                            "value": "x",
+                          },
+                        ],
+                        "callee": {
+                          "loc": Location {
+                            "end": Position {
+                              "column": 19,
+                              "line": 6,
+                            },
+                            "start": Position {
+                              "column": 19,
+                              "line": 6,
+                            },
+                          },
+                          "name": "string->symbol",
+                          "type": "Identifier",
+                        },
+                        "loc": Location {
+                          "end": Position {
+                            "column": 19,
+                            "line": 6,
+                          },
+                          "start": Position {
+                            "column": 19,
+                            "line": 6,
+                          },
+                        },
+                        "optional": false,
+                        "type": "CallExpression",
+                      },
+                    ],
+                    "callee": {
+                      "loc": Location {
+                        "end": Position {
+                          "column": 20,
+                          "line": 6,
+                        },
+                        "start": Position {
+                          "column": 11,
+                          "line": 6,
+                        },
+                      },
+                      "name": "list",
+                      "type": "Identifier",
+                    },
+                    "loc": Location {
+                      "end": Position {
+                        "column": 20,
+                        "line": 6,
+                      },
+                      "start": Position {
+                        "column": 11,
+                        "line": 6,
+                      },
+                    },
+                    "optional": false,
+                    "type": "CallExpression",
+                  },
+                  {
+                    "arguments": [
+                      {
+                        "arguments": [
+                          {
+                            "loc": Location {
+                              "end": Position {
+                                "column": 31,
+                                "line": 6,
+                              },
+                              "start": Position {
+                                "column": 27,
+                                "line": 6,
+                              },
+                            },
+                            "raw": ""begin"",
+                            "type": "Literal",
+                            "value": "begin",
+                          },
+                        ],
+                        "callee": {
+                          "loc": Location {
+                            "end": Position {
+                              "column": 31,
+                              "line": 6,
+                            },
+                            "start": Position {
+                              "column": 27,
+                              "line": 6,
+                            },
+                          },
+                          "name": "string->symbol",
+                          "type": "Identifier",
+                        },
+                        "loc": Location {
+                          "end": Position {
+                            "column": 31,
+                            "line": 6,
+                          },
+                          "start": Position {
+                            "column": 27,
+                            "line": 6,
+                          },
+                        },
+                        "optional": false,
+                        "type": "CallExpression",
+                      },
+                      {
+                        "arguments": [
+                          {
+                            "arguments": [
+                              {
+                                "loc": Location {
+                                  "end": Position {
+                                    "column": 40,
+                                    "line": 6,
+                                  },
+                                  "start": Position {
+                                    "column": 35,
+                                    "line": 6,
+                                  },
+                                },
+                                "raw": ""define"",
+                                "type": "Literal",
+                                "value": "define",
+                              },
+                            ],
+                            "callee": {
+                              "loc": Location {
+                                "end": Position {
+                                  "column": 40,
+                                  "line": 6,
+                                },
+                                "start": Position {
+                                  "column": 35,
+                                  "line": 6,
+                                },
+                              },
+                              "name": "string->symbol",
+                              "type": "Identifier",
+                            },
+                            "loc": Location {
+                              "end": Position {
+                                "column": 40,
+                                "line": 6,
+                              },
+                              "start": Position {
+                                "column": 35,
+                                "line": 6,
+                              },
+                            },
+                            "optional": false,
+                            "type": "CallExpression",
+                          },
+                          {
+                            "arguments": [
+                              {
+                                "loc": Location {
+                                  "end": Position {
+                                    "column": 37,
+                                    "line": 6,
+                                  },
+                                  "start": Position {
+                                    "column": 37,
+                                    "line": 6,
+                                  },
+                                },
+                                "raw": ""x"",
+                                "type": "Literal",
+                                "value": "x",
+                              },
+                            ],
+                            "callee": {
+                              "loc": Location {
+                                "end": Position {
+                                  "column": 37,
+                                  "line": 6,
+                                },
+                                "start": Position {
+                                  "column": 37,
+                                  "line": 6,
+                                },
+                              },
+                              "name": "string->symbol",
+                              "type": "Identifier",
+                            },
+                            "loc": Location {
+                              "end": Position {
+                                "column": 37,
+                                "line": 6,
+                              },
+                              "start": Position {
+                                "column": 37,
+                                "line": 6,
+                              },
+                            },
+                            "optional": false,
+                            "type": "CallExpression",
+                          },
+                          {
+                            "arguments": [
+                              {
+                                "loc": Location {
+                                  "end": Position {
+                                    "column": 39,
+                                    "line": 6,
+                                  },
+                                  "start": Position {
+                                    "column": 39,
+                                    "line": 6,
+                                  },
+                                },
+                                "raw": ""5"",
+                                "type": "Literal",
+                                "value": "5",
+                              },
+                            ],
+                            "callee": {
+                              "loc": Location {
+                                "end": Position {
+                                  "column": 39,
+                                  "line": 6,
+                                },
+                                "start": Position {
+                                  "column": 39,
+                                  "line": 6,
+                                },
+                              },
+                              "name": "make_number",
+                              "type": "Identifier",
+                            },
+                            "loc": Location {
+                              "end": Position {
+                                "column": 39,
+                                "line": 6,
+                              },
+                              "start": Position {
+                                "column": 39,
+                                "line": 6,
+                              },
+                            },
+                            "optional": false,
+                            "type": "CallExpression",
+                          },
+                        ],
+                        "callee": {
+                          "loc": Location {
+                            "end": Position {
+                              "column": 40,
+                              "line": 6,
+                            },
+                            "start": Position {
+                              "column": 29,
+                              "line": 6,
+                            },
+                          },
+                          "name": "list",
+                          "type": "Identifier",
+                        },
+                        "loc": Location {
+                          "end": Position {
+                            "column": 40,
+                            "line": 6,
+                          },
+                          "start": Position {
+                            "column": 29,
+                            "line": 6,
+                          },
+                        },
+                        "optional": false,
+                        "type": "CallExpression",
+                      },
+                      {
+                        "arguments": [
+                          {
+                            "arguments": [
+                              {
+                                "loc": Location {
+                                  "end": Position {
+                                    "column": 43,
+                                    "line": 6,
+                                  },
+                                  "start": Position {
+                                    "column": 43,
+                                    "line": 6,
+                                  },
+                                },
+                                "raw": ""*"",
+                                "type": "Literal",
+                                "value": "*",
+                              },
+                            ],
+                            "callee": {
+                              "loc": Location {
+                                "end": Position {
+                                  "column": 43,
+                                  "line": 6,
+                                },
+                                "start": Position {
+                                  "column": 43,
+                                  "line": 6,
+                                },
+                              },
+                              "name": "string->symbol",
+                              "type": "Identifier",
+                            },
+                            "loc": Location {
+                              "end": Position {
+                                "column": 43,
+                                "line": 6,
+                              },
+                              "start": Position {
+                                "column": 43,
+                                "line": 6,
+                              },
+                            },
+                            "optional": false,
+                            "type": "CallExpression",
+                          },
+                          {
+                            "arguments": [
+                              {
+                                "loc": Location {
+                                  "end": Position {
+                                    "column": 45,
+                                    "line": 6,
+                                  },
+                                  "start": Position {
+                                    "column": 45,
+                                    "line": 6,
+                                  },
+                                },
+                                "raw": ""x"",
+                                "type": "Literal",
+                                "value": "x",
+                              },
+                            ],
+                            "callee": {
+                              "loc": Location {
+                                "end": Position {
+                                  "column": 45,
+                                  "line": 6,
+                                },
+                                "start": Position {
+                                  "column": 45,
+                                  "line": 6,
+                                },
+                              },
+                              "name": "string->symbol",
+                              "type": "Identifier",
+                            },
+                            "loc": Location {
+                              "end": Position {
+                                "column": 45,
+                                "line": 6,
+                              },
+                              "start": Position {
+                                "column": 45,
+                                "line": 6,
+                              },
+                            },
+                            "optional": false,
+                            "type": "CallExpression",
+                          },
+                          {
+                            "arguments": [
+                              {
+                                "loc": Location {
+                                  "end": Position {
+                                    "column": 47,
+                                    "line": 6,
+                                  },
+                                  "start": Position {
+                                    "column": 47,
+                                    "line": 6,
+                                  },
+                                },
+                                "raw": ""x"",
+                                "type": "Literal",
+                                "value": "x",
+                              },
+                            ],
+                            "callee": {
+                              "loc": Location {
+                                "end": Position {
+                                  "column": 47,
+                                  "line": 6,
+                                },
+                                "start": Position {
+                                  "column": 47,
+                                  "line": 6,
+                                },
+                              },
+                              "name": "string->symbol",
+                              "type": "Identifier",
+                            },
+                            "loc": Location {
+                              "end": Position {
+                                "column": 47,
+                                "line": 6,
+                              },
+                              "start": Position {
+                                "column": 47,
+                                "line": 6,
+                              },
+                            },
+                            "optional": false,
+                            "type": "CallExpression",
+                          },
+                        ],
+                        "callee": {
+                          "loc": Location {
+                            "end": Position {
+                              "column": 48,
+                              "line": 6,
+                            },
+                            "start": Position {
+                              "column": 42,
+                              "line": 6,
+                            },
+                          },
+                          "name": "list",
+                          "type": "Identifier",
+                        },
+                        "loc": Location {
+                          "end": Position {
+                            "column": 48,
+                            "line": 6,
+                          },
+                          "start": Position {
+                            "column": 42,
+                            "line": 6,
+                          },
+                        },
+                        "optional": false,
+                        "type": "CallExpression",
+                      },
+                    ],
+                    "callee": {
+                      "loc": Location {
+                        "end": Position {
+                          "column": 49,
+                          "line": 6,
+                        },
+                        "start": Position {
+                          "column": 22,
+                          "line": 6,
+                        },
+                      },
+                      "name": "list",
+                      "type": "Identifier",
+                    },
+                    "loc": Location {
+                      "end": Position {
+                        "column": 49,
+                        "line": 6,
+                      },
+                      "start": Position {
+                        "column": 22,
+                        "line": 6,
+                      },
+                    },
+                    "optional": false,
+                    "type": "CallExpression",
+                  },
+                ],
+                "callee": {
+                  "loc": Location {
+                    "end": Position {
+                      "column": 50,
+                      "line": 6,
+                    },
+                    "start": Position {
+                      "column": 3,
+                      "line": 6,
+                    },
+                  },
+                  "name": "list",
+                  "type": "Identifier",
+                },
+                "loc": Location {
+                  "end": Position {
+                    "column": 50,
+                    "line": 6,
+                  },
+                  "start": Position {
+                    "column": 3,
+                    "line": 6,
+                  },
+                },
+                "optional": false,
+                "type": "CallExpression",
+              },
+            ],
+            "callee": {
+              "loc": Location {
+                "end": Position {
+                  "column": 50,
+                  "line": 6,
+                },
+                "start": Position {
+                  "column": 3,
+                  "line": 3,
+                },
+              },
+              "name": "list",
+              "type": "Identifier",
+            },
+            "loc": Location {
+              "end": Position {
+                "column": 50,
+                "line": 6,
+              },
+              "start": Position {
+                "column": 3,
+                "line": 3,
+              },
+            },
+            "optional": false,
+            "type": "CallExpression",
+          },
+        ],
+        "callee": {
+          "loc": Location {
+            "end": Position {
+              "column": 50,
+              "line": 6,
+            },
+            "start": Position {
+              "column": 3,
+              "line": 3,
+            },
+          },
+          "name": "eval",
+          "type": "Identifier",
+        },
+        "loc": Location {
+          "end": Position {
+            "column": 50,
+            "line": 6,
+          },
+          "start": Position {
+            "column": 3,
+            "line": 3,
+          },
+        },
+        "optional": false,
+        "type": "CallExpression",
+      },
+      "loc": Location {
+        "end": Position {
+          "column": 50,
+          "line": 6,
+        },
+        "start": Position {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "type": "ExpressionStatement",
+    },
+  ],
+  "loc": {
+    "end": Position {
+      "column": 50,
+      "line": 6,
+    },
+    "start": Position {
+      "column": 3,
+      "line": 2,
+    },
+  },
+  "sourceType": "module",
+  "type": "Program",
+}
+`;
+
+exports[`schemeParse (standard) 1`] = `
+{
+  "body": [
+    {
+      "loc": Location {
+        "end": Position {
+          "column": 27,
+          "line": 2,
+        },
+        "start": Position {
+          "column": 3,
+          "line": 2,
+        },
+      },
+      "source": {
+        "loc": Location {
+          "end": Position {
+            "column": 19,
+            "line": 2,
+          },
+          "start": Position {
+            "column": 15,
+            "line": 2,
+          },
+        },
+        "raw": ""std"",
+        "type": "Literal",
+        "value": "std",
+      },
+      "specifiers": [
+        {
+          "imported": {
+            "loc": Location {
+              "end": Position {
+                "column": 24,
+                "line": 2,
+              },
+              "start": Position {
+                "column": 21,
+                "line": 2,
+              },
+            },
+            "name": "list",
+            "type": "Identifier",
+          },
+          "loc": Location {
+            "end": Position {
+              "column": 24,
+              "line": 2,
+            },
+            "start": Position {
+              "column": 21,
+              "line": 2,
+            },
+          },
+          "local": {
+            "loc": Location {
+              "end": Position {
+                "column": 24,
+                "line": 2,
+              },
+              "start": Position {
+                "column": 21,
+                "line": 2,
+              },
+            },
+            "name": "importedlist",
+            "type": "Identifier",
+          },
+          "type": "ImportSpecifier",
+        },
+        {
+          "imported": {
+            "loc": Location {
+              "end": Position {
+                "column": 27,
+                "line": 2,
+              },
+              "start": Position {
+                "column": 25,
+                "line": 2,
+              },
+            },
+            "name": "map",
+            "type": "Identifier",
+          },
+          "loc": Location {
+            "end": Position {
+              "column": 27,
+              "line": 2,
+            },
+            "start": Position {
+              "column": 25,
+              "line": 2,
+            },
+          },
+          "local": {
+            "loc": Location {
+              "end": Position {
+                "column": 27,
+                "line": 2,
+              },
+              "start": Position {
+                "column": 25,
+                "line": 2,
+              },
+            },
+            "name": "importedmap",
+            "type": "Identifier",
+          },
+          "type": "ImportSpecifier",
+        },
+      ],
+      "type": "ImportDeclaration",
+    },
+    {
+      "declarations": [
+        {
+          "id": {
+            "loc": Location {
+              "end": Position {
+                "column": 24,
+                "line": 2,
+              },
+              "start": Position {
+                "column": 21,
+                "line": 2,
+              },
+            },
+            "name": "list",
+            "type": "Identifier",
+          },
+          "init": {
+            "loc": Location {
+              "end": Position {
+                "column": 24,
+                "line": 2,
+              },
+              "start": Position {
+                "column": 21,
+                "line": 2,
+              },
+            },
+            "name": "importedlist",
+            "type": "Identifier",
+          },
+          "type": "VariableDeclarator",
+        },
+      ],
+      "kind": "let",
+      "loc": Location {
+        "end": Position {
+          "column": 24,
+          "line": 2,
+        },
+        "start": Position {
+          "column": 21,
+          "line": 2,
+        },
+      },
+      "type": "VariableDeclaration",
+    },
+    {
+      "declarations": [
+        {
+          "id": {
+            "loc": Location {
+              "end": Position {
+                "column": 27,
+                "line": 2,
+              },
+              "start": Position {
+                "column": 25,
+                "line": 2,
+              },
+            },
+            "name": "map",
+            "type": "Identifier",
+          },
+          "init": {
+            "loc": Location {
+              "end": Position {
+                "column": 27,
+                "line": 2,
+              },
+              "start": Position {
+                "column": 25,
+                "line": 2,
+              },
+            },
+            "name": "importedmap",
+            "type": "Identifier",
+          },
+          "type": "VariableDeclarator",
+        },
+      ],
+      "kind": "let",
+      "loc": Location {
+        "end": Position {
+          "column": 27,
+          "line": 2,
+        },
+        "start": Position {
+          "column": 25,
+          "line": 2,
+        },
+      },
+      "type": "VariableDeclaration",
+    },
     {
       "declarations": [
         {
@@ -10,11 +2089,11 @@ exports[`schemeParse 1`] = `
             "loc": Location {
               "end": Position {
                 "column": 22,
-                "line": 2,
+                "line": 3,
               },
               "start": Position {
                 "column": 17,
-                "line": 2,
+                "line": 3,
               },
             },
             "name": "square",
@@ -28,11 +2107,11 @@ exports[`schemeParse 1`] = `
                   "loc": Location {
                     "end": Position {
                       "column": 25,
-                      "line": 2,
+                      "line": 3,
                     },
                     "start": Position {
                       "column": 25,
-                      "line": 2,
+                      "line": 3,
                     },
                   },
                   "name": "x",
@@ -42,11 +2121,11 @@ exports[`schemeParse 1`] = `
                   "loc": Location {
                     "end": Position {
                       "column": 27,
-                      "line": 2,
+                      "line": 3,
                     },
                     "start": Position {
                       "column": 27,
-                      "line": 2,
+                      "line": 3,
                     },
                   },
                   "name": "x",
@@ -57,11 +2136,11 @@ exports[`schemeParse 1`] = `
                 "loc": Location {
                   "end": Position {
                     "column": 23,
-                    "line": 2,
+                    "line": 3,
                   },
                   "start": Position {
                     "column": 23,
-                    "line": 2,
+                    "line": 3,
                   },
                 },
                 "name": "*",
@@ -70,11 +2149,11 @@ exports[`schemeParse 1`] = `
               "loc": Location {
                 "end": Position {
                   "column": 28,
-                  "line": 2,
+                  "line": 3,
                 },
                 "start": Position {
                   "column": 22,
-                  "line": 2,
+                  "line": 3,
                 },
               },
               "optional": false,
@@ -84,11 +2163,11 @@ exports[`schemeParse 1`] = `
             "loc": Location {
               "end": Position {
                 "column": 29,
-                "line": 2,
+                "line": 3,
               },
               "start": Position {
                 "column": 3,
-                "line": 2,
+                "line": 3,
               },
             },
             "params": [
@@ -96,11 +2175,11 @@ exports[`schemeParse 1`] = `
                 "loc": Location {
                   "end": Position {
                     "column": 19,
-                    "line": 2,
+                    "line": 3,
                   },
                   "start": Position {
                     "column": 19,
-                    "line": 2,
+                    "line": 3,
                   },
                 },
                 "name": "x",
@@ -116,11 +2195,11 @@ exports[`schemeParse 1`] = `
       "loc": Location {
         "end": Position {
           "column": 29,
-          "line": 2,
+          "line": 3,
         },
         "start": Position {
           "column": 3,
-          "line": 2,
+          "line": 3,
         },
       },
       "type": "VariableDeclaration",
@@ -134,11 +2213,11 @@ exports[`schemeParse 1`] = `
                 "loc": Location {
                   "end": Position {
                     "column": 15,
-                    "line": 3,
+                    "line": 4,
                   },
                   "start": Position {
                     "column": 13,
-                    "line": 3,
+                    "line": 4,
                   },
                 },
                 "raw": ""5/8"",
@@ -150,11 +2229,11 @@ exports[`schemeParse 1`] = `
               "loc": Location {
                 "end": Position {
                   "column": 15,
-                  "line": 3,
+                  "line": 4,
                 },
                 "start": Position {
                   "column": 13,
-                  "line": 3,
+                  "line": 4,
                 },
               },
               "name": "make_number",
@@ -163,11 +2242,11 @@ exports[`schemeParse 1`] = `
             "loc": Location {
               "end": Position {
                 "column": 15,
-                "line": 3,
+                "line": 4,
               },
               "start": Position {
                 "column": 13,
-                "line": 3,
+                "line": 4,
               },
             },
             "optional": false,
@@ -178,11 +2257,11 @@ exports[`schemeParse 1`] = `
           "loc": Location {
             "end": Position {
               "column": 14,
-              "line": 3,
+              "line": 4,
             },
             "start": Position {
               "column": 9,
-              "line": 3,
+              "line": 4,
             },
           },
           "name": "square",
@@ -191,11 +2270,11 @@ exports[`schemeParse 1`] = `
         "loc": Location {
           "end": Position {
             "column": 14,
-            "line": 3,
+            "line": 4,
           },
           "start": Position {
             "column": 3,
-            "line": 3,
+            "line": 4,
           },
         },
         "optional": false,
@@ -204,11 +2283,11 @@ exports[`schemeParse 1`] = `
       "loc": Location {
         "end": Position {
           "column": 14,
-          "line": 3,
+          "line": 4,
         },
         "start": Position {
           "column": 3,
-          "line": 3,
+          "line": 4,
         },
       },
       "type": "ExpressionStatement",
@@ -220,11 +2299,11 @@ exports[`schemeParse 1`] = `
             "loc": Location {
               "end": Position {
                 "column": 18,
-                "line": 4,
+                "line": 5,
               },
               "start": Position {
                 "column": 18,
-                "line": 4,
+                "line": 5,
               },
             },
             "name": "x",
@@ -236,11 +2315,11 @@ exports[`schemeParse 1`] = `
                 "loc": Location {
                   "end": Position {
                     "column": 20,
-                    "line": 4,
+                    "line": 5,
                   },
                   "start": Position {
                     "column": 20,
-                    "line": 4,
+                    "line": 5,
                   },
                 },
                 "raw": ""5"",
@@ -252,11 +2331,11 @@ exports[`schemeParse 1`] = `
               "loc": Location {
                 "end": Position {
                   "column": 20,
-                  "line": 4,
+                  "line": 5,
                 },
                 "start": Position {
                   "column": 20,
-                  "line": 4,
+                  "line": 5,
                 },
               },
               "name": "make_number",
@@ -265,11 +2344,11 @@ exports[`schemeParse 1`] = `
             "loc": Location {
               "end": Position {
                 "column": 20,
-                "line": 4,
+                "line": 5,
               },
               "start": Position {
                 "column": 20,
-                "line": 4,
+                "line": 5,
               },
             },
             "optional": false,
@@ -282,11 +2361,11 @@ exports[`schemeParse 1`] = `
       "loc": Location {
         "end": Position {
           "column": 21,
-          "line": 4,
+          "line": 5,
         },
         "start": Position {
           "column": 10,
-          "line": 4,
+          "line": 5,
         },
       },
       "type": "VariableDeclaration",
@@ -297,11 +2376,11 @@ exports[`schemeParse 1`] = `
           "loc": Location {
             "end": Position {
               "column": 29,
-              "line": 4,
+              "line": 5,
             },
             "start": Position {
               "column": 29,
-              "line": 4,
+              "line": 5,
             },
           },
           "name": "x",
@@ -310,11 +2389,11 @@ exports[`schemeParse 1`] = `
         "loc": Location {
           "end": Position {
             "column": 33,
-            "line": 4,
+            "line": 5,
           },
           "start": Position {
             "column": 23,
-            "line": 4,
+            "line": 5,
           },
         },
         "operator": "=",
@@ -324,11 +2403,11 @@ exports[`schemeParse 1`] = `
               "loc": Location {
                 "end": Position {
                   "column": 33,
-                  "line": 4,
+                  "line": 5,
                 },
                 "start": Position {
                   "column": 32,
-                  "line": 4,
+                  "line": 5,
                 },
               },
               "raw": ""10"",
@@ -340,11 +2419,11 @@ exports[`schemeParse 1`] = `
             "loc": Location {
               "end": Position {
                 "column": 33,
-                "line": 4,
+                "line": 5,
               },
               "start": Position {
                 "column": 32,
-                "line": 4,
+                "line": 5,
               },
             },
             "name": "make_number",
@@ -353,11 +2432,11 @@ exports[`schemeParse 1`] = `
           "loc": Location {
             "end": Position {
               "column": 33,
-              "line": 4,
+              "line": 5,
             },
             "start": Position {
               "column": 32,
-              "line": 4,
+              "line": 5,
             },
           },
           "optional": false,
@@ -368,11 +2447,11 @@ exports[`schemeParse 1`] = `
       "loc": Location {
         "end": Position {
           "column": 33,
-          "line": 4,
+          "line": 5,
         },
         "start": Position {
           "column": 23,
-          "line": 4,
+          "line": 5,
         },
       },
       "type": "ExpressionStatement",
@@ -382,11 +2461,11 @@ exports[`schemeParse 1`] = `
         "loc": Location {
           "end": Position {
             "column": 35,
-            "line": 4,
+            "line": 5,
           },
           "start": Position {
             "column": 35,
-            "line": 4,
+            "line": 5,
           },
         },
         "name": "x",
@@ -395,11 +2474,11 @@ exports[`schemeParse 1`] = `
       "loc": Location {
         "end": Position {
           "column": 35,
-          "line": 4,
+          "line": 5,
         },
         "start": Position {
           "column": 35,
-          "line": 4,
+          "line": 5,
         },
       },
       "type": "ExpressionStatement",
@@ -410,11 +2489,11 @@ exports[`schemeParse 1`] = `
           "loc": Location {
             "end": Position {
               "column": 22,
-              "line": 5,
+              "line": 6,
             },
             "start": Position {
               "column": 17,
-              "line": 5,
+              "line": 6,
             },
           },
           "name": "square",
@@ -423,11 +2502,11 @@ exports[`schemeParse 1`] = `
         "loc": Location {
           "end": Position {
             "column": 50,
-            "line": 5,
+            "line": 6,
           },
           "start": Position {
             "column": 3,
-            "line": 5,
+            "line": 6,
           },
         },
         "operator": "=",
@@ -442,11 +2521,11 @@ exports[`schemeParse 1`] = `
                       "loc": Location {
                         "end": Position {
                           "column": 37,
-                          "line": 5,
+                          "line": 6,
                         },
                         "start": Position {
                           "column": 37,
-                          "line": 5,
+                          "line": 6,
                         },
                       },
                       "name": "x",
@@ -458,11 +2537,11 @@ exports[`schemeParse 1`] = `
                           "loc": Location {
                             "end": Position {
                               "column": 39,
-                              "line": 5,
+                              "line": 6,
                             },
                             "start": Position {
                               "column": 39,
-                              "line": 5,
+                              "line": 6,
                             },
                           },
                           "raw": ""5"",
@@ -474,11 +2553,11 @@ exports[`schemeParse 1`] = `
                         "loc": Location {
                           "end": Position {
                             "column": 39,
-                            "line": 5,
+                            "line": 6,
                           },
                           "start": Position {
                             "column": 39,
-                            "line": 5,
+                            "line": 6,
                           },
                         },
                         "name": "make_number",
@@ -487,11 +2566,11 @@ exports[`schemeParse 1`] = `
                       "loc": Location {
                         "end": Position {
                           "column": 39,
-                          "line": 5,
+                          "line": 6,
                         },
                         "start": Position {
                           "column": 39,
-                          "line": 5,
+                          "line": 6,
                         },
                       },
                       "optional": false,
@@ -504,11 +2583,11 @@ exports[`schemeParse 1`] = `
                 "loc": Location {
                   "end": Position {
                     "column": 40,
-                    "line": 5,
+                    "line": 6,
                   },
                   "start": Position {
                     "column": 29,
-                    "line": 5,
+                    "line": 6,
                   },
                 },
                 "type": "VariableDeclaration",
@@ -520,11 +2599,11 @@ exports[`schemeParse 1`] = `
                       "loc": Location {
                         "end": Position {
                           "column": 45,
-                          "line": 5,
+                          "line": 6,
                         },
                         "start": Position {
                           "column": 45,
-                          "line": 5,
+                          "line": 6,
                         },
                       },
                       "name": "x",
@@ -534,11 +2613,11 @@ exports[`schemeParse 1`] = `
                       "loc": Location {
                         "end": Position {
                           "column": 47,
-                          "line": 5,
+                          "line": 6,
                         },
                         "start": Position {
                           "column": 47,
-                          "line": 5,
+                          "line": 6,
                         },
                       },
                       "name": "x",
@@ -549,11 +2628,11 @@ exports[`schemeParse 1`] = `
                     "loc": Location {
                       "end": Position {
                         "column": 43,
-                        "line": 5,
+                        "line": 6,
                       },
                       "start": Position {
                         "column": 43,
-                        "line": 5,
+                        "line": 6,
                       },
                     },
                     "name": "*",
@@ -562,11 +2641,11 @@ exports[`schemeParse 1`] = `
                   "loc": Location {
                     "end": Position {
                       "column": 48,
-                      "line": 5,
+                      "line": 6,
                     },
                     "start": Position {
                       "column": 42,
-                      "line": 5,
+                      "line": 6,
                     },
                   },
                   "optional": false,
@@ -575,11 +2654,11 @@ exports[`schemeParse 1`] = `
                 "loc": Location {
                   "end": Position {
                     "column": 48,
-                    "line": 5,
+                    "line": 6,
                   },
                   "start": Position {
                     "column": 42,
-                    "line": 5,
+                    "line": 6,
                   },
                 },
                 "type": "ReturnStatement",
@@ -588,11 +2667,11 @@ exports[`schemeParse 1`] = `
             "loc": {
               "end": Position {
                 "column": 48,
-                "line": 5,
+                "line": 6,
               },
               "start": Position {
                 "column": 29,
-                "line": 5,
+                "line": 6,
               },
             },
             "type": "BlockStatement",
@@ -601,11 +2680,11 @@ exports[`schemeParse 1`] = `
           "loc": Location {
             "end": Position {
               "column": 50,
-              "line": 5,
+              "line": 6,
             },
             "start": Position {
               "column": 3,
-              "line": 5,
+              "line": 6,
             },
           },
           "params": [
@@ -613,11 +2692,11 @@ exports[`schemeParse 1`] = `
               "loc": Location {
                 "end": Position {
                   "column": 19,
-                  "line": 5,
+                  "line": 6,
                 },
                 "start": Position {
                   "column": 19,
-                  "line": 5,
+                  "line": 6,
                 },
               },
               "name": "x",
@@ -631,11 +2710,11 @@ exports[`schemeParse 1`] = `
       "loc": Location {
         "end": Position {
           "column": 50,
-          "line": 5,
+          "line": 6,
         },
         "start": Position {
           "column": 3,
-          "line": 5,
+          "line": 6,
         },
       },
       "type": "ExpressionStatement",
@@ -644,7 +2723,7 @@ exports[`schemeParse 1`] = `
   "loc": {
     "end": Position {
       "column": 50,
-      "line": 5,
+      "line": 6,
     },
     "start": Position {
       "column": 3,

@@ -139,13 +139,13 @@ function delay(body: Expression) {
 }
 
 // helper functions to help make testing the parser easier
-function parse(input: string, chapter: number = Infinity): Expression[] {
+function parse(input: string, chapter: number = 4): Expression[] {
   const lexer = new SchemeLexer(input);
   const parser = new SchemeParser(input, lexer.scanTokens(), chapter);
   return parser.parse();
 }
 
-function parseFirst(input: string, chapter: number = Infinity): Expression {
+function parseFirst(input: string, chapter: number = 4): Expression {
   return parse(input, chapter)[0];
 }
 

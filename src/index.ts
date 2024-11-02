@@ -18,6 +18,7 @@ const JS_KEYWORDS: string[] = [
   "delete",
   "do",
   "else",
+  "eval",
   "export",
   "extends",
   "false",

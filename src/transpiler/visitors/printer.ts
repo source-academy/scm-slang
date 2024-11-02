@@ -223,4 +223,33 @@ export class Printer implements Visitor {
     node.expression.accept(this.increment());
     this.display(") ");
   }
+
+  visitDefineSyntax(node: Atomic.DefineSyntax) {
+    // this.indent();
+    this.display("( define-syntax ");
+    node.name.accept(this.increment());
+    this.display(" ");
+    node.transformer.accept(this.increment());
+    this.display(") ");
+  }
+
+  visitSyntaxRules(node: Atomic.SyntaxRules) {
+    // this.indent();
+    this.display("( syntax-rules ");
+    this.display("( ");
+    node.literals.forEach(literal => {
+      literal.accept(this.increment());
+      this.display(" ");
+    });
+    this.display(") ");
+    node.rules.forEach(rule => {
+      this.display("\n");
+      this.display("( ");
+      rule[0].accept(this.increment());
+      this.display(" ");
+      rule[1].accept(this.increment());
+      this.display(") ");
+    });
+    this.display(") ");
+  }
 }
