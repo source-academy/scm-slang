@@ -428,6 +428,11 @@ export class SchemeParser implements Parser {
   private parseNormalGroup(group: Group): Expression {
     // it is an error if the group is empty in a normal context
     if (group.length() === 0) {
+      if (this.chapter >= MACRO_CHAPTER) {
+        // disable any verification for the empty group
+        // the CSEP machine will verify its validity
+        return new Atomic.Nil(group.location);
+      }
       throw new ParserError.ExpectedFormError(
         this.source,
         group.location.start,
@@ -887,6 +892,19 @@ export class SchemeParser implements Parser {
    * @returns
    */
   private parseLet(group: Group): Extended.Let {
+    if (this.chapter >= MACRO_CHAPTER) {
+      // disable any verification for the let expression
+      const groupItems = group.unwrap().slice(1);
+      groupItems.forEach(item => {
+        this.parseExpression(item);
+      });
+      return new Extended.Let(
+        group.location,
+        [],
+        [],
+        new Atomic.Identifier(group.location, "undefined")
+      );
+    }
     // Form: (let ((<identifier> <value>)*) <body>+)
     // ensure that the group has at least 3 elements
     if (group.length() < 3) {
@@ -1003,6 +1021,19 @@ export class SchemeParser implements Parser {
    * @returns
    */
   private parseExtendedCond(group: Group): Extended.Cond {
+    if (this.chapter >= MACRO_CHAPTER) {
+      // disable any verification for the cond expression
+      const groupItems = group.unwrap().slice(1);
+      groupItems.forEach(item => {
+        this.parseExpression(item);
+      });
+      return new Extended.Cond(
+        group.location,
+        [],
+        [],
+        new Atomic.Identifier(group.location, "undefined")
+      );
+    }
     // Form: (cond (<pred> <body>)*)
     //     | (cond (<pred> <body>)* (else <val>))
     // ensure that the group has at least 2 elements
@@ -1248,6 +1279,17 @@ export class SchemeParser implements Parser {
    * @returns
    */
   private parseDelay(group: Group): Extended.Delay {
+    if (this.chapter >= MACRO_CHAPTER) {
+      // disable any verification for the delay expression
+      const groupItems = group.unwrap().slice(1);
+      groupItems.forEach(item => {
+        this.parseExpression(item);
+      });
+      return new Extended.Delay(
+        group.location,
+        new Atomic.Identifier(group.location, "undefined")
+      );
+    }
     // Form: (delay <expr>)
     // ensure that the group has 2 elements
     if (group.length() !== 2) {
@@ -1439,7 +1481,8 @@ export class SchemeParser implements Parser {
       pattern instanceof Atomic.Symbol ||
       pattern instanceof Atomic.BooleanLiteral ||
       pattern instanceof Atomic.NumericLiteral ||
-      pattern instanceof Atomic.StringLiteral
+      pattern instanceof Atomic.StringLiteral ||
+      pattern instanceof Atomic.Nil
     ) {
       return true;
     } else {
@@ -1524,7 +1567,8 @@ export class SchemeParser implements Parser {
       template instanceof Atomic.Symbol ||
       template instanceof Atomic.BooleanLiteral ||
       template instanceof Atomic.NumericLiteral ||
-      template instanceof Atomic.StringLiteral
+      template instanceof Atomic.StringLiteral ||
+      template instanceof Atomic.Nil
     ) {
       return true;
     } else {
