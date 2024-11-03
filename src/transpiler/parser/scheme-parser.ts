@@ -275,8 +275,9 @@ export class SchemeParser implements Parser {
           token.literal as string
         );
       default:
-        // if in a quoting context, any keyword is instead treated as a symbol
-        if (this.quoteMode !== QuoteMode.NONE) {
+        // if in a quoting context, or when dealing with the macro chapter,
+        // any keyword is instead treated as a symbol
+        if (this.quoteMode !== QuoteMode.NONE || this.chapter >= MACRO_CHAPTER) {
           return new Atomic.Symbol(this.toLocation(token), token.lexeme);
         }
         throw new ParserError.UnexpectedFormError(
