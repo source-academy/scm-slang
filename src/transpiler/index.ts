@@ -79,7 +79,7 @@ export function schemeParse(
 
     finalAST = redefinedAST;
   } else {
-    // Then we prepare the AST for evaluation within the CSEP machine.
+    // Then we prepare the AST for evaluation within the CSET machine.
     // Take the imports from the AST
     const macroASTImports: Expression[] = firstAST.filter(
       e => e instanceof Atomic.Import

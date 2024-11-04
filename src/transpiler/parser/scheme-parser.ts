@@ -434,7 +434,7 @@ export class SchemeParser implements Parser {
     if (group.length() === 0) {
       if (this.chapter >= MACRO_CHAPTER) {
         // disable any verification for the empty group
-        // the CSEP machine will verify its validity
+        // the CSET machine will verify its validity
         return new Atomic.Nil(group.location);
       }
       throw new ParserError.ExpectedFormError(
