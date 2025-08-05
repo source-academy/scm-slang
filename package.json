@@ -47,7 +47,7 @@
     "eslint-plugin-n": "^15.0.0 || ^16.0.0 ",
     "eslint-plugin-promise": "^6.6.0",
     "husky": "^9.1.7",
-    "jest": "^30.0.4",
+    "jest": "^30.0.5",
     "prettier": "^3.6.2",
     "source-map": "^0.7.4",
     "ts-jest": "^29.4.0",
