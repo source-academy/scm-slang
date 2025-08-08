@@ -235,4 +235,8 @@ export class Redefiner implements Visitor {
   visitSyntaxRules(node: Atomic.SyntaxRules) {
     return node;
   }
+
+  visitComplexLiteral(node: Atomic.ComplexLiteral): Expression {
+    return node;
+  }
 }
