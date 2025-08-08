@@ -129,6 +129,27 @@ export namespace Atomic {
   }
 
   /**
+   * A node that represents a Scheme complex number.
+   */
+  export class ComplexLiteral implements Literal {
+    location: Location;
+    value: string;
+    constructor(location: Location, value: string) {
+      this.location = location;
+      this.value = value;
+    }
+    accept(visitor: Visitor): any {
+      return visitor.visitComplexLiteral(this);
+    }
+    equals(other: Expression): boolean {
+      if (other instanceof ComplexLiteral) {
+        return this.value === other.value;
+      }
+      return false;
+    }
+  }
+
+  /**
    * A node representing a Scheme lambda expression.
    * TODO: Support rest arguments.
    */

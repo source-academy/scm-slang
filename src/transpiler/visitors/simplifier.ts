@@ -264,4 +264,8 @@ export class Simplifier implements Visitor {
   visitSyntaxRules(node: Atomic.SyntaxRules) {
     return node;
   }
+
+  visitComplexLiteral(node: Atomic.ComplexLiteral): Expression {
+    return node;
+  }
 }
