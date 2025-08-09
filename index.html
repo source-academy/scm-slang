@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCM-Slang - Scheme Implementation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .hero {
+            background: #f4f4f4;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .link-box {
+            background: #e8f4fd;
+            border: 1px solid #0066cc;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .link-box code {
+            background: #fff;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+        }
+        .instructions {
+            background: #f9f9f9;
+            border-left: 4px solid #0066cc;
+            padding: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <h1>🚀 SCM-Slang</h1>
+        <p>Scheme-based implementations of Source, written in TypeScript</p>
+    </div>
+
+    <h2>📦 GitHub Pages Distribution</h2>
+    <p>This repository provides a built version of the SCM-Slang library for use with Source Academy.</p>
+
+    <div class="link-box">
+        <h3>🔗 Library URL for Source Academy</h3>
+        <p>Use this URL in Source Academy's feature flag:</p>
+        <code id="library-url">https://source-academy.github.io/scm-slang/index.js</code>
+        <button onclick="copyToClipboard()" style="margin-left: 10px; padding: 5px 10px; background: #0066cc; color: white; border: none; border-radius: 3px; cursor: pointer;">Copy</button>
+    </div>
+
+    <div class="instructions">
+        <h3>📝 How to use in Source Academy</h3>
+        <ol>
+            <li>Go to Source Academy settings</li>
+            <li>Navigate to the feature flags section</li>
+            <li>Find the external library configuration</li>
+            <li>Paste the URL above as the library source</li>
+            <li>Enable the Scheme language feature</li>
+        </ol>
+    </div>
+
+    <h2>🧪 Available Exports</h2>
+    <ul>
+        <li><strong>parseSchemeSimple</strong> - Simple Scheme parser</li>
+        <li><strong>evaluate</strong> - Scheme evaluator using CSE machine</li>
+        <li><strong>createProgramEnvironment</strong> - Create Scheme environment</li>
+        <li><strong>SchemeEvaluator</strong> - Conductor-compatible evaluator</li>
+        <li><strong>BasicEvaluator</strong> - Basic evaluator implementation</li>
+        <li><strong>SchemeComplexNumber</strong> - Complex number support</li>
+    </ul>
+
+    <h2>🔍 Testing the Library</h2>
+    <p>You can test if the library loads correctly by opening the browser console and running:</p>
+    <pre style="background: #f4f4f4; padding: 10px; border-radius: 4px; overflow-x: auto;"><code>// Load the library
+const script = document.createElement('script');
+script.src = 'https://source-academy.github.io/scm-slang/index.js';
+document.head.appendChild(script);
+
+// After loading, you can test:
+// parseSchemeSimple('(+ 1 2)');
+// evaluate('(+ 1 2)', ...);
+</code></pre>
+
+    <script>
+        function copyToClipboard() {
+            const url = document.getElementById('library-url').textContent;
+            navigator.clipboard.writeText(url).then(() => {
+                alert('URL copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        }
+    </script>
+</body>
+</html>
