@@ -131,6 +131,7 @@ export class RunnerPlugin implements IRunnerPlugin {
         this.__evaluator = new SchemeEvaluator(this);
         this.__isCompatibleWithModules = false;
 
+        this.__serviceChannel.send(new HelloServiceMessage());
         this.__serviceChannel.subscribe((message) => {
             const handler = this.__serviceHandlers.get(message.type);
             if (handler) {
