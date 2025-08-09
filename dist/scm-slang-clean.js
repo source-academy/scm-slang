@@ -101,6 +101,22 @@
     class SchemeEvaluator {
         constructor(conductor) {
             this.conductor = conductor;
+            this.isRunning = false;
+        }
+
+        // IEvaluator interface - required method
+        async startEvaluator(entryPoint) {
+            console.log('ScmSlang: Starting evaluator with entry point:', entryPoint);
+            this.isRunning = true;
+            try {
+                await this.evaluateChunk(entryPoint);
+                return { status: 'completed' };
+            } catch (error) {
+                console.error('ScmSlang: Evaluator error:', error);
+                return { status: 'error', error: error.message };
+            } finally {
+                this.isRunning = false;
+            }
         }
 
         async evaluateChunk(code) {
