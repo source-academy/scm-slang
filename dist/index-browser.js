@@ -107,4 +107,3 @@
     exports.decode = decode;
 
 })));
-//# sourceMappingURL=index-browser.js.map
