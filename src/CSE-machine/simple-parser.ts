@@ -299,19 +299,14 @@ class SimpleSchemeParser {
       }
     }
 
-    // Check if this is a parameter list (single element that's not a special form)
-    if (elements.length === 1 && elements[0] instanceof Atomic.Identifier) {
-      // This could be a parameter list like (x) in lambda
-      return new Extended.List(location, elements);
-    }
-
-    // Regular function application
+    // Regular function application (including (list) which should be a function call)
     if (elements.length > 0) {
       const operator = elements[0];
       const operands = elements.slice(1);
       return new Atomic.Application(location, operator, operands);
     }
 
+    // Empty list literal
     return new Extended.List(location, elements);
   }
 
@@ -505,6 +500,10 @@ class SimpleSchemeParser {
     const quoted = this.parseExpression();
     if (!quoted) {
       throw new Error("quote requires an expression");
+    }
+    // Convert quoted expression to symbol if it's an identifier
+    if (quoted instanceof Atomic.Identifier) {
+      return new Atomic.Symbol(quoted.location, quoted.name);
     }
     return quoted; // Return the quoted expression directly
   }

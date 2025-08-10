@@ -165,17 +165,23 @@ export const primitives: Record<string, (...args: Value[]) => Value> = {
   },
 
   car: (pair: Value) => {
-    if (pair.type !== "pair") {
-      throw new Error("car requires a pair");
+    if (pair.type === "pair") {
+      return pair.car;
+    } else if (pair.type === "list" && pair.elements.length > 0) {
+      return pair.elements[0];
+    } else {
+      throw new Error("car requires a pair or non-empty list");
     }
-    return pair.car;
   },
 
   cdr: (pair: Value) => {
-    if (pair.type !== "pair") {
-      throw new Error("cdr requires a pair");
+    if (pair.type === "pair") {
+      return pair.cdr;
+    } else if (pair.type === "list" && pair.elements.length > 0) {
+      return { type: "list", elements: pair.elements.slice(1) };
+    } else {
+      throw new Error("cdr requires a pair or non-empty list");
     }
-    return pair.cdr;
   },
 
   list: (...args: Value[]) => {
@@ -188,11 +194,11 @@ export const primitives: Record<string, (...args: Value[]) => Value> = {
   },
 
   "pair?": (value: Value) => {
-    return { type: "boolean", value: value.type === "pair" };
+    return { type: "boolean", value: value.type === "pair" || value.type === "list" };
   },
 
   "list?": (value: Value) => {
-    return { type: "boolean", value: value.type === "list" };
+    return { type: "boolean", value: value.type === "list" || value.type === "nil" };
   },
 
   "number?": (value: Value) => {
@@ -209,5 +215,24 @@ export const primitives: Record<string, (...args: Value[]) => Value> = {
 
   "symbol?": (value: Value) => {
     return { type: "boolean", value: value.type === "symbol" };
+  },
+
+  length: (value: Value) => {
+    if (value.type === "list") {
+      return { type: "number", value: value.elements.length };
+    } else if (value.type === "pair") {
+      // Recursively count pairs
+      let count = 0;
+      let current: Value = value;
+      while (current.type === "pair") {
+        count++;
+        current = current.cdr;
+      }
+      return { type: "number", value: count };
+    } else if (value.type === "nil") {
+      return { type: "number", value: 0 };
+    } else {
+      throw new Error("length requires a list or pair");
+    }
   },
 };
