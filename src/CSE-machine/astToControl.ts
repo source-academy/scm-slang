@@ -6,7 +6,7 @@ import {
 } from "../transpiler/types/nodes/scheme-node-types";
 
 export function astToControl(expr: Expression): ControlItem[] {
-  // Hỗ trợ cả node Atomic và Extended
+ 
   if (
     expr instanceof Atomic.NumericLiteral ||
     expr instanceof Atomic.BooleanLiteral ||

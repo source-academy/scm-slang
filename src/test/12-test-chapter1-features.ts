@@ -220,6 +220,112 @@ function testChapter1Features() {
       expected: { type: "number", value: 3 },
       description: "Length of variable list",
     },
+
+    // ===== COMPOUND FUNCTIONS =====
+    {
+      code: "(define (square x) (* x x))",
+      expected: { type: "void" },
+      description: "Define square function",
+    },
+    {
+      code: "(define (cube x) (* x (square x)))",
+      expected: { type: "void" },
+      description: "Define cube using square (compound function)",
+    },
+    {
+      code: "(cube 3)",
+      expected: { type: "number", value: 27 },
+      description: "Test compound function",
+    },
+    {
+      code: "(define (average x y) (/ (+ x y) 2))",
+      expected: { type: "void" },
+      description: "Define average function",
+    },
+    {
+      code: "(define (square-average x y) (square (average x y)))",
+      expected: { type: "void" },
+      description: "Compound function using average",
+    },
+    {
+      code: "(square-average 4 6)",
+      expected: { type: "number", value: 25 },
+      description: "Test nested compound function",
+    },
+
+    // ===== LINEAR RECURSION =====
+    {
+      code: "(define (factorial n) (if (= n 0) 1 (* n (factorial (- n 1)))))",
+      expected: { type: "void" },
+      description: "Define factorial with linear recursion",
+    },
+    {
+      code: "(factorial 5)",
+      expected: { type: "number", value: 120 },
+      description: "Test factorial recursion",
+    },
+    {
+      code: "(factorial 0)",
+      expected: { type: "number", value: 1 },
+      description: "Test factorial base case",
+    },
+    {
+      code: "(define (sum-list lst) (if (null? lst) 0 (+ (car lst) (sum-list (cdr lst)))))",
+      expected: { type: "void" },
+      description: "Define sum-list with linear recursion",
+    },
+    {
+      code: "(sum-list (list 1 2 3 4 5))",
+      expected: { type: "number", value: 15 },
+      description: "Test sum-list recursion",
+    },
+    {
+      code: "(sum-list ())",
+      expected: { type: "number", value: 0 },
+      description: "Test sum-list base case",
+    },
+    {
+      code: "(define (count-elements lst) (if (null? lst) 0 (+ 1 (count-elements (cdr lst)))))",
+      expected: { type: "void" },
+      description: "Define count-elements with linear recursion",
+    },
+    {
+      code: "(count-elements (list 'a 'b 'c))",
+      expected: { type: "number", value: 3 },
+      description: "Test count-elements recursion",
+    },
+
+    // ===== ITERATION (Tail Recursion) =====
+    {
+      code: "(define (factorial-iter n) (define (iter n acc) (if (= n 0) acc (iter (- n 1) (* n acc)))) (iter n 1))",
+      expected: { type: "void" },
+      description: "Define factorial with iteration (tail recursion)",
+    },
+    {
+      code: "(factorial-iter 5)",
+      expected: { type: "number", value: 120 },
+      description: "Test factorial iteration",
+    },
+    {
+      code: "(define (sum-list-iter lst) (define (iter lst acc) (if (null? lst) acc (iter (cdr lst) (+ (car lst) acc)))) (iter lst 0))",
+      expected: { type: "void" },
+      description: "Define sum-list with iteration",
+    },
+    {
+      code: "(sum-list-iter (list 1 2 3 4 5))",
+      expected: { type: "number", value: 15 },
+      description: "Test sum-list iteration",
+    },
+    {
+      code: "(define (reverse-list lst) (define (iter lst result) (if (null? lst) result (iter (cdr lst) (cons (car lst) result)))) (iter lst ()))",
+      expected: { type: "void" },
+      description: "Define reverse-list with iteration",
+    },
+    {
+      code: "(reverse-list (list 1 2 3))",
+      expected: { type: "list", elements: [{ type: "number", value: 3 }, { type: "number", value: 2 }, { type: "number", value: 1 }] },
+      description: "Test reverse-list iteration",
+    },
   ];
 
   let passed = 0;
@@ -287,6 +393,9 @@ function testChapter1Features() {
   console.log("✅ Built-in functions with variables");
   console.log("✅ Boolean operations with variables");
   console.log("✅ Function composition");
+  console.log("✅ Compound functions (functions using other functions)");
+  console.log("✅ Linear recursion (factorial, sum-list, count-elements)");
+  console.log("✅ Iteration via tail recursion (factorial-iter, sum-list-iter, reverse-list)");
 }
 
 testChapter1Features();

@@ -5,6 +5,7 @@ import {
   Extended,
 } from "../transpiler/types/nodes/scheme-node-types";
 import { Location, Position } from "../transpiler/types/location";
+import { Environment } from "./environment";
 import {
   Instr,
   InstrType,
@@ -22,6 +23,7 @@ import {
   CarInstr,
   CdrInstr,
   ConsInstr,
+  RestoreEnvInstr,
   AppInstr,
   BranchInstr,
 } from "./types";
@@ -185,6 +187,14 @@ export function createBranchInstr(
     srcNode: consequent,
     consequent,
     alternate,
+  };
+}
+
+export function createRestoreEnvInstr(env: Environment): RestoreEnvInstr {
+  return {
+    instrType: InstrType.RESTORE_ENV,
+    srcNode: { type: "StatementSequence", body: [], location: { start: { line: 0, column: 0 }, end: { line: 0, column: 0 } } },
+    env,
   };
 }
 import { LiteralInstr, VariableInstr, LambdaInstr, IfInstr } from "./types";
