@@ -60,6 +60,7 @@ export enum InstrType {
   CAR = "Car",
   CDR = "Cdr",
   CONS = "Cons",
+  RESTORE_ENV = "RestoreEnv",
 }
 
 interface BaseInstr {
@@ -175,6 +176,10 @@ export interface ConsInstr extends BaseInstr {
   cdr: Expression;
 }
 
+export interface RestoreEnvInstr extends BaseInstr {
+  env: Environment;
+}
+
 // ...existing code...
 
 export interface LiteralInstr extends BaseInstr {
@@ -219,6 +224,7 @@ export type Instr =
   | CarInstr
   | CdrInstr
   | ConsInstr
+  | RestoreEnvInstr
   | UnOpInstr
   | BinOpInstr
   | LiteralInstr

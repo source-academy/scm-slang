@@ -31,6 +31,7 @@ import {
   CarInstr,
   CdrInstr,
   ConsInstr,
+  RestoreEnvInstr,
   AppInstr,
   BranchInstr,
   StatementSequence,
@@ -197,12 +198,10 @@ function evaluateExpression(
     }
   } else if (expr instanceof Atomic.Conditional) {
     console.log("DEBUG: Evaluating Conditional expression");
-    // Push branch instruction AFTER test evaluation
-    // This ensures test is evaluated and pushed to stash before branch runs
+    // Push test expression first, then branch instruction
+    // The branch instruction will decide which branch to take based on test result
     control.push(instr.createBranchInstr(expr.consequent, expr.alternate));
     control.push(expr.test);
-    control.push(expr.consequent);
-    control.push(expr.alternate);
   } else if (expr instanceof Atomic.Lambda) {
     // Create closure
     const closure: Value = {
@@ -314,12 +313,22 @@ function evaluateInstruction(
       console.log("DEBUG: Arguments:", args);
 
       if (operator.type === "closure") {
-        // Apply closure
+        // Apply closure - save current environment and create new one
+        const currentEnv = context.environment;
         const newEnv = createBlockEnvironment(operator.env);
+        
+        // Bind parameters to the new environment
         for (let i = 0; i < operator.params.length; i++) {
           newEnv.define(operator.params[i], args[i] || { type: "nil" });
         }
+        
+        // Set the new environment for function execution
         context.environment = newEnv;
+        
+        // Push a marker to restore environment after function execution
+        control.push(instr.createRestoreEnvInstr(currentEnv));
+        
+        // Push function body for execution
         control.push(...operator.body);
       } else if (operator.type === "primitive") {
         // Apply primitive function
@@ -349,7 +358,9 @@ function evaluateInstruction(
       console.log("DEBUG: Test value:", test);
       const branchInstr = instruction as BranchInstr;
 
-      if (test.type === "boolean" && test.value) {
+      // Check if test is truthy (not false and not nil)
+      const isTruthy = test.type !== "boolean" || test.value !== false;
+      if (isTruthy && test.type !== "nil") {
         console.log("DEBUG: Taking consequent branch");
         control.push(branchInstr.consequent);
       } else if (branchInstr.alternate) {
@@ -451,6 +462,12 @@ function evaluateInstruction(
           control.push(condInstr.catchall);
         }
       }
+      break;
+    }
+
+    case InstrType.RESTORE_ENV: {
+      const restoreInstr = instruction as RestoreEnvInstr;
+      context.environment = restoreInstr.env;
       break;
     }
 
