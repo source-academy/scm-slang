@@ -194,11 +194,17 @@ export const primitives: Record<string, (...args: Value[]) => Value> = {
   },
 
   "pair?": (value: Value) => {
-    return { type: "boolean", value: value.type === "pair" || value.type === "list" };
+    return {
+      type: "boolean",
+      value: value.type === "pair" || value.type === "list",
+    };
   },
 
   "list?": (value: Value) => {
-    return { type: "boolean", value: value.type === "list" || value.type === "nil" };
+    return {
+      type: "boolean",
+      value: value.type === "list" || value.type === "nil",
+    };
   },
 
   "number?": (value: Value) => {
