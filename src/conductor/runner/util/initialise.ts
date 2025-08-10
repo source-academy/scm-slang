@@ -8,7 +8,21 @@ import { EvaluatorClass, IRunnerPlugin } from "../types";
  * @param link The underlying communication link.
  * @returns The initialised `runnerPlugin` and `conduit`.
  */
-export function initialise(evaluatorClass: EvaluatorClass, link: ILink = self as ILink): { runnerPlugin: IRunnerPlugin, conduit: IConduit } {
+export function initialise(evaluatorClass: EvaluatorClass, link: ILink = (typeof self !== 'undefined' ? self : typeof global !== 'undefined' ? global : {
+    addEventListener: () => {},
+    postMessage: () => {},
+    onmessage: null
+}) as ILink): { runnerPlugin: IRunnerPlugin, conduit: IConduit } {
+    // Skip conductor initialization in browser environment for now
+    // This is causing issues with postMessage
+    if (typeof window !== 'undefined') {
+        // Return mock objects for browser
+        return {
+            runnerPlugin: {} as IRunnerPlugin,
+            conduit: {} as IConduit
+        };
+    }
+    
     const conduit = new Conduit(link, false);
     const runnerPlugin = conduit.registerPlugin(RunnerPlugin, evaluatorClass);
     return { runnerPlugin, conduit };

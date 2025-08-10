@@ -254,6 +254,7 @@ class SimpleSchemeParser {
     // Check for special forms
     if (elements.length > 0 && elements[0] instanceof Atomic.Identifier) {
       const first = elements[0] as Atomic.Identifier;
+      console.log('DEBUG: parseList - checking special form:', first.name);
       
       if (first.name === 'define') {
         return this.parseDefine(elements, location);
@@ -287,13 +288,52 @@ class SimpleSchemeParser {
   }
 
   private parseDefine(elements: Expression[], location: Location): Expression {
-    if (elements.length !== 3) {
-      throw new Error('define requires exactly 2 arguments');
+    if (elements.length < 3) {
+      throw new Error('define requires at least 2 arguments');
     }
     
     const name = elements[1];
     const value = elements[2];
     
+    console.log('DEBUG: parseDefine - name type:', name.constructor.name);
+    console.log('DEBUG: parseDefine - name:', name);
+    console.log('DEBUG: parseDefine - Extended.List check:', name instanceof Extended.List);
+    
+    // Handle function definition: (define (func-name args) body)
+    if ((name instanceof Extended.List && name.elements.length > 0) || 
+        (name instanceof Atomic.Application && name.operator instanceof Atomic.Identifier)) {
+      console.log('DEBUG: parseDefine - Processing function definition');
+      
+      let funcName: Atomic.Identifier;
+      let params: Atomic.Identifier[];
+      
+      if (name instanceof Extended.List) {
+        funcName = name.elements[0] as Atomic.Identifier;
+        params = name.elements.slice(1).filter(e => e instanceof Atomic.Identifier) as Atomic.Identifier[];
+      } else {
+        // Handle Application case: (add x y) -> operator is 'add', operands are [x, y]
+        funcName = name.operator as Atomic.Identifier;
+        params = name.operands.filter(e => e instanceof Atomic.Identifier) as Atomic.Identifier[];
+      }
+      
+      console.log('DEBUG: parseDefine - funcName type:', funcName.constructor.name);
+      console.log('DEBUG: parseDefine - funcName:', funcName.name);
+      
+      if (!(funcName instanceof Atomic.Identifier)) {
+        throw new Error('function name must be an identifier');
+      }
+      
+      console.log('DEBUG: parseDefine - params:', params.length);
+      
+      // Create lambda expression for the function body
+      const lambda = new Atomic.Lambda(location, value, params);
+      
+      // Return definition with lambda as value
+      return new Atomic.Definition(location, funcName, lambda);
+    }
+    
+    // Handle variable definition: (define name value)
+    console.log('DEBUG: parseDefine - Processing variable definition');
     if (!(name instanceof Atomic.Identifier)) {
       throw new Error('define name must be an identifier');
     }
@@ -309,10 +349,17 @@ class SimpleSchemeParser {
     const paramsExpr = elements[1];
     const body = elements[2];
     
+    console.log('DEBUG: parseLambda - paramsExpr type:', paramsExpr.constructor.name);
+    console.log('DEBUG: parseLambda - paramsExpr:', paramsExpr);
+    
     let params: Atomic.Identifier[] = [];
     if (paramsExpr instanceof Extended.List) {
       // Handle parameter list like (x y z)
       params = paramsExpr.elements.filter(e => e instanceof Atomic.Identifier) as Atomic.Identifier[];
+    } else if (paramsExpr instanceof Atomic.Application && paramsExpr.operator instanceof Atomic.Identifier) {
+      // Handle Application case: (x y) -> operator is 'x', operands are ['y']
+      params = [paramsExpr.operator as Atomic.Identifier];
+      params.push(...paramsExpr.operands.filter(e => e instanceof Atomic.Identifier) as Atomic.Identifier[]);
     } else if (paramsExpr instanceof Atomic.Identifier) {
       // Handle single parameter like x
       params = [paramsExpr];
@@ -323,6 +370,7 @@ class SimpleSchemeParser {
       throw new Error('lambda parameters must be identifiers');
     }
     
+    console.log('DEBUG: parseLambda - params:', params.length);
     return new Atomic.Lambda(location, body, params);
   }
 

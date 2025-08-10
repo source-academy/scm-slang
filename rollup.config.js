@@ -11,11 +11,19 @@ const config = {
     file: 'dist/index.js',
     format: 'umd',
     name: 'ScmSlangRunner',
-    sourcemap: true
+    sourcemap: false,
+    globals: {}
   },
   plugins: [
-    resolve(),
-    commonjs(),
+    resolve({
+      preferBuiltins: false,
+      browser: true
+    }),
+    commonjs({
+      include: 'node_modules/**',
+      transformMixedEsModules: true,
+      requireReturnsDefault: 'auto'
+    }),
     typescript({
       tsconfig: './tsconfig.json'
     })
