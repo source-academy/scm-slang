@@ -1,7 +1,7 @@
 {
   "builtInFuncs": [
     "+",
-    "-", 
+    "-",
     "*",
     "/",
     ">",
@@ -33,12 +33,7 @@
     "quotient",
     "modulo"
   ],
-  "constants": [
-    "pi",
-    "e",
-    "infinity",
-    "negative-infinity"
-  ],
+  "constants": ["pi", "e", "infinity", "negative-infinity"],
   "keywords": [
     "define",
     "lambda",
@@ -57,7 +52,7 @@
   ],
   "features": [
     "variable-declaration",
-    "function-definition", 
+    "function-definition",
     "function-application",
     "conditional-expressions",
     "arithmetic-operations",
@@ -67,4 +62,4 @@
     "complex-numbers",
     "basic-builtins"
   ]
-} 
+}

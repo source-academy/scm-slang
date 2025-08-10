@@ -3,5 +3,5 @@
 // Original author(s): Source Academy Team
 
 export interface IHostFileRpc {
-    requestFile(fileName: string): Promise<string | undefined>;
+  requestFile(fileName: string): Promise<string | undefined>;
 }

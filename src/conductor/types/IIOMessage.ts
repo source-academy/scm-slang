@@ -3,6 +3,6 @@
 // Original author(s): Source Academy Team
 
 export interface IIOMessage {
-    // stream: number;
-    message: string;
+  // stream: number;
+  message: string;
 }

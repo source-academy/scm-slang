@@ -25,13 +25,13 @@ export class SchemeComplexNumber {
     }
 
     const lower = str.toLowerCase();
-    if (lower.endsWith('i')) {
+    if (lower.endsWith("i")) {
       const numericPart = str.substring(0, str.length - 1);
-      
+
       // Handle purely imaginary: i, +i, -i
-      if (numericPart === '' || numericPart === '+') {
+      if (numericPart === "" || numericPart === "+") {
         return new SchemeComplexNumber(0, 1);
-      } else if (numericPart === '-') {
+      } else if (numericPart === "-") {
         return new SchemeComplexNumber(0, -1);
       }
 
@@ -42,7 +42,9 @@ export class SchemeComplexNumber {
       }
 
       // Handle complex with both real and imaginary parts: 3+4i, 1-2i
-      const match = numericPart.match(/^([\+\-]?\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?)([\+\-]\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?)$/);
+      const match = numericPart.match(
+        /^([\+\-]?\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?)([\+\-]\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?)$/
+      );
       if (match) {
         const realPart = Number(match[1]);
         const imagPart = Number(match[2]);
@@ -53,12 +55,14 @@ export class SchemeComplexNumber {
     throw new Error(`Invalid complex string: ${str}`);
   }
 
-  public static fromValue(value: number | string | SchemeComplexNumber): SchemeComplexNumber {
+  public static fromValue(
+    value: number | string | SchemeComplexNumber
+  ): SchemeComplexNumber {
     if (value instanceof SchemeComplexNumber) {
       return value;
-    } else if (typeof value === 'number') {
+    } else if (typeof value === "number") {
       return SchemeComplexNumber.fromNumber(value);
-    } else if (typeof value === 'string') {
+    } else if (typeof value === "string") {
       return SchemeComplexNumber.fromString(value);
     } else {
       throw new Error(`Cannot convert ${typeof value} to complex number`);
@@ -91,10 +95,12 @@ export class SchemeComplexNumber {
     // (a + bi) / (c + di) = ((ac + bd) + (bc - ad)i) / (c² + d²)
     const denominator = other.real * other.real + other.imag * other.imag;
     if (denominator === 0) {
-      throw new Error('Division by zero');
+      throw new Error("Division by zero");
     }
-    const real = (this.real * other.real + this.imag * other.imag) / denominator;
-    const imag = (this.imag * other.real - this.real * other.imag) / denominator;
+    const real =
+      (this.real * other.real + this.imag * other.imag) / denominator;
+    const imag =
+      (this.imag * other.real - this.real * other.imag) / denominator;
     return new SchemeComplexNumber(real, imag);
   }
 
@@ -117,13 +123,18 @@ export class SchemeComplexNumber {
     if (this.imag === 0) {
       return this.real.toString();
     } else if (this.real === 0) {
-      if (this.imag === 1) return 'i';
-      if (this.imag === -1) return '-i';
+      if (this.imag === 1) return "i";
+      if (this.imag === -1) return "-i";
       return `${this.imag}i`;
     } else {
-      const imagPart = this.imag === 1 ? 'i' : 
-                      this.imag === -1 ? '-i' :
-                      this.imag > 0 ? `+${this.imag}i` : `${this.imag}i`;
+      const imagPart =
+        this.imag === 1
+          ? "i"
+          : this.imag === -1
+            ? "-i"
+            : this.imag > 0
+              ? `+${this.imag}i`
+              : `${this.imag}i`;
       return `${this.real}${imagPart}`;
     }
   }
@@ -131,7 +142,9 @@ export class SchemeComplexNumber {
   // Convert to JavaScript number (only if purely real)
   public toNumber(): number {
     if (this.imag !== 0) {
-      throw new Error('Cannot convert complex number with imaginary part to real number');
+      throw new Error(
+        "Cannot convert complex number with imaginary part to real number"
+      );
     }
     return this.real;
   }

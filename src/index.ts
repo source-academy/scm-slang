@@ -29,7 +29,6 @@ export { initialise } from "./conductor/runner/util/initialise";
 export * from "./utils/encoder-visitor";
 export { unparse } from "./utils/reverse_parser";
 
-
 const JS_KEYWORDS: string[] = [
   "break",
   "case",
@@ -133,7 +132,7 @@ try {
   runnerPlugin = result.runnerPlugin;
   conduit = result.conduit;
 } catch (error) {
-  console.warn('Conductor initialization failed, using mock objects:', error);
+  console.warn("Conductor initialization failed, using mock objects:", error);
   // Create mock objects if initialization fails
   runnerPlugin = {};
   conduit = {};
@@ -141,5 +140,3 @@ try {
 
 // Export for Source Academy integration
 export { runnerPlugin, conduit };
-
-

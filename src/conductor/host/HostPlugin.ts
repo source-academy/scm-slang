@@ -1,5 +1,5 @@
-import { BasicHostPlugin } from './BasicHostPlugin';
-import { IHostPlugin } from './types';
+import { BasicHostPlugin } from "./BasicHostPlugin";
+import { IHostPlugin } from "./types";
 
 export class HostPlugin extends BasicHostPlugin implements IHostPlugin {
   private files = new Map<string, string>();
@@ -42,4 +42,4 @@ export class HostPlugin extends BasicHostPlugin implements IHostPlugin {
   addFile(fileName: string, content: string): void {
     this.files.set(fileName, content);
   }
-} 
+}

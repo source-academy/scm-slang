@@ -1,4 +1,4 @@
-import { Expression } from '../transpiler/types/nodes/scheme-node-types';
+import { Expression } from "../transpiler/types/nodes/scheme-node-types";
 
 export interface Environment {
   parent: Environment | null;
@@ -11,7 +11,10 @@ export interface Environment {
   clone(): Environment;
 }
 
-export function createEnvironment(name: string, parent: Environment | null = null): Environment {
+export function createEnvironment(
+  name: string,
+  parent: Environment | null = null
+): Environment {
   return {
     parent,
     frame: new Map(),
@@ -54,16 +57,16 @@ export function createEnvironment(name: string, parent: Environment | null = nul
       const clonedEnv = createEnvironment(this.name, clonedParent);
       clonedEnv.frame = clonedFrame;
       return clonedEnv;
-    }
+    },
   };
 }
 
 export function createProgramEnvironment(): Environment {
-  return createEnvironment('program');
+  return createEnvironment("program");
 }
 
 export function createBlockEnvironment(parent: Environment): Environment {
-  return createEnvironment('block', parent);
+  return createEnvironment("block", parent);
 }
 
 export function currentEnvironment(env: Environment): Environment {
@@ -76,7 +79,7 @@ export function pushEnvironment(env: Environment): Environment {
 
 export function popEnvironment(env: Environment): Environment {
   if (!env.parent) {
-    throw new Error('Cannot pop root environment');
+    throw new Error("Cannot pop root environment");
   }
   return env.parent;
 }
