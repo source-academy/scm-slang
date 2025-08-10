@@ -2,7 +2,7 @@ import { BasicEvaluator } from './BasicEvaluator';
 import { IRunnerPlugin } from './types';
 import { parseSchemeSimple } from '../../CSE-machine/simple-parser';
 import { evaluate, Context } from '../../CSE-machine/interpreter';
-import { createProgramEnvironment } from '../../CSE-machine/environment';
+import { createProgramEnvironment, Environment } from '../../CSE-machine/environment';
 import { Stash } from '../../CSE-machine/stash';
 import { Control } from '../../CSE-machine/control';
 import { Value } from '../../CSE-machine/stash';
@@ -10,13 +10,15 @@ import { ConductorError } from '../../common/errors/ConductorError';
 
 export class SchemeEvaluator extends BasicEvaluator {
   private context: Context;
+  private environment: Environment;
 
   constructor(conductor: IRunnerPlugin) {
     super(conductor);
+    this.environment = createProgramEnvironment();
     this.context = {
       control: new Control(),
       stash: new Stash(),
-      environment: createProgramEnvironment(),
+      environment: this.environment,
       runtime: {
         isRunning: true
       }
@@ -28,21 +30,24 @@ export class SchemeEvaluator extends BasicEvaluator {
       // Parse the Scheme code using simple parser
       const expressions = parseSchemeSimple(chunk);
       
+      // Reset control and stash but keep the same environment
+      this.context.control = new Control();
+      this.context.stash = new Stash();
+      this.context.runtime.isRunning = true;
+      
       // Evaluate the expressions
       const result = evaluate(chunk, expressions, this.context);
       
-      // Send output to the conductor
+      // Send output to the conductor (like py-slang)
       if (result.type === 'error') {
-        const conductorError = new ConductorError(result.message);
-        this.conductor.sendError(conductorError);
+        this.conductor.sendOutput(`Error: ${result.message}`);
       } else {
         // Send the result as output
         this.conductor.sendOutput(this.valueToString(result));
       }
       
     } catch (error: any) {
-      const conductorError = new ConductorError(error.message);
-      this.conductor.sendError(conductorError);
+      this.conductor.sendOutput(`Error: ${error instanceof Error ? error.message : error}`);
     }
   }
 
@@ -59,6 +64,8 @@ export class SchemeEvaluator extends BasicEvaluator {
       return value.value;
     } else if (value.type === 'nil') {
       return '()';
+    } else if (value.type === 'void') {
+      return ''; // Return empty string for void values (define statements)
     } else if (value.type === 'pair') {
       return `(${this.valueToString(value.car)} . ${this.valueToString(value.cdr)})`;
     } else if (value.type === 'list') {

@@ -1,10 +1,17 @@
-import { encode as b64Encode, decode as b64Decode } from "js-base64";
+// Import for internal use
+import { SchemeEvaluator } from "./conductor/runner/SchemeEvaluator";
+import { initialise } from "./conductor/runner/util/initialise";
+
+// Import js-base64 functions directly
+const b64Encode = (str: string) => btoa(unescape(encodeURIComponent(str)));
+const b64Decode = (str: string) => decodeURIComponent(escape(atob(str)));
 
 // Export CSE Machine functionality
 export { parseSchemeSimple } from "./CSE-machine/simple-parser";
 export { evaluate, Context } from "./CSE-machine/interpreter";
 export { createProgramEnvironment } from "./CSE-machine/environment";
-export { Value } from "./CSE-machine/stash";
+export { Value, Stash } from "./CSE-machine/stash";
+export { Control } from "./CSE-machine/control";
 export { SchemeComplexNumber } from "./CSE-machine/complex";
 
 // Export Conductor integration
@@ -12,18 +19,16 @@ export { SchemeEvaluator } from "./conductor/runner/SchemeEvaluator";
 export { BasicEvaluator } from "./conductor/runner/BasicEvaluator";
 export { initialise } from "./conductor/runner/util/initialise";
 
-// Export types
-export * from "./conductor/runner/types";
-export * from "./conductor/types";
-export * from "./conduit/types";
-export * from "./common/errors";
+// // Export types
+// export * from "./conductor/runner/types";
+// export * from "./conductor/types";
+// export * from "./conduit/types";
+// export * from "./common/errors";
 
 // Export transpiler functionality (for compatibility)
 export * from "./utils/encoder-visitor";
 export { unparse } from "./utils/reverse_parser";
-export { LexerError } from "./transpiler";
-export { ParserError } from "./transpiler";
-export { schemeParse } from "./transpiler";
+
 
 const JS_KEYWORDS: string[] = [
   "break",
@@ -120,4 +125,21 @@ export function decode(identifier: string): string {
 
 // Initialize conductor (following py-slang pattern)
 // Note: This will be executed when the module is loaded
-// const {runnerPlugin, conduit} = initialise(SchemeEvaluator);
+let runnerPlugin: any;
+let conduit: any;
+
+try {
+  const result = initialise(SchemeEvaluator);
+  runnerPlugin = result.runnerPlugin;
+  conduit = result.conduit;
+} catch (error) {
+  console.warn('Conductor initialization failed, using mock objects:', error);
+  // Create mock objects if initialization fails
+  runnerPlugin = {};
+  conduit = {};
+}
+
+// Export for Source Academy integration
+export { runnerPlugin, conduit };
+
+

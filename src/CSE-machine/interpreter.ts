@@ -73,6 +73,7 @@ function evaluateControlItem(
   stash: Stash
 ): void {
   if (isInstr(item)) {
+    console.log('DEBUG: Evaluating instruction:', item.instrType);
     evaluateInstruction(item, context, control, stash);
   } else if (isStatementSequence(item)) {
     // Handle StatementSequence by pushing all expressions in reverse order
@@ -81,6 +82,7 @@ function evaluateControlItem(
       control.push(seq.body[i]);
     }
   } else {
+    console.log('DEBUG: Evaluating expression:', item.constructor.name);
     evaluateExpression(item as Expression, context, control, stash);
   }
 }
@@ -100,6 +102,7 @@ function evaluateExpression(
   stash: Stash
 ): void {
   if (expr instanceof Atomic.NumericLiteral) {
+    console.log('DEBUG: Evaluating NumericLiteral:', expr.value);
     stash.push({ type: 'number', value: parseFloat(expr.value) });
   } else if (expr instanceof Atomic.ComplexLiteral) {
     try {
@@ -121,13 +124,22 @@ function evaluateExpression(
     stash.push(value);
   } else if (expr instanceof Atomic.Definition) {
     // Push the value to be evaluated, then the define instruction
-    control.push(expr.value);
+    // The value will be evaluated first, then the define instruction will use the result
+    console.log('DEBUG: Definition - expr.value type:', expr.value.constructor.name);
+    console.log('DEBUG: Definition - expr.value:', expr.value);
+    
+    // Push the define instruction AFTER the value evaluation
+    // This ensures the value is evaluated and pushed to stash before define runs
+    console.log('DEBUG: Pushing define instruction after value evaluation');
     control.push(instr.createDefineInstr(expr.name.name, expr.value));
+    control.push(expr.value);
   } else if (expr instanceof Atomic.Reassignment) {
     // Push the value to be evaluated, then the set instruction
     control.push(expr.value);
     control.push(instr.createSetInstr(expr.name.name, expr.value));
   } else if (expr instanceof Atomic.Application) {
+    console.log('DEBUG: Evaluating Application with', expr.operands.length, 'operands');
+    
     // Push the application instruction first (so it's executed last)
     control.push(instr.createAppInstr(expr.operands.length, expr));
     
@@ -139,11 +151,13 @@ function evaluateExpression(
       control.push(expr.operands[i]);
     }
   }  else if (expr instanceof Atomic.Conditional) {
-    // Push test, consequent, alternate, then branch instruction
+    console.log('DEBUG: Evaluating Conditional expression');
+    // Push branch instruction AFTER test evaluation
+    // This ensures test is evaluated and pushed to stash before branch runs
+    control.push(instr.createBranchInstr(expr.consequent, expr.alternate));
     control.push(expr.test);
     control.push(expr.consequent);
     control.push(expr.alternate);
-    control.push(instr.createBranchInstr(expr.consequent, expr.alternate));
   } else if (expr instanceof Atomic.Lambda) {
     // Create closure
     const closure: Value = {
@@ -214,9 +228,17 @@ function evaluateInstruction(
   switch (instruction.instrType) {
     case InstrType.DEFINE: {
       const value = stash.pop();
-      if (!value) throw new Error('No value to define');
+      if (!value) {
+        console.error('DEBUG: Stash is empty when define instruction runs');
+        console.error('DEBUG: Stash size:', stash.size());
+        console.error('DEBUG: Define instruction:', instruction);
+        throw new Error('No value to define');
+      }
       const defineInstr = instruction as DefineInstr;
+      console.log('DEBUG: Defining', defineInstr.name, 'with value:', value);
       context.environment.define(defineInstr.name, value);
+      // Push void value to indicate successful definition
+      stash.push({ type: 'void' });
       break;
     }
     
@@ -229,15 +251,18 @@ function evaluateInstruction(
     }
     
     case InstrType.APPLICATION: {
+      console.log('DEBUG: Executing APPLICATION instruction');
       const appInstr = instruction as AppInstr;
       const operator = stash.pop();
       if (!operator) throw new Error('No operator for application');
+      console.log('DEBUG: Operator:', operator);
       
       const args: Value[] = [];
       for (let i = 0; i < appInstr.numOfArgs; i++) {
         const arg = stash.pop();
         if (arg) args.unshift(arg);
       }
+      console.log('DEBUG: Arguments:', args);
       
       if (operator.type === 'closure') {
         // Apply closure
@@ -262,13 +287,21 @@ function evaluateInstruction(
     }
     
     case InstrType.BRANCH: {
+      console.log('DEBUG: Executing BRANCH instruction');
       const test = stash.pop();
-      if (!test) throw new Error('No test value for branch');
+      if (!test) {
+        console.error('DEBUG: No test value for branch - stash is empty');
+        console.error('DEBUG: Stash size:', stash.size());
+        throw new Error('No test value for branch');
+      }
+      console.log('DEBUG: Test value:', test);
       const branchInstr = instruction as BranchInstr;
       
       if (test.type === 'boolean' && test.value) {
+        console.log('DEBUG: Taking consequent branch');
         control.push(branchInstr.consequent);
       } else if (branchInstr.alternate) {
+        console.log('DEBUG: Taking alternate branch');
         control.push(branchInstr.alternate);
       }
       break;

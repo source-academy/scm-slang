@@ -10,6 +10,7 @@ export type Value =
   | { type: 'list'; elements: Value[] }
   | { type: 'vector'; elements: Value[] }
   | { type: 'nil' }
+  | { type: 'void' }
   | { type: 'closure'; params: string[]; body: any[]; env: any }
   | { type: 'primitive'; name: string; func: Function }
   | { type: 'error'; message: string };
