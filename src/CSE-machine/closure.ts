@@ -1,9 +1,9 @@
 // closure.ts
-import { Expression } from '../transpiler/types/nodes/scheme-node-types';
-import { Environment } from './environment';
+import { Expression } from "../transpiler/types/nodes/scheme-node-types";
+import { Environment } from "./environment";
 
 export class Closure {
-  readonly type = 'Closure';
+  readonly type = "Closure";
   readonly params: string[];
   readonly body: Expression[];
   readonly env: Environment;

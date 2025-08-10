@@ -1,8 +1,8 @@
-import { ControlItem } from './control';
-import { Environment } from './environment';
-import { Stack } from './stack';
-import { Atomic } from '../transpiler/types/nodes/scheme-node-types';
-import { astToControl } from './astToControl';
+import { ControlItem } from "./control";
+import { Environment } from "./environment";
+import { Stack } from "./stack";
+import { Atomic } from "../transpiler/types/nodes/scheme-node-types";
+import { astToControl } from "./astToControl";
 
 let globalStepCount = 0;
 
@@ -15,16 +15,18 @@ export function runCSE(control: ControlItem[], env: Environment): any {
     const current = control.shift()!;
 
     // Kiểm tra loại node bằng instanceof
-    if (current instanceof Atomic.NumericLiteral ||
-        current instanceof Atomic.BooleanLiteral ||
-        current instanceof Atomic.StringLiteral ||
-        current instanceof Atomic.Symbol) {
+    if (
+      current instanceof Atomic.NumericLiteral ||
+      current instanceof Atomic.BooleanLiteral ||
+      current instanceof Atomic.StringLiteral ||
+      current instanceof Atomic.Symbol
+    ) {
       stack.push(current.value);
       continue;
     }
 
     if (current instanceof Atomic.Identifier) {
-      const val =  env.get(current.name);
+      const val = env.get(current.name);
       stack.push(val);
       continue;
     }
@@ -39,10 +41,10 @@ export function runCSE(control: ControlItem[], env: Environment): any {
 
     if (current instanceof Atomic.Lambda) {
       const closure = {
-        type: 'Closure',
+        type: "Closure",
         params: current.params.map(p => p.name),
         body: current.body,
-        env: env.clone ? env.clone() : env // fallback nếu không có clone
+        env: env.clone ? env.clone() : env, // fallback nếu không có clone
       };
       stack.push(closure);
       continue;
@@ -51,9 +53,9 @@ export function runCSE(control: ControlItem[], env: Environment): any {
     if (current instanceof Atomic.Application) {
       const fn = evaluateExpr(current.operator, env);
       const args = current.operands.map(arg => evaluateExpr(arg, env));
-      if (typeof fn === 'function') {
+      if (typeof fn === "function") {
         stack.push(fn(...args));
-      } else if (typeof fn === 'object' && fn.type === 'Closure') {
+      } else if (typeof fn === "object" && fn.type === "Closure") {
         const newEnv = fn.env.extend ? fn.env.extend() : fn.env;
         fn.params.forEach((p: string, i: number) => {
           if (newEnv.define) newEnv.define(p, args[i]);
@@ -63,7 +65,7 @@ export function runCSE(control: ControlItem[], env: Environment): any {
         const result = runCSE(bodyControl, newEnv);
         stack.push(result);
       } else {
-        throw new Error('Invalid function application');
+        throw new Error("Invalid function application");
       }
       continue;
     }
@@ -91,10 +93,10 @@ function evaluateExpr(expr: any, env: Environment): any {
   }
   if (expr instanceof Atomic.Lambda) {
     return {
-      type: 'Closure',
+      type: "Closure",
       params: expr.params.map((p: any) => p.name),
       body: expr.body,
-      env: env.clone ? env.clone() : env
+      env: env.clone ? env.clone() : env,
     };
   }
   throw new Error(`Unhandled expr: ${JSON.stringify(expr)}`);

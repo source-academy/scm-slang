@@ -5,11 +5,51 @@ const b64Encode = (str: string) => btoa(unescape(encodeURIComponent(str)));
 const b64Decode = (str: string) => decodeURIComponent(escape(atob(str)));
 
 const JS_KEYWORDS: string[] = [
-  "break", "case", "catch", "class", "const", "continue", "debugger", "default",
-  "delete", "do", "else", "eval", "export", "extends", "false", "finally", "for",
-  "function", "if", "import", "in", "instanceof", "new", "return", "super", "switch",
-  "this", "throw", "true", "try", "typeof", "var", "void", "while", "with", "yield",
-  "enum", "await", "implements", "package", "protected", "static", "interface", "private", "public",
+  "break",
+  "case",
+  "catch",
+  "class",
+  "const",
+  "continue",
+  "debugger",
+  "default",
+  "delete",
+  "do",
+  "else",
+  "eval",
+  "export",
+  "extends",
+  "false",
+  "finally",
+  "for",
+  "function",
+  "if",
+  "import",
+  "in",
+  "instanceof",
+  "new",
+  "return",
+  "super",
+  "switch",
+  "this",
+  "throw",
+  "true",
+  "try",
+  "typeof",
+  "var",
+  "void",
+  "while",
+  "with",
+  "yield",
+  "enum",
+  "await",
+  "implements",
+  "package",
+  "protected",
+  "static",
+  "interface",
+  "private",
+  "public",
 ];
 
 function encode(identifier: string): string {
@@ -48,14 +88,14 @@ function decode(identifier: string): string {
 // Simple AST walker to replace acorn-walk
 function walkFull(ast: es.Node, visitor: (node: es.Node) => void) {
   visitor(ast);
-  
+
   // Walk through all properties that might contain nodes
   for (const key in ast) {
     const value = (ast as any)[key];
-    if (value && typeof value === 'object') {
+    if (value && typeof value === "object") {
       if (Array.isArray(value)) {
         value.forEach(item => {
-          if (item && typeof item === 'object' && item.type) {
+          if (item && typeof item === "object" && item.type) {
             walkFull(item, visitor);
           }
         });

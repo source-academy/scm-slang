@@ -6,8 +6,8 @@ import type { DataType } from "./DataType";
 import type { ExternTypeOf } from "./ExternTypeOf";
 
 interface ITypedValue<T extends DataType> {
-    type: T;
-    value: ExternTypeOf<T>;
+  type: T;
+  value: ExternTypeOf<T>;
 }
 
 // export a type instead to benefit from distributive conditional type

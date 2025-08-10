@@ -1,5 +1,9 @@
-import { ControlItem } from './control';
-import { Expression, Atomic, Extended } from '../transpiler/types/nodes/scheme-node-types';
+import { ControlItem } from "./control";
+import {
+  Expression,
+  Atomic,
+  Extended,
+} from "../transpiler/types/nodes/scheme-node-types";
 
 export function astToControl(expr: Expression): ControlItem[] {
   // Hỗ trợ cả node Atomic và Extended
@@ -31,6 +35,6 @@ export function astToControl(expr: Expression): ControlItem[] {
   ) {
     return [expr];
   }
-  console.log('DEBUG expr:', expr);
+  console.log("DEBUG expr:", expr);
   throw new Error(`Unhandled expr type: ${expr.constructor.name}`);
 }

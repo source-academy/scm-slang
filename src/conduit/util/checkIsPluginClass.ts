@@ -12,5 +12,6 @@ import { AbstractPluginClass, PluginClass } from "../types";
  * (e.g. terser) do not have good support for class decorators.
  * @param _pluginClass The Class to be typechecked.
  */
-export function checkIsPluginClass<Arg extends any[] = [], T = IPlugin>(_pluginClass: PluginClass<Arg, T> | AbstractPluginClass<Arg, T>) {
-}
+export function checkIsPluginClass<Arg extends any[] = [], T = IPlugin>(
+  _pluginClass: PluginClass<Arg, T> | AbstractPluginClass<Arg, T>
+) {}

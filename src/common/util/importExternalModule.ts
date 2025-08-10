@@ -11,8 +11,13 @@ import { importExternalPlugin } from "./importExternalPlugin";
  * @param location Where to find the external module.
  * @returns A promise resolving to the imported module.
  */
-export async function importExternalModule(location: string): Promise<PluginClass<any, IModulePlugin>> {
-    const plugin = await importExternalPlugin(location) as PluginClass<any, IModulePlugin>;
-    // TODO: additional verification it is a module
-    return plugin;
+export async function importExternalModule(
+  location: string
+): Promise<PluginClass<any, IModulePlugin>> {
+  const plugin = (await importExternalPlugin(location)) as PluginClass<
+    any,
+    IModulePlugin
+  >;
+  // TODO: additional verification it is a module
+  return plugin;
 }

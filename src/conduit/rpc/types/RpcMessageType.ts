@@ -3,9 +3,9 @@
 // Original author(s): Source Academy Team
 
 const enum RpcMessageType {
-    CALL,
-    RETURN,
-    RETURN_ERR
+  CALL,
+  RETURN,
+  RETURN_ERR,
 }
 
 export { RpcMessageType };

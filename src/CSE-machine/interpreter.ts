@@ -1,11 +1,43 @@
-import { Expression, Atomic, Extended } from '../transpiler/types/nodes/scheme-node-types';
-import { Control, ControlItem } from './control';
-import { Stash, Value } from './stash';
-import { Environment, createBlockEnvironment, createEnvironment, createProgramEnvironment, currentEnvironment, popEnvironment, pushEnvironment } from './environment';
-import { Instr, InstrType, DefineInstr, SetInstr, CondInstr, LetInstr, BeginInstr, DelayInstr, PairInstr, ListInstr, VectorInstr, SymbolInstr, NilInstr, CarInstr, CdrInstr, ConsInstr, AppInstr, BranchInstr, StatementSequence } from './types';
-import * as instr from './instrCreator';
-import { primitives } from './primitives';
-import { SchemeComplexNumber } from './complex';
+import {
+  Expression,
+  Atomic,
+  Extended,
+} from "../transpiler/types/nodes/scheme-node-types";
+import { Control, ControlItem } from "./control";
+import { Stash, Value } from "./stash";
+import {
+  Environment,
+  createBlockEnvironment,
+  createEnvironment,
+  createProgramEnvironment,
+  currentEnvironment,
+  popEnvironment,
+  pushEnvironment,
+} from "./environment";
+import {
+  Instr,
+  InstrType,
+  DefineInstr,
+  SetInstr,
+  CondInstr,
+  LetInstr,
+  BeginInstr,
+  DelayInstr,
+  PairInstr,
+  ListInstr,
+  VectorInstr,
+  SymbolInstr,
+  NilInstr,
+  CarInstr,
+  CdrInstr,
+  ConsInstr,
+  AppInstr,
+  BranchInstr,
+  StatementSequence,
+} from "./types";
+import * as instr from "./instrCreator";
+import { primitives } from "./primitives";
+import { SchemeComplexNumber } from "./complex";
 
 export interface Context {
   control: Control;
@@ -16,36 +48,39 @@ export interface Context {
   };
 }
 
-export function evaluate(code: string, program: Expression[], context: Context): Value {
+export function evaluate(
+  code: string,
+  program: Expression[],
+  context: Context
+): Value {
   try {
     // Initialize
     context.runtime.isRunning = true;
     context.stash = new Stash();
     context.control = new Control();
-    
+
     // Initialize environment with primitives
     Object.entries(primitives).forEach(([name, func]) => {
-      context.environment.define(name, { type: 'primitive', name, func });
+      context.environment.define(name, { type: "primitive", name, func });
     });
-    
+
     // Push expressions in reverse order
     for (let i = program.length - 1; i >= 0; i--) {
       context.control.push(program[i]);
     }
-    
+
     // Run CSE machine using the existing function
     const result = runCSEMachine(code, context, context.control, context.stash);
     return result;
-    
   } catch (error: any) {
-    return { type: 'error', message: error.message };
+    return { type: "error", message: error.message };
   }
 }
 
 function initializeEnvironment(environment: Environment): void {
   // Add all primitive functions to the environment
   Object.entries(primitives).forEach(([name, func]) => {
-    environment.define(name, { type: 'primitive', name, func });
+    environment.define(name, { type: "primitive", name, func });
   });
 }
 
@@ -58,12 +93,12 @@ function runCSEMachine(
   while (!control.isEmpty() && context.runtime.isRunning) {
     const item = control.pop();
     if (!item) break;
-    
+
     evaluateControlItem(item, context, control, stash);
   }
-  
+
   const result = stash.pop();
-  return result || { type: 'nil' };
+  return result || { type: "nil" };
 }
 
 function evaluateControlItem(
@@ -73,7 +108,7 @@ function evaluateControlItem(
   stash: Stash
 ): void {
   if (isInstr(item)) {
-    console.log('DEBUG: Evaluating instruction:', item.instrType);
+    console.log("DEBUG: Evaluating instruction:", item.instrType);
     evaluateInstruction(item, context, control, stash);
   } else if (isStatementSequence(item)) {
     // Handle StatementSequence by pushing all expressions in reverse order
@@ -82,17 +117,17 @@ function evaluateControlItem(
       control.push(seq.body[i]);
     }
   } else {
-    console.log('DEBUG: Evaluating expression:', item.constructor.name);
+    console.log("DEBUG: Evaluating expression:", item.constructor.name);
     evaluateExpression(item as Expression, context, control, stash);
   }
 }
 
 function isStatementSequence(item: ControlItem): item is StatementSequence {
-  return 'type' in item && item.type === 'StatementSequence';
+  return "type" in item && item.type === "StatementSequence";
 }
 
 function isInstr(item: ControlItem): item is Instr {
-  return 'instrType' in item;
+  return "instrType" in item;
 }
 
 function evaluateExpression(
@@ -102,35 +137,41 @@ function evaluateExpression(
   stash: Stash
 ): void {
   if (expr instanceof Atomic.NumericLiteral) {
-    console.log('DEBUG: Evaluating NumericLiteral:', expr.value);
-    stash.push({ type: 'number', value: parseFloat(expr.value) });
+    console.log("DEBUG: Evaluating NumericLiteral:", expr.value);
+    stash.push({ type: "number", value: parseFloat(expr.value) });
   } else if (expr instanceof Atomic.ComplexLiteral) {
     try {
       const complexNumber = SchemeComplexNumber.fromString(expr.value);
-      stash.push({ type: 'complex', value: complexNumber });
+      stash.push({ type: "complex", value: complexNumber });
     } catch (error: any) {
-      stash.push({ type: 'error', message: `Invalid complex number: ${error.message}` });
+      stash.push({
+        type: "error",
+        message: `Invalid complex number: ${error.message}`,
+      });
     }
   } else if (expr instanceof Atomic.BooleanLiteral) {
-    stash.push({ type: 'boolean', value: expr.value });
+    stash.push({ type: "boolean", value: expr.value });
   } else if (expr instanceof Atomic.StringLiteral) {
-    stash.push({ type: 'string', value: expr.value });
+    stash.push({ type: "string", value: expr.value });
   } else if (expr instanceof Atomic.Symbol) {
-    stash.push({ type: 'symbol', value: expr.value });
+    stash.push({ type: "symbol", value: expr.value });
   } else if (expr instanceof Atomic.Nil) {
-    stash.push({ type: 'nil' });
-  }  else if (expr instanceof Atomic.Identifier) {
+    stash.push({ type: "nil" });
+  } else if (expr instanceof Atomic.Identifier) {
     const value = context.environment.get(expr.name);
     stash.push(value);
   } else if (expr instanceof Atomic.Definition) {
     // Push the value to be evaluated, then the define instruction
     // The value will be evaluated first, then the define instruction will use the result
-    console.log('DEBUG: Definition - expr.value type:', expr.value.constructor.name);
-    console.log('DEBUG: Definition - expr.value:', expr.value);
-    
+    console.log(
+      "DEBUG: Definition - expr.value type:",
+      expr.value.constructor.name
+    );
+    console.log("DEBUG: Definition - expr.value:", expr.value);
+
     // Push the define instruction AFTER the value evaluation
     // This ensures the value is evaluated and pushed to stash before define runs
-    console.log('DEBUG: Pushing define instruction after value evaluation');
+    console.log("DEBUG: Pushing define instruction after value evaluation");
     control.push(instr.createDefineInstr(expr.name.name, expr.value));
     control.push(expr.value);
   } else if (expr instanceof Atomic.Reassignment) {
@@ -138,20 +179,24 @@ function evaluateExpression(
     control.push(expr.value);
     control.push(instr.createSetInstr(expr.name.name, expr.value));
   } else if (expr instanceof Atomic.Application) {
-    console.log('DEBUG: Evaluating Application with', expr.operands.length, 'operands');
-    
+    console.log(
+      "DEBUG: Evaluating Application with",
+      expr.operands.length,
+      "operands"
+    );
+
     // Push the application instruction first (so it's executed last)
     control.push(instr.createAppInstr(expr.operands.length, expr));
-    
+
     // Push the operator (so it's evaluated before the instruction)
     control.push(expr.operator);
-    
+
     // Push operands in reverse order (so they are evaluated left-to-right)
     for (let i = expr.operands.length - 1; i >= 0; i--) {
       control.push(expr.operands[i]);
     }
-  }  else if (expr instanceof Atomic.Conditional) {
-    console.log('DEBUG: Evaluating Conditional expression');
+  } else if (expr instanceof Atomic.Conditional) {
+    console.log("DEBUG: Evaluating Conditional expression");
     // Push branch instruction AFTER test evaluation
     // This ensures test is evaluated and pushed to stash before branch runs
     control.push(instr.createBranchInstr(expr.consequent, expr.alternate));
@@ -161,10 +206,10 @@ function evaluateExpression(
   } else if (expr instanceof Atomic.Lambda) {
     // Create closure
     const closure: Value = {
-      type: 'closure',
+      type: "closure",
       params: expr.params.map(p => p.name),
       body: [expr.body],
-      env: context.environment
+      env: context.environment,
     };
     stash.push(closure);
   } else if (expr instanceof Atomic.Pair) {
@@ -195,11 +240,13 @@ function evaluateExpression(
     for (let i = expr.values.length - 1; i >= 0; i--) {
       control.push(expr.values[i]);
     }
-    control.push(instr.createLetInstr(
-      expr.identifiers.map(id => id.name),
-      expr.values,
-      expr.body
-    ));
+    control.push(
+      instr.createLetInstr(
+        expr.identifiers.map(id => id.name),
+        expr.values,
+        expr.body
+      )
+    );
   } else if (expr instanceof Extended.Cond) {
     // Push predicates and consequents, then cond instruction
     for (let i = expr.predicates.length - 1; i >= 0; i--) {
@@ -209,7 +256,9 @@ function evaluateExpression(
     if (expr.catchall) {
       control.push(expr.catchall);
     }
-    control.push(instr.createCondInstr(expr.predicates, expr.consequents, expr.catchall));
+    control.push(
+      instr.createCondInstr(expr.predicates, expr.consequents, expr.catchall)
+    );
   } else if (expr instanceof Extended.Delay) {
     // Push expression to be evaluated, then delay instruction
     control.push(expr.expression);
@@ -229,93 +278,96 @@ function evaluateInstruction(
     case InstrType.DEFINE: {
       const value = stash.pop();
       if (!value) {
-        console.error('DEBUG: Stash is empty when define instruction runs');
-        console.error('DEBUG: Stash size:', stash.size());
-        console.error('DEBUG: Define instruction:', instruction);
-        throw new Error('No value to define');
+        console.error("DEBUG: Stash is empty when define instruction runs");
+        console.error("DEBUG: Stash size:", stash.size());
+        console.error("DEBUG: Define instruction:", instruction);
+        throw new Error("No value to define");
       }
       const defineInstr = instruction as DefineInstr;
-      console.log('DEBUG: Defining', defineInstr.name, 'with value:', value);
+      console.log("DEBUG: Defining", defineInstr.name, "with value:", value);
       context.environment.define(defineInstr.name, value);
       // Push void value to indicate successful definition
-      stash.push({ type: 'void' });
+      stash.push({ type: "void" });
       break;
     }
-    
+
     case InstrType.SET: {
       const value = stash.pop();
-      if (!value) throw new Error('No value to set');
+      if (!value) throw new Error("No value to set");
       const setInstr = instruction as SetInstr;
       context.environment.set(setInstr.name, value);
       break;
     }
-    
+
     case InstrType.APPLICATION: {
-      console.log('DEBUG: Executing APPLICATION instruction');
+      console.log("DEBUG: Executing APPLICATION instruction");
       const appInstr = instruction as AppInstr;
       const operator = stash.pop();
-      if (!operator) throw new Error('No operator for application');
-      console.log('DEBUG: Operator:', operator);
-      
+      if (!operator) throw new Error("No operator for application");
+      console.log("DEBUG: Operator:", operator);
+
       const args: Value[] = [];
       for (let i = 0; i < appInstr.numOfArgs; i++) {
         const arg = stash.pop();
         if (arg) args.unshift(arg);
       }
-      console.log('DEBUG: Arguments:', args);
-      
-      if (operator.type === 'closure') {
+      console.log("DEBUG: Arguments:", args);
+
+      if (operator.type === "closure") {
         // Apply closure
         const newEnv = createBlockEnvironment(operator.env);
         for (let i = 0; i < operator.params.length; i++) {
-          newEnv.define(operator.params[i], args[i] || { type: 'nil' });
+          newEnv.define(operator.params[i], args[i] || { type: "nil" });
         }
         context.environment = newEnv;
         control.push(...operator.body);
-      } else if (operator.type === 'primitive') {
+      } else if (operator.type === "primitive") {
         // Apply primitive function
         try {
           const result = operator.func(...args);
           stash.push(result);
         } catch (error: any) {
-          stash.push({ type: 'error', message: error.message });
+          stash.push({ type: "error", message: error.message });
         }
       } else {
-        stash.push({ type: 'error', message: `Cannot apply non-function: ${operator.type}` });
+        stash.push({
+          type: "error",
+          message: `Cannot apply non-function: ${operator.type}`,
+        });
       }
       break;
     }
-    
+
     case InstrType.BRANCH: {
-      console.log('DEBUG: Executing BRANCH instruction');
+      console.log("DEBUG: Executing BRANCH instruction");
       const test = stash.pop();
       if (!test) {
-        console.error('DEBUG: No test value for branch - stash is empty');
-        console.error('DEBUG: Stash size:', stash.size());
-        throw new Error('No test value for branch');
+        console.error("DEBUG: No test value for branch - stash is empty");
+        console.error("DEBUG: Stash size:", stash.size());
+        throw new Error("No test value for branch");
       }
-      console.log('DEBUG: Test value:', test);
+      console.log("DEBUG: Test value:", test);
       const branchInstr = instruction as BranchInstr;
-      
-      if (test.type === 'boolean' && test.value) {
-        console.log('DEBUG: Taking consequent branch');
+
+      if (test.type === "boolean" && test.value) {
+        console.log("DEBUG: Taking consequent branch");
         control.push(branchInstr.consequent);
       } else if (branchInstr.alternate) {
-        console.log('DEBUG: Taking alternate branch');
+        console.log("DEBUG: Taking alternate branch");
         control.push(branchInstr.alternate);
       }
       break;
     }
-    
+
     case InstrType.PAIR: {
       const cdr = stash.pop();
       const car = stash.pop();
-      if (!car || !cdr) throw new Error('Missing car or cdr for pair');
-      
-      stash.push({ type: 'pair', car, cdr });
+      if (!car || !cdr) throw new Error("Missing car or cdr for pair");
+
+      stash.push({ type: "pair", car, cdr });
       break;
     }
-    
+
     case InstrType.LIST: {
       const listInstr = instruction as ListInstr;
       const elements: Value[] = [];
@@ -323,10 +375,10 @@ function evaluateInstruction(
         const element = stash.pop();
         if (element) elements.unshift(element);
       }
-      stash.push({ type: 'list', elements });
+      stash.push({ type: "list", elements });
       break;
     }
-    
+
     case InstrType.VECTOR: {
       const vectorInstr = instruction as VectorInstr;
       const elements: Value[] = [];
@@ -334,16 +386,16 @@ function evaluateInstruction(
         const element = stash.pop();
         if (element) elements.unshift(element);
       }
-      stash.push({ type: 'vector', elements });
+      stash.push({ type: "vector", elements });
       break;
     }
-    
+
     case InstrType.BEGIN: {
       // Begin evaluates all expressions and returns the last one
       const beginInstr = instruction as BeginInstr;
       const expressions = beginInstr.expressions;
       if (expressions.length === 0) {
-        stash.push({ type: 'nil' });
+        stash.push({ type: "nil" });
       } else if (expressions.length === 1) {
         control.push(expressions[0]);
       } else {
@@ -354,7 +406,7 @@ function evaluateInstruction(
       }
       break;
     }
-    
+
     case InstrType.LET: {
       // Let creates a new environment with bindings
       const letInstr = instruction as LetInstr;
@@ -363,28 +415,28 @@ function evaluateInstruction(
         const value = stash.pop();
         if (value) values.unshift(value);
       }
-      
+
       const newEnv = createBlockEnvironment(context.environment);
       for (let i = 0; i < letInstr.identifiers.length; i++) {
-        newEnv.define(letInstr.identifiers[i], values[i] || { type: 'nil' });
+        newEnv.define(letInstr.identifiers[i], values[i] || { type: "nil" });
       }
-      
+
       context.environment = newEnv;
       control.push(letInstr.body);
       break;
     }
-    
+
     case InstrType.COND: {
       // Cond evaluates predicates and consequents
       const condInstr = instruction as CondInstr;
       const predicates = condInstr.predicates;
       const consequents = condInstr.consequents;
-      
+
       if (predicates.length === 0) {
         if (condInstr.catchall) {
           control.push(condInstr.catchall);
         } else {
-          stash.push({ type: 'nil' });
+          stash.push({ type: "nil" });
         }
       } else {
         // Push first predicate and consequent
@@ -401,7 +453,7 @@ function evaluateInstruction(
       }
       break;
     }
-    
+
     default:
       throw new Error(`Unsupported instruction type: ${instruction.instrType}`);
   }
