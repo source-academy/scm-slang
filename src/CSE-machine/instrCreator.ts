@@ -193,7 +193,11 @@ export function createBranchInstr(
 export function createRestoreEnvInstr(env: Environment): RestoreEnvInstr {
   return {
     instrType: InstrType.RESTORE_ENV,
-    srcNode: { type: "StatementSequence", body: [], location: { start: { line: 0, column: 0 }, end: { line: 0, column: 0 } } },
+    srcNode: {
+      type: "StatementSequence",
+      body: [],
+      location: { start: { line: 0, column: 0 }, end: { line: 0, column: 0 } },
+    },
     env,
   };
 }

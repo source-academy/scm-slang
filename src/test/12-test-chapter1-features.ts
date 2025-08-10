@@ -323,7 +323,14 @@ function testChapter1Features() {
     },
     {
       code: "(reverse-list (list 1 2 3))",
-      expected: { type: "list", elements: [{ type: "number", value: 3 }, { type: "number", value: 2 }, { type: "number", value: 1 }] },
+      expected: {
+        type: "list",
+        elements: [
+          { type: "number", value: 3 },
+          { type: "number", value: 2 },
+          { type: "number", value: 1 },
+        ],
+      },
       description: "Test reverse-list iteration",
     },
   ];
@@ -395,7 +402,9 @@ function testChapter1Features() {
   console.log("✅ Function composition");
   console.log("✅ Compound functions (functions using other functions)");
   console.log("✅ Linear recursion (factorial, sum-list, count-elements)");
-  console.log("✅ Iteration via tail recursion (factorial-iter, sum-list-iter, reverse-list)");
+  console.log(
+    "✅ Iteration via tail recursion (factorial-iter, sum-list-iter, reverse-list)"
+  );
 }
 
 testChapter1Features();

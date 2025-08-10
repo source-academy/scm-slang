@@ -316,18 +316,18 @@ function evaluateInstruction(
         // Apply closure - save current environment and create new one
         const currentEnv = context.environment;
         const newEnv = createBlockEnvironment(operator.env);
-        
+
         // Bind parameters to the new environment
         for (let i = 0; i < operator.params.length; i++) {
           newEnv.define(operator.params[i], args[i] || { type: "nil" });
         }
-        
+
         // Set the new environment for function execution
         context.environment = newEnv;
-        
+
         // Push a marker to restore environment after function execution
         control.push(instr.createRestoreEnvInstr(currentEnv));
-        
+
         // Push function body for execution
         control.push(...operator.body);
       } else if (operator.type === "primitive") {
