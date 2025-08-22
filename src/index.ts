@@ -29,6 +29,9 @@ export { initialise } from "./conductor/runner/util/initialise";
 export * from "./utils/encoder-visitor";
 export { unparse } from "./utils/reverse_parser";
 
+// Export tracer functionality
+export { stepExpression } from "./tracer/stepper";
+
 const JS_KEYWORDS: string[] = [
   "break",
   "case",

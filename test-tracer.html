@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SCM-Slang Tracer Test</title>
+</head>
+<body>
+    <h1>SCM-Slang Tracer Test</h1>
+    <div id="output"></div>
+
+    <script src="dist/index.js"></script>
+    <script>
+        console.log('Testing SCM-Slang Tracer...');
+        
+        if (typeof window.ScmSlangRunner !== 'undefined') {
+            console.log('ScmSlangRunner loaded successfully');
+            console.log('Available functions:', Object.keys(window.ScmSlangRunner));
+            
+            if (window.ScmSlangRunner.stepExpression) {
+                console.log('stepExpression function found');
+                
+                // Test simple expression
+                try {
+                    const steps = window.ScmSlangRunner.stepExpression('(+ 1 2)', 10);
+                    console.log('Steps for (+ 1 2):', steps);
+                    document.getElementById('output').innerHTML = '<p>Test passed! Check console for details.</p>';
+                } catch (error) {
+                    console.error('Error testing stepExpression:', error);
+                    document.getElementById('output').innerHTML = '<p>Test failed: ' + error.message + '</p>';
+                }
+            } else {
+                console.error('stepExpression function not found');
+                document.getElementById('output').innerHTML = '<p>stepExpression function not found</p>';
+            }
+        } else {
+            console.error('ScmSlangRunner not loaded');
+            document.getElementById('output').innerHTML = '<p>ScmSlangRunner not loaded</p>';
+        }
+    </script>
+</body>
+</html>
