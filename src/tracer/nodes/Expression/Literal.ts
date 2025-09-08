@@ -1,8 +1,8 @@
-import { StepperBaseNode } from '../../interface';
-import { StepperExpression, StepperPattern } from '../index';
+import { StepperBaseNode } from "../../interface";
+import { StepperExpression, StepperPattern } from "../index";
 
 export class StepperLiteral implements StepperBaseNode {
-  type = 'Literal';
+  type = "Literal";
   value: any;
   raw: string;
 

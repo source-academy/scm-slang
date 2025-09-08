@@ -55,9 +55,7 @@ export abstract class BasicHostPlugin implements IHostPlugin {
             `Runner's protocol version (${hello.data.version}) must be at least ${Constant.PROTOCOL_MIN_VERSION}`
           );
         } else {
-          console.log(
-            `Runner is using protocol version ${hello.data.version}`
-          );
+          console.log(`Runner is using protocol version ${hello.data.version}`);
         }
       },
     ],

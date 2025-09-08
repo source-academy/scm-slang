@@ -1,8 +1,8 @@
-import { StepperBaseNode } from '../../interface';
-import { StepperExpression, StepperPattern } from '../index';
+import { StepperBaseNode } from "../../interface";
+import { StepperExpression, StepperPattern } from "../index";
 
 export class StepperLambdaExpression implements StepperBaseNode {
-  type = 'LambdaExpression';
+  type = "LambdaExpression";
   params: StepperPattern[];
   body: StepperBaseNode;
 
@@ -13,10 +13,7 @@ export class StepperLambdaExpression implements StepperBaseNode {
 
   static create(node: any): StepperLambdaExpression {
     // This will be handled by the convertNode function in generator.ts
-    return new StepperLambdaExpression(
-      node.params || [],
-      node.body
-    );
+    return new StepperLambdaExpression(node.params || [], node.body);
   }
 
   isContractible(): boolean {
@@ -40,7 +37,7 @@ export class StepperLambdaExpression implements StepperBaseNode {
     if (this.params.some(param => param.name === id.name)) {
       return this;
     }
-    
+
     return new StepperLambdaExpression(
       this.params,
       this.body.substitute(id, value)
@@ -59,10 +56,10 @@ export class StepperLambdaExpression implements StepperBaseNode {
 
   rename(before: string, after: string): StepperBaseNode {
     // Rename parameters if they match
-    const newParams = this.params.map(param => 
+    const newParams = this.params.map(param =>
       param.name === before ? new (param.constructor as any)(after) : param
     );
-    
+
     return new StepperLambdaExpression(
       newParams,
       this.body.rename(before, after)
@@ -70,7 +67,7 @@ export class StepperLambdaExpression implements StepperBaseNode {
   }
 
   toString(): string {
-    const paramsStr = this.params.map(p => p.toString()).join(' ');
+    const paramsStr = this.params.map(p => p.toString()).join(" ");
     return `(lambda (${paramsStr}) ${this.body.toString()})`;
   }
 }

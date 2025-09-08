@@ -1,8 +1,8 @@
-import { StepperBaseNode } from '../interface';
-import { StepperExpression, StepperPattern } from './index';
+import { StepperBaseNode } from "../interface";
+import { StepperExpression, StepperPattern } from "./index";
 
 export class StepperProgram implements StepperBaseNode {
-  type = 'Program';
+  type = "Program";
   body: StepperBaseNode[];
 
   constructor(body: StepperBaseNode[]) {
@@ -11,9 +11,7 @@ export class StepperProgram implements StepperBaseNode {
 
   static create(node: any): StepperProgram {
     // This will be handled by the convertNode function in generator.ts
-    return new StepperProgram(
-      node.expressions || []
-    );
+    return new StepperProgram(node.expressions || []);
   }
 
   isContractible(): boolean {
@@ -26,17 +24,17 @@ export class StepperProgram implements StepperBaseNode {
 
   contract(): StepperBaseNode {
     if (!this.isContractible()) {
-      throw new Error('Cannot contract non-contractible program');
+      throw new Error("Cannot contract non-contractible program");
     }
-    
+
     // Contract all expressions in the program
     const contractedBody = this.body.map(expr => expr.contract());
-    
+
     // If there's only one expression left, return it
     if (contractedBody.length === 1) {
       return contractedBody[0];
     }
-    
+
     return new StepperProgram(contractedBody);
   }
 
@@ -44,19 +42,19 @@ export class StepperProgram implements StepperBaseNode {
     // Find the first expression that can be stepped
     for (let i = 0; i < this.body.length; i++) {
       const expr = this.body[i];
-      
+
       if (expr.isOneStepPossible()) {
         const newBody = [...this.body];
         newBody[i] = expr.oneStep();
         return new StepperProgram(newBody);
       }
     }
-    
+
     // If we can contract the entire program, do it
     if (this.isContractible()) {
       return this.contract();
     }
-    
+
     return this;
   }
 
@@ -81,6 +79,6 @@ export class StepperProgram implements StepperBaseNode {
   }
 
   toString(): string {
-    return this.body.map(expr => expr.toString()).join('\n');
+    return this.body.map(expr => expr.toString()).join("\n");
   }
 }

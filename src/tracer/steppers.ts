@@ -1,6 +1,6 @@
-import { StepperBaseNode } from './interface';
-import { explain } from './generator';
-import { IStepperPropContents, Marker, redex } from './index';
+import { StepperBaseNode } from "./interface";
+import { explain } from "./generator";
+import { IStepperPropContents, Marker, redex } from "./index";
 
 export function getSteps(
   inputNode: any,
@@ -9,7 +9,12 @@ export function getSteps(
 ): IStepperPropContents[] {
   const node: StepperBaseNode = inputNode;
   const steps: IStepperPropContents[] = [];
-  const limit = stepLimit === undefined ? 1000 : stepLimit % 2 === 0 ? stepLimit : stepLimit + 1;
+  const limit =
+    stepLimit === undefined
+      ? 1000
+      : stepLimit % 2 === 0
+        ? stepLimit
+        : stepLimit + 1;
   let hasError = false;
 
   let numSteps = 0;
@@ -28,31 +33,33 @@ export function getSteps(
 
         if (redex) {
           const explanations: string[] = redex.preRedex.map(explain);
-          const beforeMarkers: Marker[] = redex.preRedex.map((redex, index) => ({
-            redex: redex,
-            redexType: 'beforeMarker',
-            explanation: explanations[index]
-          }));
+          const beforeMarkers: Marker[] = redex.preRedex.map(
+            (redex, index) => ({
+              redex: redex,
+              redexType: "beforeMarker",
+              explanation: explanations[index],
+            })
+          );
           steps.push({
             ast: oldNode,
-            markers: beforeMarkers
+            markers: beforeMarkers,
           });
           const afterMarkers: Marker[] =
             redex.postRedex.length > 0
               ? redex.postRedex.map((redex, index) => ({
                   redex: redex,
-                  redexType: 'afterMarker',
-                  explanation: explanations[index]
+                  redexType: "afterMarker",
+                  explanation: explanations[index],
                 }))
               : [
                   {
-                    redexType: 'afterMarker',
-                    explanation: explanations[0] // use explanation based on preRedex
-                  }
+                    redexType: "afterMarker",
+                    explanation: explanations[0], // use explanation based on preRedex
+                  },
                 ];
           steps.push({
             ast: newNode,
-            markers: afterMarkers
+            markers: afterMarkers,
           });
         }
         // reset
@@ -69,10 +76,10 @@ export function getSteps(
         ast: node,
         markers: [
           {
-            redexType: 'beforeMarker',
-            explanation: error instanceof Error ? error.message : String(error)
-          }
-        ]
+            redexType: "beforeMarker",
+            explanation: error instanceof Error ? error.message : String(error),
+          },
+        ],
       });
       return node;
     }
@@ -83,9 +90,9 @@ export function getSteps(
     ast: node,
     markers: [
       {
-        explanation: 'Start of evaluation'
-      }
-    ]
+        explanation: "Start of evaluation",
+      },
+    ],
   });
 
   // Start evaluation

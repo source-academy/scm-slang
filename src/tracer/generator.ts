@@ -1,38 +1,36 @@
-import { StepperBaseNode } from './interface';
-import { StepperLiteral } from './nodes/Expression/Literal';
-import { StepperBinaryExpression } from './nodes/Expression/BinaryExpression';
-import { StepperIdentifier } from './nodes/Expression/Identifier';
-import { StepperFunctionApplication } from './nodes/Expression/FunctionApplication';
-import { StepperLambdaExpression } from './nodes/Expression/LambdaExpression';
-import { StepperProgram } from './nodes/Program';
+import { StepperBaseNode } from "./interface";
+import { StepperLiteral } from "./nodes/Expression/Literal";
+import { StepperBinaryExpression } from "./nodes/Expression/BinaryExpression";
+import { StepperIdentifier } from "./nodes/Expression/Identifier";
+import { StepperFunctionApplication } from "./nodes/Expression/FunctionApplication";
+import { StepperLambdaExpression } from "./nodes/Expression/LambdaExpression";
+import { StepperProgram } from "./nodes/Program";
 
-const undefinedNode = new StepperLiteral('undefined');
+const undefinedNode = new StepperLiteral("undefined");
 
 // Helper function to convert nodes without circular dependency
 function convertNode(node: any): StepperBaseNode {
   const nodeType = node.constructor.name;
-  
+
   switch (nodeType) {
-    case 'NumericLiteral':
-    case 'BooleanLiteral':
-    case 'StringLiteral':
+    case "NumericLiteral":
+    case "BooleanLiteral":
+    case "StringLiteral":
       return StepperLiteral.create(node);
-    case 'Identifier':
+    case "Identifier":
       return StepperIdentifier.create(node);
-    case 'Application':
+    case "Application":
       return new StepperFunctionApplication(
         convertNode(node.operator),
         node.operands.map(convertNode)
       );
-    case 'Lambda':
+    case "Lambda":
       return new StepperLambdaExpression(
         node.params || [],
         convertNode(node.body)
       );
-    case 'Sequence':
-      return new StepperProgram(
-        node.expressions.map(convertNode)
-      );
+    case "Sequence":
+      return new StepperProgram(node.expressions.map(convertNode));
     default:
       return undefinedNode;
   }
@@ -45,7 +43,7 @@ const nodeConverters: { [Key: string]: (node: any) => StepperBaseNode } = {
   Identifier: (node: any) => StepperIdentifier.create(node),
   Application: (node: any) => convertNode(node),
   Lambda: (node: any) => convertNode(node),
-  Sequence: (node: any) => convertNode(node)
+  Sequence: (node: any) => convertNode(node),
 };
 
 export function convert(node: any): StepperBaseNode {
@@ -56,15 +54,15 @@ export function convert(node: any): StepperBaseNode {
 export function explain(node: StepperBaseNode): string {
   // Generate explanation based on node type
   switch (node.type) {
-    case 'Literal':
+    case "Literal":
       return `Evaluated to literal value: ${node.toString()}`;
-    case 'BinaryExpression':
+    case "BinaryExpression":
       return `Evaluated binary expression: ${node.toString()}`;
-    case 'Identifier':
+    case "Identifier":
       return `Variable reference: ${node.toString()}`;
-    case 'FunctionApplication':
+    case "FunctionApplication":
       return `Function application: ${node.toString()}`;
-    case 'LambdaExpression':
+    case "LambdaExpression":
       return `Lambda expression: ${node.toString()}`;
     default:
       return `Processed ${node.type}`;

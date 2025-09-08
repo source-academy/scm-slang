@@ -1,8 +1,8 @@
-import { StepperBaseNode } from '../../interface';
-import { StepperExpression, StepperPattern } from '../index';
+import { StepperBaseNode } from "../../interface";
+import { StepperExpression, StepperPattern } from "../index";
 
 export class StepperFunctionApplication implements StepperBaseNode {
-  type = 'FunctionApplication';
+  type = "FunctionApplication";
   operator: StepperBaseNode;
   operands: StepperBaseNode[];
 
@@ -13,15 +13,12 @@ export class StepperFunctionApplication implements StepperBaseNode {
 
   static create(node: any): StepperFunctionApplication {
     // This will be handled by the convertNode function in generator.ts
-    return new StepperFunctionApplication(
-      node.operator,
-      node.operands
-    );
+    return new StepperFunctionApplication(node.operator, node.operands);
   }
 
   isContractible(): boolean {
     // Check if operator is a lambda and all operands are literals
-    if (this.operator.type === 'LambdaExpression') {
+    if (this.operator.type === "LambdaExpression") {
       return this.operands.every(op => op.isContractible());
     }
     return false;
@@ -29,44 +26,52 @@ export class StepperFunctionApplication implements StepperBaseNode {
 
   isOneStepPossible(): boolean {
     // Can step if any operand is not contractible, or if operator is lambda and all operands are contractible
-    return this.operands.some(op => !op.isContractible()) || this.isContractible();
+    return (
+      this.operands.some(op => !op.isContractible()) || this.isContractible()
+    );
   }
 
   contract(): StepperBaseNode {
     if (!this.isContractible()) {
-      throw new Error('Cannot contract non-contractible expression');
+      throw new Error("Cannot contract non-contractible expression");
     }
-    
+
     // Perform beta-reduction for lambda applications
-    if (this.operator.type === 'LambdaExpression') {
+    if (this.operator.type === "LambdaExpression") {
       const lambda = this.operator as any;
       let body = lambda.body;
-      
+
       // Substitute parameters with arguments
-      for (let i = 0; i < lambda.params.length && i < this.operands.length; i++) {
+      for (
+        let i = 0;
+        i < lambda.params.length && i < this.operands.length;
+        i++
+      ) {
         const param = lambda.params[i];
         const arg = this.operands[i];
         body = body.substitute(param, arg);
       }
-      
+
       return body;
     }
-    
+
     return this;
   }
 
   oneStep(): StepperBaseNode {
     // First, step any non-contractible operands
-    const steppedOperands = this.operands.map(op => 
+    const steppedOperands = this.operands.map(op =>
       op.isContractible() ? op : op.oneStep()
     );
-    
+
     // If all operands are now contractible and operator is lambda, contract
-    if (this.operator.type === 'LambdaExpression' && 
-        steppedOperands.every(op => op.isContractible())) {
+    if (
+      this.operator.type === "LambdaExpression" &&
+      steppedOperands.every(op => op.isContractible())
+    ) {
       return this.contract();
     }
-    
+
     return new StepperFunctionApplication(this.operator, steppedOperands);
   }
 
@@ -80,14 +85,14 @@ export class StepperFunctionApplication implements StepperBaseNode {
   freeNames(): string[] {
     return [
       ...this.operator.freeNames(),
-      ...this.operands.flatMap(op => op.freeNames())
+      ...this.operands.flatMap(op => op.freeNames()),
     ];
   }
 
   allNames(): string[] {
     return [
       ...this.operator.allNames(),
-      ...this.operands.flatMap(op => op.allNames())
+      ...this.operands.flatMap(op => op.allNames()),
     ];
   }
 
@@ -99,7 +104,6 @@ export class StepperFunctionApplication implements StepperBaseNode {
   }
 
   toString(): string {
-    return `(${this.operator.toString()} ${this.operands.map(op => op.toString()).join(' ')})`;
+    return `(${this.operator.toString()} ${this.operands.map(op => op.toString()).join(" ")})`;
   }
 }
-

@@ -1,8 +1,8 @@
-import { StepperBaseNode } from '../../interface';
-import { StepperExpression, StepperPattern } from '../index';
+import { StepperBaseNode } from "../../interface";
+import { StepperExpression, StepperPattern } from "../index";
 
 export class StepperIdentifier implements StepperBaseNode {
-  type = 'Identifier';
+  type = "Identifier";
   name: string;
 
   constructor(name: string) {
