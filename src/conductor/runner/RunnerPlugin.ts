@@ -57,48 +57,41 @@ export class RunnerPlugin implements IRunnerPlugin {
   private readonly __errorChannel: IChannel<IErrorMessage>;
   private readonly __statusChannel: IChannel<IStatusMessage>;
 
-  // @ts-expect-error TODO: figure proper way to typecheck this
   private readonly __serviceHandlers = new Map<
     ServiceMessageType,
-    (message: IServiceMessage) => void
+    (message: any) => void
   >([
     [
       ServiceMessageType.HELLO,
-      function helloServiceHandler(
-        this: RunnerPlugin,
-        message: HelloServiceMessage
-      ) {
-        if (message.data.version < Constant.PROTOCOL_MIN_VERSION) {
+      (message: any) => {
+        const hello = message as HelloServiceMessage;
+        if (hello.data.version < Constant.PROTOCOL_MIN_VERSION) {
           this.__serviceChannel.send(
             new AbortServiceMessage(Constant.PROTOCOL_MIN_VERSION)
           );
           console.error(
-            `Host's protocol version (${message.data.version}) must be at least ${Constant.PROTOCOL_MIN_VERSION}`
+            `Host's protocol version (${hello.data.version}) must be at least ${Constant.PROTOCOL_MIN_VERSION}`
           );
         } else {
-          console.log(`Host is using protocol version ${message.data.version}`);
+          console.log(`Host is using protocol version ${hello.data.version}`);
         }
       },
     ],
     [
       ServiceMessageType.ABORT,
-      function abortServiceHandler(
-        this: RunnerPlugin,
-        message: AbortServiceMessage
-      ) {
+      (message: any) => {
+        const abort = message as AbortServiceMessage;
         console.error(
-          `Host expects at least protocol version ${message.data.minVersion}, but we are on version ${Constant.PROTOCOL_VERSION}`
+          `Host expects at least protocol version ${abort.data.minVersion}, but we are on version ${Constant.PROTOCOL_VERSION}`
         );
         this.__conduit.terminate();
       },
     ],
     [
       ServiceMessageType.ENTRY,
-      function entryServiceHandler(
-        this: RunnerPlugin,
-        message: EntryServiceMessage
-      ) {
-        this.__evaluator.startEvaluator(message.data);
+      (message: any) => {
+        const entry = message as EntryServiceMessage;
+        this.__evaluator.startEvaluator(entry.data);
       },
     ],
   ]);
