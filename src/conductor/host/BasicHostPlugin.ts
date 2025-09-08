@@ -39,50 +39,43 @@ export abstract class BasicHostPlugin implements IHostPlugin {
 
   private __chunkCount: number = 0;
 
-  // @ts-expect-error TODO: figure proper way to typecheck this
   private readonly __serviceHandlers = new Map<
     ServiceMessageType,
-    (message: IServiceMessage) => void
+    (message: any) => void
   >([
     [
       ServiceMessageType.HELLO,
-      function helloServiceHandler(
-        this: BasicHostPlugin,
-        message: HelloServiceMessage
-      ) {
-        if (message.data.version < Constant.PROTOCOL_MIN_VERSION) {
+      (message: any) => {
+        const hello = message as HelloServiceMessage;
+        if (hello.data.version < Constant.PROTOCOL_MIN_VERSION) {
           this.__serviceChannel.send(
             new AbortServiceMessage(Constant.PROTOCOL_MIN_VERSION)
           );
           console.error(
-            `Runner's protocol version (${message.data.version}) must be at least ${Constant.PROTOCOL_MIN_VERSION}`
+            `Runner's protocol version (${hello.data.version}) must be at least ${Constant.PROTOCOL_MIN_VERSION}`
           );
         } else {
           console.log(
-            `Runner is using protocol version ${message.data.version}`
+            `Runner is using protocol version ${hello.data.version}`
           );
         }
       },
     ],
     [
       ServiceMessageType.ABORT,
-      function abortServiceHandler(
-        this: BasicHostPlugin,
-        message: AbortServiceMessage
-      ) {
+      (message: any) => {
+        const abort = message as AbortServiceMessage;
         console.error(
-          `Runner expects at least protocol version ${message.data.minVersion}, but we are on version ${Constant.PROTOCOL_VERSION}`
+          `Runner expects at least protocol version ${abort.data.minVersion}, but we are on version ${Constant.PROTOCOL_VERSION}`
         );
         this.__conduit.terminate();
       },
     ],
     [
       ServiceMessageType.PLUGIN,
-      function pluginServiceHandler(
-        this: BasicHostPlugin,
-        message: PluginServiceMessage
-      ) {
-        const pluginName = message.data;
+      (message: any) => {
+        const pluginMsg = message as PluginServiceMessage;
+        const pluginName = pluginMsg.data;
         this.requestLoadPlugin(pluginName);
       },
     ],
