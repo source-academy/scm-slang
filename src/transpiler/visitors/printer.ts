@@ -252,4 +252,8 @@ export class Printer implements Visitor {
     });
     this.display(") ");
   }
+
+  visitComplexLiteral(node: Atomic.ComplexLiteral): void {
+    this.display(node.value);
+  }
 }
