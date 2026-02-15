@@ -237,6 +237,7 @@ export function makeImportDeclaration(
   source: Literal,
   loc?: SourceLocation
 ): ModuleDeclaration {
+  // @ts-expect-error - estree attributes field is optional in our usage
   return {
     type: "ImportDeclaration",
     specifiers,
@@ -254,6 +255,7 @@ export function makeExportNamedDeclaration(
   declaration: VariableDeclaration,
   loc?: SourceLocation
 ): ModuleDeclaration {
+  // @ts-expect-error - estree attributes field is optional in our usage
   return {
     type: "ExportNamedDeclaration",
     specifiers: [],
