@@ -40,7 +40,7 @@ export interface SuspendedCseEval {
 
 /**
  * Handles Scheme-specific value formatting for display.
- * 
+ *
  * Examples:
  * - #t / #f for booleans
  * - () for empty list
@@ -67,19 +67,19 @@ export class Representation {
 export interface NativeStorage {
   /** Built-in functions (car, cdr, cons, etc.) */
   builtins: Map<string, Value>;
-  
+
   /** Identifiers defined in previous programs */
   previousProgramsIdentifiers: Set<string>;
-  
+
   /** Operators for evaluation */
   operators: Map<string, (...operands: Value[]) => Value>;
-  
+
   /** Max execution time (milliseconds) */
   maxExecTime: number;
-  
+
   /** Loaded modules */
   loadedModules: Record<string, any>;
-  
+
   /** Type information for modules */
   loadedModuleTypes: Record<string, Record<string, string>>;
 }

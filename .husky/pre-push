@@ -1,1 +1,0 @@
-yarn format && yarn eslint && yarn test

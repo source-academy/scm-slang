@@ -3,13 +3,7 @@
   "version": "1.0.3",
   "license": "Apache-2.0",
   "description": "Scheme-based implementations of Source, written in Typescript",
-  "keywords": [
-    "Scheme",
-    "interpreter",
-    "compiler",
-    "Source",
-    "SICP"
-  ],
+  "keywords": ["Scheme", "interpreter", "compiler", "Source", "SICP"],
   "author": {
     "name": "Source Academy",
     "url": "https://github.com/source-academy/"
@@ -36,7 +30,9 @@
     "@rollup/plugin-node-resolve": "^15.0.0",
     "@rollup/plugin-typescript": "^11.0.0",
     "@types/jest": "^30.0.0",
+    "eslint": "^10.0.1",
     "jest": "^30.2.0",
+    "prettier": "^3.8.1",
     "rollup": "^3.0.0",
     "ts-jest": "^29.4.6",
     "tslib": "^2.8.1"
