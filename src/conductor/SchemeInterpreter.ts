@@ -18,6 +18,7 @@ interface Environment {
 export class SchemeInterpreter {
   // Global environment - persists across chunks
   private globalEnv: Environment;
+  private evaluateCounter = 0;
 
   constructor() {
     this.globalEnv = this.createEnvironment(null);
@@ -37,20 +38,21 @@ export class SchemeInterpreter {
 
     // Add compatibility aliases for functions the transpiler generates
     if ((stdlib as any).make_number) {
-      this.globalEnv.values.set('make_number', (stdlib as any).make_number);
+      this.globalEnv.values.set("make_number", (stdlib as any).make_number);
     }
 
     // If make_number doesn't exist, create a wrapper
-    if (!this.globalEnv.values.has('make_number')) {
-      const coreImport = require('../stdlib/core-math');
+    if (!this.globalEnv.values.has("make_number")) {
+      const coreImport = require("../stdlib/core-math");
       if (coreImport.make_number) {
-        this.globalEnv.values.set('make_number', coreImport.make_number);
+        this.globalEnv.values.set("make_number", coreImport.make_number);
       }
     }
 
-    // Add the special eval function
-    this.globalEnv.values.set("eval", (schemeExpr: any) => {
-      return this.evalSchemeExpression(schemeExpr);
+    // Add the special eval function - pass current environment
+    this.globalEnv.values.set("eval", (schemeExpr: any, env?: Environment) => {
+      const envToUse = env || this.globalEnv;
+      return this.evalSchemeExpression(schemeExpr, envToUse);
     });
   }
 
@@ -90,6 +92,7 @@ export class SchemeInterpreter {
    * @returns The result of evaluating the program
    */
   evaluate(program: es.Program): any {
+    this.evaluateCounter++;
     let result: any = undefined;
 
     // Evaluate each statement in the program body
@@ -200,7 +203,7 @@ export class SchemeInterpreter {
     const func = this.evaluateNode(node.callee, env);
 
     // Evaluate arguments
-    const args = node.arguments.map((arg) => {
+    const args = node.arguments.map(arg => {
       if (arg.type === "SpreadElement") {
         const arr = this.evaluateNode(arg.argument, env);
         return Array.isArray(arr) ? arr : [arr];
@@ -208,10 +211,18 @@ export class SchemeInterpreter {
       return this.evaluateNode(arg, env);
     });
 
-    // Flatten spread arguments
+    // Flatten spread arguments - only if we have a single SpreadElement argument
+    // Don't spread regular array arguments (like pair structures)
     const flatArgs: any[] = [];
-    for (const arg of args) {
-      if (Array.isArray(arg) && args.length === 1) {
+    for (let i = 0; i < args.length; i++) {
+      const arg = args[i];
+      // Only spread if this came from a SpreadElement
+      // AND it was explicitly marked as a spread
+      if (
+        Array.isArray(arg) &&
+        args.length === 1 &&
+        node.arguments[i]?.type === "SpreadElement"
+      ) {
         flatArgs.push(...arg);
       } else {
         flatArgs.push(arg);
@@ -320,7 +331,7 @@ export class SchemeInterpreter {
     node: es.ArrayExpression,
     env: Environment
   ): any {
-    return node.elements.map((el) => {
+    return node.elements.map(el => {
       if (el === null) return null;
       if (el.type === "SpreadElement") {
         const arr = this.evaluateNode(el.argument, env);
@@ -356,6 +367,22 @@ export class SchemeInterpreter {
   }
 
   /**
+   * Extract identifier name from a parameter (handles symbols and identifiers)
+   */
+  private extractParamName(param: any): string {
+    if (param === null || param === undefined) {
+      throw new Error("Invalid parameter");
+    }
+    if (typeof param === "string") {
+      return param;
+    }
+    if (param.sym !== undefined) {
+      return param.sym;
+    }
+    return String(param);
+  }
+
+  /**
    * Evaluates a Scheme s-expression at runtime
    * Used by the eval special form
    *
@@ -365,7 +392,7 @@ export class SchemeInterpreter {
    * - Objects with .sym properties: {"sym": "+"}
    * - SchemeNumber objects with .numberType and .coerce()
    */
-  private evalSchemeExpression(expr: any): any {
+  private evalSchemeExpression(expr: any, env: Environment): any {
     // Base cases
     if (expr === null || expr === undefined) {
       return expr;
@@ -377,14 +404,15 @@ export class SchemeInterpreter {
     }
 
     // Handle SchemeNumber types (SchemeInteger, SchemeReal, etc.)
-    // These have a numberType property and coerce() method to convert to JavaScript numbers
+    // DON'T coerce them - keep as SchemeNumber objects
+    // The stdlib functions need SchemeNumber objects, not JavaScript numbers
     if (expr.numberType !== undefined && typeof expr.coerce === "function") {
-      return expr.coerce();
+      return expr;
     }
 
     // Symbol lookup
     if (expr.sym !== undefined) {
-      return this.lookupVariable(expr.sym, this.globalEnv);
+      return this.lookupVariable(expr.sym, env);
     }
 
     // Convert pair structure to flat array if needed
@@ -417,29 +445,44 @@ export class SchemeInterpreter {
 
           // Check if it's a function definition: (define (name params...) body)
           if (Array.isArray(nameOrSignature)) {
-            const [funcName, ...params] = nameOrSignature;
-            const funcNameStr = funcName.sym || funcName;
+            // Convert pair structure to flat array if needed
+            let flatSignature = nameOrSignature;
+            if ((nameOrSignature as any).pair === true) {
+              flatSignature = this.pairToArray(nameOrSignature);
+            }
+
+            const [funcName, ...params] = flatSignature;
+            const funcNameStr = this.extractParamName(funcName);
+
+            // Convert each param if it's a pair structure
+            const flatParams = params.map(param => {
+              if (Array.isArray(param) && (param as any).pair === true) {
+                const flatParam = this.pairToArray(param);
+                return flatParam[0];
+              }
+              return param;
+            });
 
             // Create a function that will be stored
             const schemeFunc = (...args: any[]) => {
-              const funcEnv = this.createEnvironment(this.globalEnv);
+              const funcEnv = this.createEnvironment(env);
 
               // Bind parameters
-              for (let i = 0; i < params.length; i++) {
-                const paramName = params[i].sym || params[i];
+              for (let i = 0; i < flatParams.length; i++) {
+                const paramName = this.extractParamName(flatParams[i]);
                 funcEnv.values.set(paramName, args[i]);
               }
 
               return this.evalSchemeExpressionInEnv(value, funcEnv);
             };
 
-            this.defineVariable(funcNameStr, schemeFunc, this.globalEnv);
+            this.defineVariable(funcNameStr, schemeFunc, env);
             return undefined;
           } else {
             // Simple define: (define name value)
-            const nameStr = nameOrSignature.sym || nameOrSignature;
-            const evaluatedValue = this.evalSchemeExpression(value);
-            this.defineVariable(nameStr, evaluatedValue, this.globalEnv);
+            const nameStr = this.extractParamName(nameOrSignature);
+            const evaluatedValue = this.evalSchemeExpression(value, env);
+            this.defineVariable(nameStr, evaluatedValue, env);
             return undefined;
           }
         }
@@ -449,12 +492,12 @@ export class SchemeInterpreter {
           if (operands.length < 3) {
             throw new Error("if: insufficient arguments");
           }
-          const test = this.evalSchemeExpression(operands[0]);
+          const test = this.evalSchemeExpression(operands[0], env);
           const isTruthy = test !== false;
           if (isTruthy) {
-            return this.evalSchemeExpression(operands[1]);
+            return this.evalSchemeExpression(operands[1], env);
           } else {
-            return this.evalSchemeExpression(operands[2]);
+            return this.evalSchemeExpression(operands[2], env);
           }
         }
 
@@ -466,14 +509,20 @@ export class SchemeInterpreter {
           const params = operands[0];
           const body = operands[1];
 
+          // Convert pair structure to flat array if needed
+          let flatParams = params;
+          if (Array.isArray(params) && (params as any).pair === true) {
+            flatParams = this.pairToArray(params);
+          }
+
           // Return a function that closes over the current environment
           return (...args: any[]) => {
-            const funcEnv = this.createEnvironment(this.globalEnv);
+            const funcEnv = this.createEnvironment(env);
 
             // Bind parameters
-            if (Array.isArray(params)) {
-              for (let i = 0; i < params.length; i++) {
-                const paramName = params[i].sym || params[i];
+            if (Array.isArray(flatParams)) {
+              for (let i = 0; i < flatParams.length; i++) {
+                const paramName = this.extractParamName(flatParams[i]);
                 funcEnv.values.set(paramName, args[i]);
               }
             }
@@ -484,12 +533,12 @@ export class SchemeInterpreter {
 
         // ===== REGULAR FUNCTION CALLS =====
         // Recursively evaluate operands
-        const evaluatedOperands = operands.map((operand) =>
-          this.evalSchemeExpression(operand)
+        const evaluatedOperands = operands.map(operand =>
+          this.evalSchemeExpression(operand, env)
         );
 
         try {
-          const func = this.lookupVariable(operatorName, this.globalEnv);
+          const func = this.lookupVariable(operatorName, env);
           if (typeof func === "function") {
             return func(...evaluatedOperands);
           }
@@ -500,9 +549,9 @@ export class SchemeInterpreter {
 
       // If operator is an array (higher-order function), evaluate it
       if (Array.isArray(operator)) {
-        const evaluatedFunc = this.evalSchemeExpression(operator);
-        const evaluatedOperands = operands.map((op) =>
-          this.evalSchemeExpression(op)
+        const evaluatedFunc = this.evalSchemeExpression(operator, env);
+        const evaluatedOperands = operands.map(op =>
+          this.evalSchemeExpression(op, env)
         );
         if (typeof evaluatedFunc === "function") {
           return evaluatedFunc(...evaluatedOperands);
@@ -511,10 +560,15 @@ export class SchemeInterpreter {
 
       // If operator is a function, call it
       if (typeof operator === "function") {
-        const evaluatedOperands = operands.map((op) =>
-          this.evalSchemeExpression(op)
+        const evaluatedOperands = operands.map(op =>
+          this.evalSchemeExpression(op, env)
         );
         return operator(...evaluatedOperands);
+      }
+
+      // If operator is a number or other non-callable value, throw error
+      if (typeof operator !== "function" && operator !== undefined) {
+        throw new Error(`Cannot call non-function: ${operator}`);
       }
     }
 
@@ -540,8 +594,9 @@ export class SchemeInterpreter {
     }
 
     // Handle SchemeNumber types (SchemeInteger, SchemeReal, etc.)
+    // DON'T coerce them - keep as SchemeNumber objects
     if (expr.numberType !== undefined && typeof expr.coerce === "function") {
-      return expr.coerce();
+      return expr;
     }
 
     // Symbol lookup in provided environment
@@ -571,7 +626,7 @@ export class SchemeInterpreter {
         }
 
         // Regular function call
-        const evaluatedOperands = operands.map((op) =>
+        const evaluatedOperands = operands.map(op =>
           this.evalSchemeExpressionInEnv(op, env)
         );
 
@@ -585,18 +640,9 @@ export class SchemeInterpreter {
         }
       }
 
-      if (Array.isArray(operator)) {
-        const evaluatedFunc = this.evalSchemeExpressionInEnv(operator, env);
-        const evaluatedOperands = operands.map((op) =>
-          this.evalSchemeExpressionInEnv(op, env)
-        );
-        if (typeof evaluatedFunc === "function") {
-          return evaluatedFunc(...evaluatedOperands);
-        }
-      }
-
+      // If operator is a function, call it
       if (typeof operator === "function") {
-        const evaluatedOperands = operands.map((op) =>
+        const evaluatedOperands = operands.map(op =>
           this.evalSchemeExpressionInEnv(op, env)
         );
         return operator(...evaluatedOperands);
