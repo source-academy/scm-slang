@@ -140,10 +140,7 @@ describe("SchemeInterpreter Integration Tests", () => {
 
     test("nested function calls", () => {
       evaluate(interpreter, "(define (double x) (* x 2))");
-      evaluate(
-        interpreter,
-        "(define (quad x) (double (double x)))"
-      );
+      evaluate(interpreter, "(define (quad x) (double (double x)))");
       const result = evaluate(interpreter, "(quad 3)");
       expectSchemeNumber(result, 12);
     });
@@ -186,10 +183,7 @@ describe("SchemeInterpreter Integration Tests", () => {
     });
 
     test("((lambda (x y) (+ x y)) 3 4) should return SchemeNumber 7", () => {
-      const result = evaluate(
-        interpreter,
-        "((lambda (x y) (+ x y)) 3 4)"
-      );
+      const result = evaluate(interpreter, "((lambda (x y) (+ x y)) 3 4)");
       expectSchemeNumber(result, 7);
     });
   });
@@ -201,7 +195,7 @@ describe("SchemeInterpreter Integration Tests", () => {
   describe("Lists", () => {
     test("(list 1 2 3) should return list of 3 SchemeNumbers", () => {
       const result = evaluate(interpreter, "(list 1 2 3)");
-      expectSchemeListValues(result, 3, (arr) => {
+      expectSchemeListValues(result, 3, arr => {
         arr.forEach((elem, i) => {
           expectSchemeNumber(elem, i + 1);
         });
@@ -279,7 +273,92 @@ describe("SchemeInterpreter Integration Tests", () => {
       expect(() => evaluate(interpreter, "(5 3)")).toThrow();
     });
   });
+
+    // ============================================================================
+  // PART 10: SET! (MUTATION - CHAPTER 3)
+  // ============================================================================
+
+  describe("Set! (Mutation)", () => {
+    test("basic set! mutation", () => {
+      evaluate(interpreter, "(define x 1)");
+      evaluate(interpreter, "(set! x 2)");
+      const result = evaluate(interpreter, "x");
+      expectSchemeNumber(result, 2);
+    });
+
+    test("set! with expression value", () => {
+      evaluate(interpreter, "(define x 10)");
+      evaluate(interpreter, "(set! x (+ x 5))");
+      const result = evaluate(interpreter, "x");
+      expectSchemeNumber(result, 15);
+    });
+
+    test("set! counter pattern", () => {
+      evaluate(interpreter, "(define count 0)");
+      evaluate(interpreter, "(define (increment) (begin (set! count (+ count 1)) count))");
+      evaluate(interpreter, "(increment)");
+      evaluate(interpreter, "(increment)");
+      const result = evaluate(interpreter, "(increment)");
+      expectSchemeNumber(result, 3);
+    });
+
+    test("set! modifies variable in outer scope", () => {
+      evaluate(interpreter, "(define x 1)");
+      evaluate(interpreter, "(define (mutate) (set! x 99))");
+      evaluate(interpreter, "(mutate)");
+      const result = evaluate(interpreter, "x");
+      expectSchemeNumber(result, 99);
+    });
+
+    test("set! make-counter closure", () => {
+      evaluate(interpreter, `
+        (define (make-counter)
+          (define n 0)
+          (lambda ()
+            (begin (set! n (+ n 1)) n)))
+      `);
+      evaluate(interpreter, "(define counter (make-counter))");
+      evaluate(interpreter, "(counter)");
+      evaluate(interpreter, "(counter)");
+      const result = evaluate(interpreter, "(counter)");
+      expectSchemeNumber(result, 3);
+    });
+
+    test("set! independent counters", () => {
+      evaluate(interpreter, `
+        (define (make-counter)
+          (define n 0)
+          (lambda ()
+            (begin (set! n (+ n 1)) n)))
+      `);
+      evaluate(interpreter, "(define c1 (make-counter))");
+      evaluate(interpreter, "(define c2 (make-counter))");
+      evaluate(interpreter, "(c1)");
+      evaluate(interpreter, "(c1)");
+      evaluate(interpreter, "(c1)");
+      const result = evaluate(interpreter, "(c2)");
+      expectSchemeNumber(result, 1);
+    });
+
+    test("set! on undefined variable throws error", () => {
+      expect(() => evaluate(interpreter, "(set! undefined-var 5)")).toThrow();
+    });
+
+    test("set! with boolean value", () => {
+      evaluate(interpreter, "(define flag #t)");
+      evaluate(interpreter, "(set! flag #f)");
+      const result = evaluate(interpreter, "flag");
+      expectSchemeBoolean(result, false);
+    });
+
+    test("set! does not create new variable", () => {
+      expect(() => evaluate(interpreter, "(set! never-defined 42)")).toThrow();
+    });
+  });
+
 });
+
+/*
 
 // ============================================================================
 // DEBUG TESTS (Optional - can be kept for development)
@@ -328,10 +407,7 @@ test("debug: trace eval", () => {
   const interpreter = new SchemeInterpreter();
 
   console.log("\n=== Before evaluate ===");
-  console.log(
-    "Program:",
-    JSON.stringify(program, null, 2).substring(0, 500)
-  );
+  console.log("Program:", JSON.stringify(program, null, 2).substring(0, 500));
 
   const result = interpreter.evaluate(program);
 
@@ -355,11 +431,7 @@ test("debug: what does evalSchemeExpression receive?", () => {
   const make_number = require("../stdlib/core-math").make_number;
   const list = stdlib.list;
 
-  const expr = list(
-    string_to_symbol("+"),
-    make_number("1"),
-    make_number("2")
-  );
+  const expr = list(string_to_symbol("+"), make_number("1"), make_number("2"));
 
   console.log("\n=== Raw pair structure ===");
   console.log("expr:", expr);
@@ -386,11 +458,7 @@ test("debug: pairToArray conversion", () => {
   const make_number = require("../stdlib/core-math").make_number;
   const list = stdlib.list;
 
-  const expr = list(
-    string_to_symbol("+"),
-    make_number("1"),
-    make_number("2")
-  );
+  const expr = list(string_to_symbol("+"), make_number("1"), make_number("2"));
 
   // Manually implement pairToArray to test
   const pairToArray = (pair: any): any[] => {
@@ -469,25 +537,28 @@ test("debug: trace what evaluate() returns", () => {
   const interpreter = new SchemeInterpreter();
   const code = "(+ 1 2)";
   const program = schemeParse(code);
-  
+
   console.log("\n=== Program body ===");
   console.log("program.body.length:", program.body.length);
   console.log("program.body[0]:", program.body[0]);
-  
+
   const stmt = program.body[0];
   console.log("\nStatement type:", (stmt as any).type);
-  console.log("Is ExpressionStatement?", (stmt as any).type === "ExpressionStatement");
-  
+  console.log(
+    "Is ExpressionStatement?",
+    (stmt as any).type === "ExpressionStatement"
+  );
+
   if ((stmt as any).type === "ExpressionStatement") {
     const expr = (stmt as any).expression;
     console.log("Expression type:", expr.type);
     console.log("Expression callee:", expr.callee?.name);
     console.log("Expression arguments:", expr.arguments?.length);
   }
-  
+
   console.log("\n=== Calling interpreter.evaluate() ===");
   const result = interpreter.evaluate(program);
-  
+
   console.log("\nResult:", result);
   console.log("Result type:", typeof result);
   console.log("Result is undefined?", result === undefined);
@@ -496,46 +567,45 @@ test("debug: trace what evaluate() returns", () => {
 test("debug: what does schemeParse really generate?", () => {
   const code = "(+ 1 2)";
   const program = schemeParse(code);
-  
+
   const stmt = program.body[0] as any;
   const callExpr = stmt.expression;
-  
+
   console.log("\n=== Call expression details ===");
   console.log("Callee:", callExpr.callee.name);
   console.log("Arguments count:", callExpr.arguments.length);
-  
+
   const arg = callExpr.arguments[0];
   console.log("\nFirst argument:");
   console.log("Type:", arg.type);
   console.log("Full argument:", JSON.stringify(arg, null, 2));
 });
 
-
 test("debug: what does list() return when called directly?", () => {
   const interpreter = new SchemeInterpreter();
-  
+
   const stdlib = require("../stdlib/base");
   const list = stdlib.list;
   const string_to_symbol = stdlib.string$45$$62$symbol;
   const make_number = require("../stdlib/core-math").make_number;
-  
+
   console.log("\n=== Testing list() directly ===");
-  
+
   const plus = string_to_symbol("+");
   const one = make_number("1");
   const two = make_number("2");
-  
+
   console.log("plus:", plus);
   console.log("one:", one);
   console.log("two:", two);
-  
+
   const result = list(plus, one, two);
   console.log("\nlist(plus, one, two):", result);
   console.log("Is array?", Array.isArray(result));
   console.log("Has pair property?", (result as any).pair);
   console.log("result[0]:", result[0]);
   console.log("result[1]:", result[1]);
-  
+
   // Now test what eval receives when we pass this
   const evalFunc = (schemeExpr: any) => {
     console.log("\n[EVAL] Received:", schemeExpr);
@@ -548,10 +618,9 @@ test("debug: what does list() return when called directly?", () => {
       console.log("[EVAL] pair property:", (schemeExpr as any).pair);
     }
   };
-  
+
   evalFunc(result);
 });
-
 
 test("debug: what does (square 5) transpile to?", () => {
   const program = schemeParse("(square 5)");
@@ -563,3 +632,4 @@ test("debug: what does (square 5) transpile to?", () => {
   console.log("Full:", JSON.stringify(callExpr, null, 2).substring(0, 500));
 });
 
+*/

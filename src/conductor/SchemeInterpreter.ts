@@ -1,6 +1,6 @@
 import * as es from "estree";
 import * as stdlib from "../stdlib/base";
-import { decode } from "../index";
+import { decode, encode } from "../index";
 
 /**
  * Represents an environment (scope) in the Scheme interpreter
@@ -33,7 +33,9 @@ export class SchemeInterpreter {
     for (const [encodedKey, value] of Object.entries(stdlib)) {
       this.globalEnv.values.set(encodedKey, value);
       const decodedKey = decode(encodedKey);
-      this.globalEnv.values.set(decodedKey, value);
+      if (decodedKey !== encodedKey) {
+        this.globalEnv.values.set(decodedKey, value);
+      }
     }
 
     // Add compatibility aliases for functions the transpiler generates
@@ -56,6 +58,10 @@ export class SchemeInterpreter {
     });
   }
 
+  // ==========================================================================
+  // Environment operations
+  // ==========================================================================
+
   /**
    * Create a new environment
    */
@@ -67,35 +73,118 @@ export class SchemeInterpreter {
   }
 
   /**
-   * Look up a variable in the environment
+   * Look up a variable in the environment chain.
+   * Tries the name as-is first, then tries the encoded version.
    */
   private lookupVariable(name: string, env: Environment): any {
-    if (env.values.has(name)) {
-      return env.values.get(name);
+    // Try the name as-is through the chain
+    let current: Environment | null = env;
+    while (current !== null) {
+      if (current.values.has(name)) {
+        return current.values.get(name);
+      }
+      current = current.parent;
     }
-    if (env.parent) {
-      return this.lookupVariable(name, env.parent);
+
+    // Try encoded name as fallback (e.g., make-counter -> make$45$counter)
+    const encodedName = encode(name);
+    if (encodedName !== name) {
+      let current2: Environment | null = env;
+      while (current2 !== null) {
+        if (current2.values.has(encodedName)) {
+          return current2.values.get(encodedName);
+        }
+        current2 = current2.parent;
+      }
     }
+
+    // Try decoded name as fallback (e.g., make$45$counter -> make-counter)
+    const decodedName = decode(name);
+    if (decodedName !== name) {
+      let current3: Environment | null = env;
+      while (current3 !== null) {
+        if (current3.values.has(decodedName)) {
+          return current3.values.get(decodedName);
+        }
+        current3 = current3.parent;
+      }
+    }
+
     throw new Error(`Undefined variable: ${name}`);
   }
 
   /**
-   * Define a variable in the environment
+   * Define a variable in the environment.
+   * Stores under both the given name and its encoded/decoded counterpart
+   * so lookups from either the ESTree path or the s-expression path work.
    */
   private defineVariable(name: string, value: any, env: Environment): void {
     env.values.set(name, value);
+    // Also store under encoded name if different
+    const encodedName = encode(name);
+    if (encodedName !== name) {
+      env.values.set(encodedName, value);
+    }
+    // Also store under decoded name if different
+    const decodedName = decode(name);
+    if (decodedName !== name) {
+      env.values.set(decodedName, value);
+    }
   }
 
   /**
+   * Set (mutate) an existing variable by walking up the environment chain.
+   * Updates under both the found name and its encoded/decoded counterpart.
+   * Throws if the variable was never defined.
+   */
+  private setVariable(name: string, value: any, env: Environment): any {
+    // Try the name as-is
+    let current: Environment | null = env;
+    while (current !== null) {
+      if (current.values.has(name)) {
+        current.values.set(name, value);
+        // Keep encoded/decoded counterpart in sync
+        const encodedName = encode(name);
+        if (encodedName !== name && current.values.has(encodedName)) {
+          current.values.set(encodedName, value);
+        }
+        const decodedName = decode(name);
+        if (decodedName !== name && current.values.has(decodedName)) {
+          current.values.set(decodedName, value);
+        }
+        return value;
+      }
+      current = current.parent;
+    }
+
+    // Try encoded name
+    const encodedName = encode(name);
+    if (encodedName !== name) {
+      let current2: Environment | null = env;
+      while (current2 !== null) {
+        if (current2.values.has(encodedName)) {
+          current2.values.set(encodedName, value);
+          current2.values.set(name, value);
+          return value;
+        }
+        current2 = current2.parent;
+      }
+    }
+
+    throw new Error(`Undefined variable: ${name}`);
+  }
+
+  // ==========================================================================
+  // ESTree evaluation (main path)
+  // ==========================================================================
+
+  /**
    * Evaluates an ESTree Program
-   * @param program The ESTree Program to evaluate
-   * @returns The result of evaluating the program
    */
   evaluate(program: es.Program): any {
     this.evaluateCounter++;
     let result: any = undefined;
 
-    // Evaluate each statement in the program body
     for (const statement of program.body) {
       result = this.evaluateNode(statement, this.globalEnv);
     }
@@ -127,10 +216,10 @@ export class SchemeInterpreter {
         return this.evaluateCallExpression(node as es.CallExpression, env);
 
       case "Identifier":
-        return this.evaluateIdentifier(node as es.Identifier, env);
+        return this.lookupVariable(node.name, env);
 
       case "Literal":
-        return this.evaluateLiteral(node as es.Literal, env);
+        return (node as es.Literal).value;
 
       case "ArrowFunctionExpression":
         return this.evaluateArrowFunctionExpression(
@@ -141,12 +230,12 @@ export class SchemeInterpreter {
       case "BlockStatement":
         return this.evaluateBlockStatement(node as es.BlockStatement, env);
 
-      case "ReturnStatement":
+      case "ReturnStatement": {
         const returnStmt = node as es.ReturnStatement;
-        if (returnStmt.argument) {
-          return this.evaluateNode(returnStmt.argument, env);
-        }
-        return undefined;
+        return returnStmt.argument
+          ? this.evaluateNode(returnStmt.argument, env)
+          : undefined;
+      }
 
       case "ConditionalExpression":
         return this.evaluateConditionalExpression(
@@ -156,6 +245,13 @@ export class SchemeInterpreter {
 
       case "ArrayExpression":
         return this.evaluateArrayExpression(node as es.ArrayExpression, env);
+
+      case "AssignmentExpression": {
+        const assignNode = node as es.AssignmentExpression;
+        const value = this.evaluateNode(assignNode.right, env);
+        const name = (assignNode.left as es.Identifier).name;
+        return this.setVariable(name, value, env);
+      }
 
       default:
         throw new Error(
@@ -199,11 +295,9 @@ export class SchemeInterpreter {
     node: es.CallExpression,
     env: Environment
   ): any {
-    // Evaluate the function
     const func = this.evaluateNode(node.callee, env);
 
-    // Evaluate arguments
-    const args = node.arguments.map(arg => {
+    const args = node.arguments.map((arg) => {
       if (arg.type === "SpreadElement") {
         const arr = this.evaluateNode(arg.argument, env);
         return Array.isArray(arr) ? arr : [arr];
@@ -211,30 +305,24 @@ export class SchemeInterpreter {
       return this.evaluateNode(arg, env);
     });
 
-    // Flatten spread arguments - only if we have a single SpreadElement argument
-    // Don't spread regular array arguments (like pair structures)
+    // Flatten spread arguments
     const flatArgs: any[] = [];
     for (let i = 0; i < args.length; i++) {
-      const arg = args[i];
-      // Only spread if this came from a SpreadElement
-      // AND it was explicitly marked as a spread
       if (
-        Array.isArray(arg) &&
+        Array.isArray(args[i]) &&
         args.length === 1 &&
         node.arguments[i]?.type === "SpreadElement"
       ) {
-        flatArgs.push(...arg);
+        flatArgs.push(...args[i]);
       } else {
-        flatArgs.push(arg);
+        flatArgs.push(args[i]);
       }
     }
 
-    // Call the function
     if (typeof func === "function") {
       return func(...flatArgs);
     }
 
-    // If it's a closure (arrow function object), call it
     if (func && typeof func === "object" && (func as any).__call__) {
       return (func as any).__call__(...flatArgs);
     }
@@ -243,32 +331,15 @@ export class SchemeInterpreter {
   }
 
   /**
-   * Evaluate identifier (variable lookup)
-   */
-  private evaluateIdentifier(node: es.Identifier, env: Environment): any {
-    return this.lookupVariable(node.name, env);
-  }
-
-  /**
-   * Evaluate literal (constant values)
-   */
-  private evaluateLiteral(node: es.Literal, env: Environment): any {
-    return node.value;
-  }
-
-  /**
-   * Evaluate arrow function
+   * Evaluate arrow function expression — creates a closure
    */
   private evaluateArrowFunctionExpression(
     node: es.ArrowFunctionExpression,
     env: Environment
   ): any {
-    // Return a closure that captures the environment
     const closure = (...args: any[]) => {
-      // Create new environment for function execution
       const funcEnv = this.createEnvironment(env);
 
-      // Bind parameters
       for (let i = 0; i < node.params.length; i++) {
         const param = node.params[i];
         if (param.type === "Identifier") {
@@ -280,14 +351,12 @@ export class SchemeInterpreter {
         }
       }
 
-      // Evaluate body
       if (node.body.type === "BlockStatement") {
         return this.evaluateBlockStatement(
           node.body as es.BlockStatement,
           funcEnv
         );
       } else {
-        // Expression body
         return this.evaluateNode(node.body, funcEnv);
       }
     };
@@ -318,8 +387,7 @@ export class SchemeInterpreter {
   ): any {
     const test = this.evaluateNode(node.test, env);
     // In Scheme, only #f (false) is falsy
-    const isTruthy = test !== false;
-    return isTruthy
+    return test !== false
       ? this.evaluateNode(node.consequent, env)
       : this.evaluateNode(node.alternate, env);
   }
@@ -331,7 +399,7 @@ export class SchemeInterpreter {
     node: es.ArrayExpression,
     env: Environment
   ): any {
-    return node.elements.map(el => {
+    return node.elements.map((el) => {
       if (el === null) return null;
       if (el.type === "SpreadElement") {
         const arr = this.evaluateNode(el.argument, env);
@@ -341,10 +409,12 @@ export class SchemeInterpreter {
     });
   }
 
+  // ==========================================================================
+  // S-expression evaluation (used by eval special form at runtime)
+  // ==========================================================================
+
   /**
-   * Convert a Scheme pair structure (cons list) to a flat array
-   * pair structure: [head, [head2, [head3, null, pair: true], pair: true], pair: true]
-   * flat array: [head, head2, head3]
+   * Convert a Scheme pair structure to a flat array
    */
   private pairToArray(pair: any): any[] {
     const result: any[] = [];
@@ -367,7 +437,7 @@ export class SchemeInterpreter {
   }
 
   /**
-   * Extract identifier name from a parameter (handles symbols and identifiers)
+   * Extract identifier name from a parameter
    */
   private extractParamName(param: any): string {
     if (param === null || param === undefined) {
@@ -383,14 +453,8 @@ export class SchemeInterpreter {
   }
 
   /**
-   * Evaluates a Scheme s-expression at runtime
-   * Used by the eval special form
-   *
-   * S-expressions can be:
-   * - Pair structures: [head, [head2, null, pair: true], pair: true]
-   * - Flat arrays: [operator, arg1, arg2, ...]
-   * - Objects with .sym properties: {"sym": "+"}
-   * - SchemeNumber objects with .numberType and .coerce()
+   * Evaluates a Scheme s-expression at runtime.
+   * Used by the eval special form.
    */
   private evalSchemeExpression(expr: any, env: Environment): any {
     // Base cases
@@ -398,14 +462,11 @@ export class SchemeInterpreter {
       return expr;
     }
 
-    // Numbers, strings, booleans - return as-is
     if (typeof expr !== "object") {
       return expr;
     }
 
-    // Handle SchemeNumber types (SchemeInteger, SchemeReal, etc.)
-    // DON'T coerce them - keep as SchemeNumber objects
-    // The stdlib functions need SchemeNumber objects, not JavaScript numbers
+    // SchemeNumber objects — keep as-is
     if (expr.numberType !== undefined && typeof expr.coerce === "function") {
       return expr;
     }
@@ -420,7 +481,7 @@ export class SchemeInterpreter {
       expr = this.pairToArray(expr);
     }
 
-    // List/pair (array representing a list)
+    // List (array representing an s-expression)
     if (Array.isArray(expr)) {
       if (expr.length === 0) {
         return expr;
@@ -434,123 +495,67 @@ export class SchemeInterpreter {
 
         // ===== SPECIAL FORMS =====
 
-        // define: (define name value) or (define (name args...) body)
+        // define
         if (operatorName === "define") {
-          if (operands.length < 2) {
-            throw new Error("define: insufficient arguments");
-          }
-
-          const nameOrSignature = operands[0];
-          const value = operands[1];
-
-          // Check if it's a function definition: (define (name params...) body)
-          if (Array.isArray(nameOrSignature)) {
-            // Convert pair structure to flat array if needed
-            let flatSignature = nameOrSignature;
-            if ((nameOrSignature as any).pair === true) {
-              flatSignature = this.pairToArray(nameOrSignature);
-            }
-
-            const [funcName, ...params] = flatSignature;
-            const funcNameStr = this.extractParamName(funcName);
-
-            // Convert each param if it's a pair structure
-            const flatParams = params.map(param => {
-              if (Array.isArray(param) && (param as any).pair === true) {
-                const flatParam = this.pairToArray(param);
-                return flatParam[0];
-              }
-              return param;
-            });
-
-            // Create a function that will be stored
-            const schemeFunc = (...args: any[]) => {
-              const funcEnv = this.createEnvironment(env);
-
-              // Bind parameters
-              for (let i = 0; i < flatParams.length; i++) {
-                const paramName = this.extractParamName(flatParams[i]);
-                funcEnv.values.set(paramName, args[i]);
-              }
-
-              return this.evalSchemeExpressionInEnv(value, funcEnv);
-            };
-
-            this.defineVariable(funcNameStr, schemeFunc, env);
-            return undefined;
-          } else {
-            // Simple define: (define name value)
-            const nameStr = this.extractParamName(nameOrSignature);
-            const evaluatedValue = this.evalSchemeExpression(value, env);
-            this.defineVariable(nameStr, evaluatedValue, env);
-            return undefined;
-          }
+          return this.evalDefine(operands, env);
         }
 
-        // if: (if test consequent alternate)
+        // if
         if (operatorName === "if") {
-          if (operands.length < 3) {
+          if (operands.length < 2) {
             throw new Error("if: insufficient arguments");
           }
           const test = this.evalSchemeExpression(operands[0], env);
-          const isTruthy = test !== false;
-          if (isTruthy) {
+          if (test !== false) {
             return this.evalSchemeExpression(operands[1], env);
           } else {
-            return this.evalSchemeExpression(operands[2], env);
+            return operands.length >= 3
+              ? this.evalSchemeExpression(operands[2], env)
+              : undefined;
           }
         }
 
-        // lambda: (lambda (params...) body)
+        // lambda
         if (operatorName === "lambda") {
+          return this.evalLambda(operands, env);
+        }
+
+        // set!
+        if (operatorName === "set!") {
           if (operands.length < 2) {
-            throw new Error("lambda: insufficient arguments");
+            throw new Error("set!: insufficient arguments");
           }
-          const params = operands[0];
-          const body = operands[1];
+          const nameStr = this.extractParamName(operands[0]);
+          const value = this.evalSchemeExpression(operands[1], env);
+          return this.setVariable(nameStr, value, env);
+        }
 
-          // Convert pair structure to flat array if needed
-          let flatParams = params;
-          if (Array.isArray(params) && (params as any).pair === true) {
-            flatParams = this.pairToArray(params);
+        // begin
+        if (operatorName === "begin") {
+          let result: any = undefined;
+          for (const operand of operands) {
+            result = this.evalSchemeExpression(operand, env);
           }
-
-          // Return a function that closes over the current environment
-          return (...args: any[]) => {
-            const funcEnv = this.createEnvironment(env);
-
-            // Bind parameters
-            if (Array.isArray(flatParams)) {
-              for (let i = 0; i < flatParams.length; i++) {
-                const paramName = this.extractParamName(flatParams[i]);
-                funcEnv.values.set(paramName, args[i]);
-              }
-            }
-
-            return this.evalSchemeExpressionInEnv(body, funcEnv);
-          };
+          return result;
         }
 
         // ===== REGULAR FUNCTION CALLS =====
-        // Recursively evaluate operands
-        const evaluatedOperands = operands.map(operand =>
+        const evaluatedOperands = operands.map((operand) =>
           this.evalSchemeExpression(operand, env)
         );
 
-        try {
-          const func = this.lookupVariable(operatorName, env);
-          if (typeof func === "function") {
-            return func(...evaluatedOperands);
-          }
-        } catch (e) {
-          throw new Error(`Unknown operator: ${operatorName}`);
+        const func = this.lookupVariable(operatorName, env);
+        if (typeof func === "function") {
+          return func(...evaluatedOperands);
         }
+
+        throw new Error(`Unknown operator: ${operatorName}`);
       }
 
       // If operator is an array (higher-order function), evaluate it
       if (Array.isArray(operator)) {
         const evaluatedFunc = this.evalSchemeExpression(operator, env);
-        const evaluatedOperands = operands.map(op =>
+        const evaluatedOperands = operands.map((op) =>
           this.evalSchemeExpression(op, env)
         );
         if (typeof evaluatedFunc === "function") {
@@ -558,15 +563,14 @@ export class SchemeInterpreter {
         }
       }
 
-      // If operator is a function, call it
+      // If operator is already a function
       if (typeof operator === "function") {
-        const evaluatedOperands = operands.map(op =>
+        const evaluatedOperands = operands.map((op) =>
           this.evalSchemeExpression(op, env)
         );
         return operator(...evaluatedOperands);
       }
 
-      // If operator is a number or other non-callable value, throw error
       if (typeof operator !== "function" && operator !== undefined) {
         throw new Error(`Cannot call non-function: ${operator}`);
       }
@@ -576,79 +580,99 @@ export class SchemeInterpreter {
   }
 
   /**
-   * Helper: Evaluate s-expression in a specific environment
+   * Handle (define ...) in s-expression evaluation
    */
-  private evalSchemeExpressionInEnv(expr: any, env: Environment): any {
-    // Convert pair structure to flat array if needed
-    if (Array.isArray(expr) && (expr as any).pair === true) {
-      expr = this.pairToArray(expr);
+  private evalDefine(operands: any[], env: Environment): undefined {
+    if (operands.length < 2) {
+      throw new Error("define: insufficient arguments");
     }
 
-    // Base cases
-    if (expr === null || expr === undefined) {
-      return expr;
-    }
+    const nameOrSignature = operands[0];
+    const bodyExprs = operands.slice(1);
 
-    if (typeof expr !== "object") {
-      return expr;
-    }
-
-    // Handle SchemeNumber types (SchemeInteger, SchemeReal, etc.)
-    // DON'T coerce them - keep as SchemeNumber objects
-    if (expr.numberType !== undefined && typeof expr.coerce === "function") {
-      return expr;
-    }
-
-    // Symbol lookup in provided environment
-    if (expr.sym !== undefined) {
-      return this.lookupVariable(expr.sym, env);
-    }
-
-    if (Array.isArray(expr)) {
-      if (expr.length === 0) {
-        return expr;
+    // Function definition: (define (name params...) body...)
+    if (
+      Array.isArray(nameOrSignature) ||
+      (nameOrSignature && typeof nameOrSignature === "object" && !nameOrSignature.sym && (nameOrSignature as any).pair)
+    ) {
+      let flatSignature = nameOrSignature;
+      if (Array.isArray(nameOrSignature) && (nameOrSignature as any).pair === true) {
+        flatSignature = this.pairToArray(nameOrSignature);
       }
 
-      const [operator, ...operands] = expr;
+      if (!Array.isArray(flatSignature)) {
+        flatSignature = [flatSignature];
+      }
 
-      if (operator && typeof operator === "object" && operator.sym) {
-        const operatorName = operator.sym;
+      const [funcName, ...params] = flatSignature;
+      const funcNameStr = this.extractParamName(funcName);
 
-        // if: special case
-        if (operatorName === "if") {
-          const test = this.evalSchemeExpressionInEnv(operands[0], env);
-          const isTruthy = test !== false;
-          if (isTruthy) {
-            return this.evalSchemeExpressionInEnv(operands[1], env);
-          } else {
-            return this.evalSchemeExpressionInEnv(operands[2], env);
-          }
+      const flatParams = params.map((param: any) => {
+        if (Array.isArray(param) && (param as any).pair === true) {
+          return this.pairToArray(param)[0];
+        }
+        return param;
+      });
+
+      const schemeFunc = (...args: any[]) => {
+        const funcEnv = this.createEnvironment(env);
+
+        for (let i = 0; i < flatParams.length; i++) {
+          const paramName = this.extractParamName(flatParams[i]);
+          this.defineVariable(paramName, args[i], funcEnv);
         }
 
-        // Regular function call
-        const evaluatedOperands = operands.map(op =>
-          this.evalSchemeExpressionInEnv(op, env)
-        );
+        // Evaluate all body expressions, return the last
+        let result: any = undefined;
+        for (const bodyExpr of bodyExprs) {
+          result = this.evalSchemeExpression(bodyExpr, funcEnv);
+        }
+        return result;
+      };
 
-        try {
-          const func = this.lookupVariable(operatorName, env);
-          if (typeof func === "function") {
-            return func(...evaluatedOperands);
-          }
-        } catch (e) {
-          throw new Error(`Unknown operator: ${operatorName}`);
+      this.defineVariable(funcNameStr, schemeFunc, env);
+      return undefined;
+    } else {
+      // Simple define: (define name value)
+      const nameStr = this.extractParamName(nameOrSignature);
+      const evaluatedValue = this.evalSchemeExpression(bodyExprs[0], env);
+      this.defineVariable(nameStr, evaluatedValue, env);
+      return undefined;
+    }
+  }
+
+  /**
+   * Handle (lambda ...) in s-expression evaluation
+   */
+  private evalLambda(operands: any[], env: Environment): Function {
+    if (operands.length < 2) {
+      throw new Error("lambda: insufficient arguments");
+    }
+
+    const params = operands[0];
+    const bodyExprs = operands.slice(1);
+
+    let flatParams = params;
+    if (Array.isArray(params) && (params as any).pair === true) {
+      flatParams = this.pairToArray(params);
+    }
+
+    return (...args: any[]) => {
+      const funcEnv = this.createEnvironment(env);
+
+      if (Array.isArray(flatParams)) {
+        for (let i = 0; i < flatParams.length; i++) {
+          const paramName = this.extractParamName(flatParams[i]);
+          this.defineVariable(paramName, args[i], funcEnv);
         }
       }
 
-      // If operator is a function, call it
-      if (typeof operator === "function") {
-        const evaluatedOperands = operands.map(op =>
-          this.evalSchemeExpressionInEnv(op, env)
-        );
-        return operator(...evaluatedOperands);
+      // Evaluate all body expressions, return the last
+      let result: any = undefined;
+      for (const bodyExpr of bodyExprs) {
+        result = this.evalSchemeExpression(bodyExpr, funcEnv);
       }
-    }
-
-    return expr;
+      return result;
+    };
   }
 }
