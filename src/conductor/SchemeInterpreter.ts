@@ -297,7 +297,7 @@ export class SchemeInterpreter {
   ): any {
     const func = this.evaluateNode(node.callee, env);
 
-    const args = node.arguments.map((arg) => {
+    const args = node.arguments.map(arg => {
       if (arg.type === "SpreadElement") {
         const arr = this.evaluateNode(arg.argument, env);
         return Array.isArray(arr) ? arr : [arr];
@@ -399,7 +399,7 @@ export class SchemeInterpreter {
     node: es.ArrayExpression,
     env: Environment
   ): any {
-    return node.elements.map((el) => {
+    return node.elements.map(el => {
       if (el === null) return null;
       if (el.type === "SpreadElement") {
         const arr = this.evaluateNode(el.argument, env);
@@ -540,7 +540,7 @@ export class SchemeInterpreter {
         }
 
         // ===== REGULAR FUNCTION CALLS =====
-        const evaluatedOperands = operands.map((operand) =>
+        const evaluatedOperands = operands.map(operand =>
           this.evalSchemeExpression(operand, env)
         );
 
@@ -555,7 +555,7 @@ export class SchemeInterpreter {
       // If operator is an array (higher-order function), evaluate it
       if (Array.isArray(operator)) {
         const evaluatedFunc = this.evalSchemeExpression(operator, env);
-        const evaluatedOperands = operands.map((op) =>
+        const evaluatedOperands = operands.map(op =>
           this.evalSchemeExpression(op, env)
         );
         if (typeof evaluatedFunc === "function") {
@@ -565,7 +565,7 @@ export class SchemeInterpreter {
 
       // If operator is already a function
       if (typeof operator === "function") {
-        const evaluatedOperands = operands.map((op) =>
+        const evaluatedOperands = operands.map(op =>
           this.evalSchemeExpression(op, env)
         );
         return operator(...evaluatedOperands);
@@ -593,10 +593,16 @@ export class SchemeInterpreter {
     // Function definition: (define (name params...) body...)
     if (
       Array.isArray(nameOrSignature) ||
-      (nameOrSignature && typeof nameOrSignature === "object" && !nameOrSignature.sym && (nameOrSignature as any).pair)
+      (nameOrSignature &&
+        typeof nameOrSignature === "object" &&
+        !nameOrSignature.sym &&
+        (nameOrSignature as any).pair)
     ) {
       let flatSignature = nameOrSignature;
-      if (Array.isArray(nameOrSignature) && (nameOrSignature as any).pair === true) {
+      if (
+        Array.isArray(nameOrSignature) &&
+        (nameOrSignature as any).pair === true
+      ) {
         flatSignature = this.pairToArray(nameOrSignature);
       }
 

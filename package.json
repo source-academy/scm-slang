@@ -39,6 +39,7 @@
   },
   "scripts": {
     "build": "rollup -c",
+    "build:evaluator": "esbuild src/conductor/evaluatorEntry.ts --bundle --platform=browser --outfile=dist/scm-slang-evaluator.js --format=iife --global-name=evaluator",
     "build-libs": "npx ts-node ./src/compile-libs.ts",
     "test": "jest",
     "test-coverage": "jest --coverage",

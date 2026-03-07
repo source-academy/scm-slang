@@ -274,7 +274,7 @@ describe("SchemeInterpreter Integration Tests", () => {
     });
   });
 
-    // ============================================================================
+  // ============================================================================
   // PART 10: SET! (MUTATION - CHAPTER 3)
   // ============================================================================
 
@@ -295,7 +295,10 @@ describe("SchemeInterpreter Integration Tests", () => {
 
     test("set! counter pattern", () => {
       evaluate(interpreter, "(define count 0)");
-      evaluate(interpreter, "(define (increment) (begin (set! count (+ count 1)) count))");
+      evaluate(
+        interpreter,
+        "(define (increment) (begin (set! count (+ count 1)) count))"
+      );
       evaluate(interpreter, "(increment)");
       evaluate(interpreter, "(increment)");
       const result = evaluate(interpreter, "(increment)");
@@ -311,12 +314,15 @@ describe("SchemeInterpreter Integration Tests", () => {
     });
 
     test("set! make-counter closure", () => {
-      evaluate(interpreter, `
+      evaluate(
+        interpreter,
+        `
         (define (make-counter)
           (define n 0)
           (lambda ()
             (begin (set! n (+ n 1)) n)))
-      `);
+      `
+      );
       evaluate(interpreter, "(define counter (make-counter))");
       evaluate(interpreter, "(counter)");
       evaluate(interpreter, "(counter)");
@@ -325,12 +331,15 @@ describe("SchemeInterpreter Integration Tests", () => {
     });
 
     test("set! independent counters", () => {
-      evaluate(interpreter, `
+      evaluate(
+        interpreter,
+        `
         (define (make-counter)
           (define n 0)
           (lambda ()
             (begin (set! n (+ n 1)) n)))
-      `);
+      `
+      );
       evaluate(interpreter, "(define c1 (make-counter))");
       evaluate(interpreter, "(define c2 (make-counter))");
       evaluate(interpreter, "(c1)");
@@ -355,7 +364,6 @@ describe("SchemeInterpreter Integration Tests", () => {
       expect(() => evaluate(interpreter, "(set! never-defined 42)")).toThrow();
     });
   });
-
 });
 
 /*
