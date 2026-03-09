@@ -44,7 +44,7 @@
     "build-libs": "npx ts-node ./src/compile-libs.ts",
     "test": "jest",
     "test-coverage": "jest --coverage",
-    "eslint": "eslint --ext .ts",
+    "eslint": "eslint --config eslint.config.js --ext .ts",
     "format": "prettier --ignore-path .gitignore --write \"**/*.+(js|ts|json)\"",
     "format:ci": "prettier --ignore-path .gitignore --list-different \"**/*.+(js|ts|json)\""
   }
