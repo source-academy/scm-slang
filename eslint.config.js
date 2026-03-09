@@ -8,10 +8,11 @@ export default async () => [
       parser: (await import("@typescript-eslint/parser")).default,
     },
     plugins: {
-      "@typescript-eslint": (await import("@typescript-eslint/eslint-plugin")).default
+      "@typescript-eslint": (await import("@typescript-eslint/eslint-plugin"))
+        .default,
     },
     rules: {
       // your rules here
-    }
-  }
+    },
+  },
 ];
