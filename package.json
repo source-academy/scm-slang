@@ -38,7 +38,8 @@
     "prettier": "^3.8.1",
     "rollup": "^3.0.0",
     "ts-jest": "^29.4.6",
-    "tslib": "^2.8.1"
+    "tslib": "^2.8.1",
+    "typescript": "^5.9.3"
   },
   "scripts": {
     "build": "rollup -c",
