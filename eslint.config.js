@@ -6,14 +6,14 @@ export default [
     languageOptions: {
       parser: "@typescript-eslint/parser",
       parserOptions: {
-        project: "./tsconfig.json"
-      }
+        project: "./tsconfig.json",
+      },
     },
     plugins: {
-      "@typescript-eslint": require("@typescript-eslint/eslint-plugin")
+      "@typescript-eslint": require("@typescript-eslint/eslint-plugin"),
     },
     rules: {
       // add your rules or leave empty for defaults
-    }
-  }
+    },
+  },
 ];
