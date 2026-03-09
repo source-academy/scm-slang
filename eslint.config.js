@@ -1,19 +1,17 @@
 // eslint.config.js
-export default [
+
+export default async () => [
   {
     files: ["**/*.ts", "**/*.js"],
-    ignores: ["dist/**", "node_modules/**"], // You can add more folders to ignore here
+    ignores: ["dist/**", "node_modules/**"],
     languageOptions: {
-      parser: "@typescript-eslint/parser",
-      parserOptions: {
-        project: "./tsconfig.json",
-      },
+      parser: (await import("@typescript-eslint/parser")).default,
     },
     plugins: {
-      "@typescript-eslint": require("@typescript-eslint/eslint-plugin"),
+      "@typescript-eslint": (await import("@typescript-eslint/eslint-plugin")).default
     },
     rules: {
-      // add your rules or leave empty for defaults
-    },
-  },
+      // your rules here
+    }
+  }
 ];
