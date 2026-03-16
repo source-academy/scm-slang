@@ -12,6 +12,7 @@ export interface Visitor {
   visitNumericLiteral(node: Atomic.NumericLiteral): any;
   visitBooleanLiteral(node: Atomic.BooleanLiteral): any;
   visitStringLiteral(node: Atomic.StringLiteral): any;
+  visitComplexLiteral(node: Atomic.ComplexLiteral): any;
   visitLambda(node: Atomic.Lambda): any;
 
   visitIdentifier(node: Atomic.Identifier): any;

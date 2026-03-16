@@ -416,4 +416,9 @@ export class Transpiler implements Visitor {
   visitSyntaxRules(node: Atomic.SyntaxRules) {
     throw new Error("This should not be called!");
   }
+
+  visitComplexLiteral(node: Atomic.ComplexLiteral): [es.Literal] {
+    // Convert complex literal to string representation for JavaScript
+    return [estreeBuilder.makeLiteral(node.value, node.location)];
+  }
 }
