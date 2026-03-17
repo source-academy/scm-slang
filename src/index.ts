@@ -54,6 +54,9 @@ const JS_KEYWORDS: string[] = [
   "public",
 ];
 
+/**
+ * Takes a Scheme identifier and encodes it to follow JS naming conventions.
+ */
 export function encode(identifier: string): string {
   if (JS_KEYWORDS.includes(identifier) || identifier.startsWith("$scheme_")) {
     return (
@@ -71,6 +74,9 @@ export function encode(identifier: string): string {
   }
 }
 
+/**
+ * Takes a JS identifier and decodes it to follow Scheme naming conventions.
+ */
 export function decode(identifier: string): string {
   if (identifier.startsWith("$scheme_")) {
     return b64Decode(

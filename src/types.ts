@@ -13,6 +13,9 @@ import * as es from "estree";
  */
 export type Value = any;
 
+// TODO: Replace with actual Context type from cse-machine/context when available.
+export type Context = any;
+
 /**
  * Result of evaluating a chunk. One of three states:
  * - Finished: evaluation completed (success or error)
@@ -25,7 +28,7 @@ export type Result = Finished | SuspendedCseEval;
  */
 export interface Finished {
   status: "finished";
-  context: any; // Will be Context from cse-machine/context
+  context: Context;
   value: Value;
   representation: Representation;
 }
@@ -35,7 +38,7 @@ export interface Finished {
  */
 export interface SuspendedCseEval {
   status: "suspended-cse-eval";
-  context: any; // Will be Context from cse-machine/context
+  context: Context;
 }
 
 /**

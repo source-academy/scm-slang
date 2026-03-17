@@ -23,17 +23,13 @@ export class SchemeContext {
    * @returns The result of evaluation
    */
   async evaluateChunk(chunk: string): Promise<any> {
-    try {
-      // Step 1: Parse Scheme code to ESTree Program
-      const program = schemeParse(chunk);
+    // Step 1: Parse Scheme code to ESTree Program
+    const program = schemeParse(chunk);
 
-      // Step 2: Evaluate the ESTree with the interpreter
-      const result = this.interpreter.evaluate(program);
+    // Step 2: Evaluate the ESTree with the interpreter
+    const result = this.interpreter.evaluate(program);
 
-      // Step 3: Return result (SchemeEvaluator will format it)
-      return result;
-    } catch (error) {
-      throw error;
-    }
+    // Step 3: Return result (SchemeEvaluator will format it)
+    return result;
   }
 }

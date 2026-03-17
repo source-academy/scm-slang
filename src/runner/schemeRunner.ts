@@ -18,5 +18,6 @@ export async function runInContext(
   context: any,
   options: Partial<IOptions> = {}
 ): Promise<any> {
+  // TODO: Implement after Phase 1 is complete.
   throw new Error("Phase 2: Not yet implemented");
 }

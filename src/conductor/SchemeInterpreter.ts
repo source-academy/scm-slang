@@ -77,40 +77,39 @@ export class SchemeInterpreter {
    * Tries the name as-is first, then tries the encoded version.
    */
   private lookupVariable(name: string, env: Environment): any {
-    // Try the name as-is through the chain
-    let current: Environment | null = env;
-    while (current !== null) {
-      if (current.values.has(name)) {
-        return current.values.get(name);
-      }
-      current = current.parent;
-    }
-
-    // Try encoded name as fallback (e.g., make-counter -> make$45$counter)
-    const encodedName = encode(name);
-    if (encodedName !== name) {
-      let current2: Environment | null = env;
-      while (current2 !== null) {
-        if (current2.values.has(encodedName)) {
-          return current2.values.get(encodedName);
-        }
-        current2 = current2.parent;
-      }
-    }
-
-    // Try decoded name as fallback (e.g., make$45$counter -> make-counter)
-    const decodedName = decode(name);
-    if (decodedName !== name) {
-      let current3: Environment | null = env;
-      while (current3 !== null) {
-        if (current3.values.has(decodedName)) {
-          return current3.values.get(decodedName);
-        }
-        current3 = current3.parent;
+    for (const variant of this.getNameVariants(name)) {
+      const result = this.lookupInEnv(env, variant);
+      if (result.found) {
+        return result.value;
       }
     }
 
     throw new Error(`Undefined variable: ${name}`);
+  }
+
+  private lookupInEnv(
+    env: Environment,
+    name: string
+  ): { found: boolean; value?: any } {
+    let current: Environment | null = env;
+    while (current !== null) {
+      if (current.values.has(name)) {
+        return { found: true, value: current.values.get(name) };
+      }
+      current = current.parent;
+    }
+    return { found: false };
+  }
+
+  private getNameVariants(name: string): string[] {
+    const variants = [name, encode(name), decode(name)];
+    const unique: string[] = [];
+    for (const variant of variants) {
+      if (!unique.includes(variant)) {
+        unique.push(variant);
+      }
+    }
+    return unique;
   }
 
   /**
@@ -119,16 +118,8 @@ export class SchemeInterpreter {
    * so lookups from either the ESTree path or the s-expression path work.
    */
   private defineVariable(name: string, value: any, env: Environment): void {
-    env.values.set(name, value);
-    // Also store under encoded name if different
-    const encodedName = encode(name);
-    if (encodedName !== name) {
-      env.values.set(encodedName, value);
-    }
-    // Also store under decoded name if different
-    const decodedName = decode(name);
-    if (decodedName !== name) {
-      env.values.set(decodedName, value);
+    for (const variant of this.getNameVariants(name)) {
+      env.values.set(variant, value);
     }
   }
 
@@ -494,49 +485,45 @@ export class SchemeInterpreter {
         const operatorName = operator.sym;
 
         // ===== SPECIAL FORMS =====
+        switch (operatorName) {
+          case "define":
+            return this.evalDefine(operands, env);
 
-        // define
-        if (operatorName === "define") {
-          return this.evalDefine(operands, env);
-        }
-
-        // if
-        if (operatorName === "if") {
-          if (operands.length < 2) {
-            throw new Error("if: insufficient arguments");
-          }
-          const test = this.evalSchemeExpression(operands[0], env);
-          if (test !== false) {
-            return this.evalSchemeExpression(operands[1], env);
-          } else {
+          case "if": {
+            if (operands.length < 2) {
+              throw new Error("if: insufficient arguments");
+            }
+            const test = this.evalSchemeExpression(operands[0], env);
+            if (test !== false) {
+              return this.evalSchemeExpression(operands[1], env);
+            }
             return operands.length >= 3
               ? this.evalSchemeExpression(operands[2], env)
               : undefined;
           }
-        }
 
-        // lambda
-        if (operatorName === "lambda") {
-          return this.evalLambda(operands, env);
-        }
+          case "lambda":
+            return this.evalLambda(operands, env);
 
-        // set!
-        if (operatorName === "set!") {
-          if (operands.length < 2) {
-            throw new Error("set!: insufficient arguments");
+          case "set!": {
+            if (operands.length < 2) {
+              throw new Error("set!: insufficient arguments");
+            }
+            const nameStr = this.extractParamName(operands[0]);
+            const value = this.evalSchemeExpression(operands[1], env);
+            return this.setVariable(nameStr, value, env);
           }
-          const nameStr = this.extractParamName(operands[0]);
-          const value = this.evalSchemeExpression(operands[1], env);
-          return this.setVariable(nameStr, value, env);
-        }
 
-        // begin
-        if (operatorName === "begin") {
-          let result: any = undefined;
-          for (const operand of operands) {
-            result = this.evalSchemeExpression(operand, env);
+          case "begin": {
+            let result: any = undefined;
+            for (const operand of operands) {
+              result = this.evalSchemeExpression(operand, env);
+            }
+            return result;
           }
-          return result;
+
+          default:
+            break;
         }
 
         // ===== REGULAR FUNCTION CALLS =====
