@@ -72,29 +72,31 @@ function getNameVariants(name: string): string[] {
 export function lookupVariable(name: string, env: Environment): any {
   const variants = getNameVariants(name);
   let current: Environment | null = env;
-  let found = false;
-  let foundValue: any = undefined;
 
   while (current !== null) {
+    let foundInFrame = false;
+    let frameValue: any = undefined;
     for (const variant of variants) {
       if (current.values.has(variant)) {
         const value = current.values.get(variant);
-        if (!found) {
-          found = true;
-          foundValue = value;
-        } else if (foundValue !== value) {
+        if (!foundInFrame) {
+          foundInFrame = true;
+          frameValue = value;
+        } else if (frameValue !== value) {
+          // Invariant: all name variants for a binding are defined together and
+          // always updated together (see defineVariable/setVariable), so they
+          // should never diverge. If this fires, it indicates a bug.
           throw new Error(`Conflicting bindings for ${name}`);
         }
       }
     }
+    if (foundInFrame) {
+      return frameValue;
+    }
     current = current.parent;
   }
 
-  if (!found) {
-    throw new Error(`Undefined variable: ${name}`);
-  }
-
-  return foundValue;
+  throw new Error(`Undefined variable: ${name}`);
 }
 
 export function defineVariable(
