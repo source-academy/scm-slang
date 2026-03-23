@@ -1,6 +1,6 @@
-import * as stdlib from "../stdlib/base";
-import { decode, encode } from "../index";
-import { evalSchemeExpression } from "./evaluator";
+import * as stdlib from "../stdlib/base.js";
+import { decode, encode } from "../index.js";
+import { evalSchemeExpression } from "./evaluator.js";
 
 export interface Environment {
   values: Map<string, any>;
