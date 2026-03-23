@@ -1,6 +1,6 @@
 import * as es from "estree";
-import { schemeParse } from "../transpiler";
-import { SchemeInterpreter } from "./SchemeInterpreter";
+import { schemeParse } from "../transpiler/index.js";
+import { SchemeInterpreter } from "./SchemeInterpreter.js";
 
 /**
  * SchemeContext manages evaluation state for Scheme code.

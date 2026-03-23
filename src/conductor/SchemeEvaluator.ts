@@ -11,9 +11,9 @@
 import { BasicEvaluator } from "@sourceacademy/conductor/runner";
 // @ts-ignore - same reason
 import type { IRunnerPlugin } from "@sourceacademy/conductor/runner/types";
-import type { Finished, Result } from "../types";
-import type { CseContext } from "../cse-machine/context";
-import { runInContext } from "../runner/schemeRunner";
+import type { Finished, Result } from "../types.js";
+import type { CseContext } from "../cse-machine/context.js";
+import { runInContext } from "../runner/schemeRunner.js";
 
 interface IOptions {
   isPrelude: boolean;
