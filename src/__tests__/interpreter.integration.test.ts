@@ -1,5 +1,5 @@
-import { schemeParse } from "../index";
-import { SchemeInterpreter } from "../conductor/SchemeInterpreter";
+import { schemeParse } from "../index.js";
+import { SchemeInterpreter } from "../conductor/SchemeInterpreter.js";
 
 /**
  * Helper functions to validate Scheme values

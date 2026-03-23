@@ -1,5 +1,5 @@
-import type { CseContext } from "../cse-machine/context";
-import { runInContext } from "../runner/schemeRunner";
+import type { CseContext } from "../cse-machine/context.js";
+import { runInContext } from "../runner/schemeRunner.js";
 
 const expectSchemeNumber = (result: any, expectedValue: number) => {
   expect(result).toBeDefined();

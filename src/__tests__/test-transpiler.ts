@@ -1,4 +1,4 @@
-import { schemeParse } from "../index";
+import { schemeParse } from "../index.js";
 
 test("transpiler + interpreter: simple arithmetic", () => {
   const code = "(+ 1 2)";
