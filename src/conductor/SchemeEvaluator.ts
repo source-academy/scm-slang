@@ -30,27 +30,73 @@ const defaultOptions: IOptions = {
 export default class SchemeEvaluator extends BasicEvaluator {
   private context: CseContext | undefined;
   private options: IOptions;
+  private static handlersRegistered = false;
 
   constructor(conductor: IRunnerPlugin) {
     super(conductor);
     this.context = undefined;
     this.options = defaultOptions;
+
+    if (!SchemeEvaluator.handlersRegistered && typeof self !== "undefined") {
+      SchemeEvaluator.handlersRegistered = true;
+      const handler = (event: any) => {
+        const error = event?.reason ?? event?.error ?? event;
+        const name = error instanceof Error ? error.name : "Error";
+        const message = error instanceof Error ? error.message : String(error);
+        (this as any).conductor.sendError({ name, message });
+      };
+
+      self.addEventListener("unhandledrejection", handler);
+      self.addEventListener("error", handler);
+    }
   }
 
   async evaluateChunk(chunk: string): Promise<void> {
     try {
-      const result = await runInContext(chunk, this.context, this.options);
+      const result = await runInContext(chunk, this.context, {
+        ...this.options,
+        output: (text: string) => {
+          (this as any).conductor.sendOutput(text);
+        },
+      });
       this.context = result.context as CseContext;
 
       // Cast to access conductor (inherited from BasicEvaluator)
-      (this as any).conductor.sendResult(result as Result);
-      const output = this.formatResult(result);
-      (this as any).conductor.sendOutput(output);
+      if (result && typeof result === "object" && result.status === "error") {
+        const error = (result as any).error ?? result;
+        const name = error instanceof Error ? error.name : "Error";
+        const message = error instanceof Error ? error.message : String(error);
+        (this as any).conductor.sendError({ name, message });
+        return;
+      }
+
+      if (
+        result &&
+        typeof result === "object" &&
+        result.status === "finished"
+      ) {
+        const finished = result as Finished;
+        const display = finished.representation.toString(finished.value);
+        const sanitized = {
+          status: "finished",
+          value: display,
+          representation: display,
+        };
+        (this as any).conductor.sendResult(sanitized);
+      } else if (
+        result &&
+        typeof result === "object" &&
+        result.status === "suspended-cse-eval"
+      ) {
+        const sanitized = { status: "suspended-cse-eval" };
+        (this as any).conductor.sendResult(sanitized);
+      } else {
+        (this as any).conductor.sendResult(result as Result);
+      }
     } catch (error) {
       const name = error instanceof Error ? error.name : "Error";
       const message = error instanceof Error ? error.message : String(error);
       (this as any).conductor.sendError({ name, message });
-      (this as any).conductor.sendOutput(`Error: ${message}`);
     }
   }
 

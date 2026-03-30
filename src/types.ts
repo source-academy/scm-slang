@@ -51,7 +51,14 @@ export interface SuspendedCseEval {
  * - #<procedure> for functions
  */
 export class Representation {
-  constructor(private representation: string) {}
+  private formatter: (value: any) => string;
+
+  constructor(representation: string | ((value: any) => string)) {
+    this.formatter =
+      typeof representation === "string"
+        ? () => representation
+        : representation;
+  }
 
   /**
    * Convert a value to its display representation.
@@ -59,7 +66,7 @@ export class Representation {
    * In the future, could use stdlib's display function.
    */
   toString(value: any): string {
-    return this.representation;
+    return this.formatter(value);
   }
 }
 

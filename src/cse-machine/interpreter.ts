@@ -224,11 +224,14 @@ export function runWithContext(program: es.Program, context: CseContext): any {
   return runContext(context);
 }
 
-export function evaluate(program: es.Program): any {
+export function evaluate(
+  program: es.Program,
+  output?: (text: string) => void
+): any {
   const context: CseContext = {
     control: [],
     stash: [],
-    env: createGlobalEnvironment(),
+    env: createGlobalEnvironment(output),
   };
   return runWithContext(program, context);
 }

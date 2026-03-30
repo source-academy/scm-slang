@@ -853,10 +853,10 @@
   dependencies:
     "@sinonjs/commons" "^3.0.1"
 
-"@sourceacademy/conductor@0.2.3":
-  version "0.2.3"
-  resolved "https://registry.yarnpkg.com/@sourceacademy/conductor/-/conductor-0.2.3.tgz"
-  integrity sha512-jaJBCsKlzJzb+nxL2oED733KGE+zlzoe0carfLYrBH/q9nHR9RJOPZHxhYF7k76lQ7KkVU4q7wI36/p4o40V3w==
+"@sourceacademy/conductor@0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@sourceacademy/conductor/-/conductor-0.3.0.tgz#5294caeb14c5eba29fb3a6015296d262683026d2"
+  integrity sha512-pwzx64p22g8OM6AI73eyE8wgzBg7Iq35T6HLwcO3MXDgeLvsEV33BQVLtXqRNAJYQiVy4301Ci2WAI8eM149oA==
 
 "@tybys/wasm-util@^0.10.0":
   version "0.10.1"

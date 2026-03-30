@@ -48,4 +48,13 @@ describe("Scheme output formatting", () => {
     expect(resultTrue.representation.toString(resultTrue.value)).toBe("#t");
     expect(resultFalse.representation.toString(resultFalse.value)).toBe("#f");
   });
+
+  test("display outputs without quotes", async () => {
+    const outputs: string[] = [];
+    await runInContext('(display "hello")', context, {
+      chapter: 3,
+      output: text => outputs.push(text),
+    });
+    expect(outputs.join("")).toBe("hello");
+  });
 });

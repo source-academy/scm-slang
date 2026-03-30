@@ -5,7 +5,8 @@ import { runWithContext } from "./interpreter";
 
 export function runCSEMachine(
   program: es.Program,
-  existingContext?: CseContext
+  existingContext?: CseContext,
+  output?: (text: string) => void
 ): {
   value: any;
   context: CseContext;
@@ -15,7 +16,7 @@ export function runCSEMachine(
     ({
       control: [],
       stash: [],
-      env: createGlobalEnvironment(),
+      env: createGlobalEnvironment(output),
     } as CseContext);
 
   const value = runWithContext(program, context);
