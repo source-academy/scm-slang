@@ -37,8 +37,6 @@
     "@rollup/plugin-node-resolve": "^15.0.0",
     "@rollup/plugin-typescript": "^11.0.0",
     "@types/jest": "^30.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.56.1",
-    "@typescript-eslint/parser": "^8.56.1",
     "esbuild": "^0.27.4",
     "eslint": "^10.0.1",
     "husky": "^9.1.7",
