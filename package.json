@@ -4,7 +4,13 @@
   "type": "module",
   "license": "Apache-2.0",
   "description": "Scheme-based implementations of Source, written in Typescript",
-  "keywords": ["Scheme", "interpreter", "compiler", "Source", "SICP"],
+  "keywords": [
+    "Scheme",
+    "interpreter",
+    "compiler",
+    "Source",
+    "SICP"
+  ],
   "author": {
     "name": "Source Academy",
     "url": "https://github.com/source-academy/"
@@ -41,7 +47,8 @@
     "rollup": "^3.0.0",
     "ts-jest": "^29.4.6",
     "tslib": "^2.8.1",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.56.1"
   },
   "scripts": {
     "build": "rollup -c && yarn build:evaluator",
