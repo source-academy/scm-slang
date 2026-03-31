@@ -28,7 +28,7 @@
   "dependencies": {
     "@sourceacademy/conductor": "0.3.0",
     "@types/estree": "^1.0.6",
-    "acorn": "^8.15.0",
+    "acorn": "^8.16.0",
     "acorn-walk": "^8.3.5",
     "js-base64": "^3.7.8"
   },
