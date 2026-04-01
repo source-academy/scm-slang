@@ -56,9 +56,6 @@ const JS_KEYWORDS: string[] = [
 
 /**
  * Takes a Scheme identifier and encodes it to follow JS naming conventions.
- *
- * @param identifier An identifier name.
- * @returns An encoded identifier that follows JS naming conventions.
  */
 export function encode(identifier: string): string {
   if (JS_KEYWORDS.includes(identifier) || identifier.startsWith("$scheme_")) {
@@ -79,9 +76,6 @@ export function encode(identifier: string): string {
 
 /**
  * Takes a JS identifier and decodes it to follow Scheme naming conventions.
- *
- * @param identifier An encoded identifier name.
- * @returns A decoded identifier that follows Scheme naming conventions.
  */
 export function decode(identifier: string): string {
   if (identifier.startsWith("$scheme_")) {
@@ -97,4 +91,28 @@ export function decode(identifier: string): string {
       String.fromCharCode(parseInt(code))
     );
   }
+}
+
+/**
+ * Initialize conductor integration dynamically.
+ * This allows conductor (ESM) to load scm-slang (CommonJS) without conflicts.
+ * Only runs in browser environment (where `self` and `globalThis.import` exist).
+ */
+if (
+  typeof (globalThis as any).import === "function" &&
+  "conductor" in (globalThis as any)
+) {
+  Promise.all([
+    (globalThis as any).import("@sourceacademy/conductor/runner/util"),
+    (globalThis as any).import("./conductor/SchemeEvaluator"),
+  ])
+    .then(([{ initialise }, { default: SchemeEvaluator }]) => {
+      const { runnerPlugin, conduit } = initialise(SchemeEvaluator);
+      (globalThis as any).scmSlangRunnerPlugin = runnerPlugin;
+      (globalThis as any).scmSlangConduit = conduit;
+      console.log("[scm-slang] Conductor integration initialized");
+    })
+    .catch(err => {
+      console.error("[scm-slang] Conductor initialization error:", err);
+    });
 }
