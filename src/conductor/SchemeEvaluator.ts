@@ -53,6 +53,9 @@ export default class SchemeEvaluator extends BasicEvaluator {
 
   async evaluateChunk(chunk: string): Promise<void> {
     try {
+      (globalThis as any).__displayOutput = (msg: string) => {
+        (this as any).conductor.sendOutput(msg);
+      };
       const result = await runInContext(chunk, this.context, {
         ...this.options,
         output: (text: string) => {
