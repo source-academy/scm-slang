@@ -1,0 +1,39 @@
+\section{Evaluation Rules and Restrictions}
+
+\subsection*{Truthiness}
+scm-slang follows Scheme truthiness: only \texttt{\#f} is false. All other
+values are true.
+
+\subsection*{Definitions and Mutation}
+\begin{itemize}
+\item \texttt{define} introduces a new binding in the current environment.
+\item \texttt{set!} requires that the identifier already be defined; otherwise
+      it is an error.
+\item Redefinition is permitted if the identifier is already in scope; scm-slang
+      does not block shadowing across nested scopes created by \texttt{lambda} or
+      \texttt{let}.
+\end{itemize}
+
+\subsection*{Sequencing}
+\texttt{begin} evaluates its subexpressions in order and returns the value of the
+last expression. A \texttt{begin} form does not introduce a new scope.
+
+\subsection*{Conditionals}
+\texttt{if} accepts two or three operands. If the alternative is omitted, the
+value is \texttt{undefined}. \texttt{cond} evaluates predicates in order and
+returns the first consequent whose predicate is true. An \texttt{else} clause, if
+present, must appear last.
+
+\subsection*{Delayed Evaluation}
+\texttt{delay} produces a promise. \texttt{force} evaluates a promise at most once
+and memoizes the result.
+
+\subsection*{Quotation}
+Quoted data are not evaluated. Quasiquotation supports unquote and
+unquote-splicing; unquote and splicing are only valid inside a quasiquoted
+context.
+
+\subsection*{Imports and Exports}
+\texttt{import} and \texttt{export} follow a scm-slang specific syntax that is
+compatible with the Source Academy module system. Imports must appear at the
+top level.

@@ -1,0 +1,18 @@
+\section{Numbers}
+
+scm-slang implements a numeric tower with exact and inexact numbers, including
+integers, rationals, reals and complex numbers. Numeric literals are recognized
+using the scm-slang number parser and include:
+
+\begin{itemize}
+\item Integers in decimal notation (e.g. \texttt{0}, \texttt{-42})
+\item Rationals using \texttt{/} (e.g. \texttt{3/4})
+\item Reals with decimal points and exponent notation
+\item Complex numbers in rectangular form (e.g. \texttt{1+2i})
+\item Special values: \texttt{+inf.0}, \texttt{-inf.0}, and \texttt{+nan.0}
+\end{itemize}
+
+Predicates and constructors include \texttt{number?}, \texttt{integer?},
+\texttt{rational?}, \texttt{real?}, \texttt{complex?}, \texttt{exact?}, and
+\texttt{inexact?}. Arithmetic is provided by \texttt{+}, \texttt{-}, \texttt{*},
+\texttt{/} and comparison predicates such as \texttt{=} and \texttt{<}.

@@ -1,0 +1,74 @@
+\section{Syntax}
+
+A Scheme program is a sequence of \emph{datum} forms, defined using
+Backus--Naur Form as follows:
+
+\renewcommand{\arraystretch}{1.2}
+
+% tex-fmt: off
+\[\begin{array}{rcll}
+
+\textit{program}        & ::= & \textit{datum} ...                                                   & \text{program} \\[1mm]
+
+\textit{datum}          & ::= & \textit{atom}                                                       & \\
+                        & |   & \textit{list}                                                       & \\
+                        & |   & \textit{vector}                                                     & \\
+                        & |   & \textit{quoted}                                                     & \\
+
+\textit{atom}           & ::= & \textit{number}                                                     & \text{numeric literal} \\
+                        & |   & \term{\#t} \ | \ \term{\#f}                                      & \text{boolean literal} \\
+                        & |   & \textit{string}                                                     & \text{string literal} \\
+                        & |   & \textit{identifier}                                                 & \text{identifier} \\[1mm]
+
+\textit{list}           & ::= & \term{(} \ \textit{form}... \ \term{)}                           & \text{proper list} \\
+                        & |   & \term{(} \ \textit{form}... \ \term{.} \ \textit{form} \ \term{)}
+                                                                                                        & \text{dotted list} \\[1mm]
+
+\textit{vector}         & ::= & \term{\#(} \ \textit{form}... \ \term{)}                          & \text{vector literal} \\[1mm]
+
+\textit{quoted}         & ::= & \term{'} \textit{form}                                             & \text{quote} \\
+                        & |   & \term{`} \textit{form}                                             & \text{quasiquote} \\
+                        & |   & \term{,} \textit{form}                                             & \text{unquote} \\
+                        & |   & \term{,@} \textit{form}                                            & \text{unquote-splicing} \\
+                        & |   & \term{(}\term{quote} \ \textit{form}\term{)}                      & \\
+                        & |   & \term{(}\term{quasiquote} \ \textit{form}\term{)}                 & \\
+                        & |   & \term{(}\term{unquote} \ \textit{form}\term{)}                    & \\
+                        & |   & \term{(}\term{unquote-splicing} \ \textit{form}\term{)}           & \\
+
+\textit{form}           & ::= & \textit{special-form}                                               & \\
+                        & |   & \textit{application}                                                & \\
+                        & |   & \textit{datum}                                                      & \\
+
+\textit{special-form}   & ::= & \term{(}\term{define} \ \textit{define-form}\term{)}              & \\
+                        & |   & \term{(}\term{lambda} \ \textit{formals} \ \textit{body}+\term{)} & \\
+                        & |   & \term{(}\term{if} \ \textit{form} \ \textit{form} \ [\textit{form}] \term{)} & \\
+                        & |   & \term{(}\term{let} \ \term{(}\textit{binding}...\term{)} \ \textit{body}+\term{)} & \\
+                        & |   & \term{(}\term{cond} \ \textit{clause}... \ [\textit{else-clause}] \term{)} & \\
+                        & |   & \term{(}\term{set!} \ \textit{identifier} \ \textit{form}\term{)} & \\
+                        & |   & \term{(}\term{begin} \ \textit{form}+\term{)}                     & \\
+                        & |   & \term{(}\term{delay} \ \textit{form}\term{)}                      & \\
+                        & |   & \textit{import}                                                     & \\
+                        & |   & \textit{export}                                                     & \\
+
+\textit{define-form}    & ::= & \textit{identifier} \ \textit{form}                               & \\
+                        & |   & \term{(}\textit{identifier} \ \textit{formals}\term{)} \ \textit{body}+ & \\
+
+\textit{formals}        & ::= & \term{(}\textit{identifier}...\term{)}                             & \\
+                        & |   & \textit{identifier}                                                 & \\
+                        & |   & \term{(}\textit{identifier}... \term{.} \textit{identifier}\term{)} & \\
+
+\textit{binding}        & ::= & \term{(}\textit{identifier} \ \textit{form}\term{)}               & \\
+
+\textit{clause}         & ::= & \term{(}\textit{form} \ \textit{body}*\term{)}                    & \\
+\textit{else-clause}    & ::= & \term{(}\term{else} \ \textit{body}+\term{)}                      & \\
+
+\textit{application}    & ::= & \term{(}\textit{form} \ \textit{form}...\term{)}                  & \\
+
+\textit{import}         & ::= & \term{(}\term{import} \ \textit{string} \ \term{(}\textit{identifier}...\term{)}\term{)} & \\
+\textit{export}         & ::= & \term{(}\term{export} \ \term{(}\textit{define-form}\term{)}\term{)} & \\
+
+\end{array}\]
+% tex-fmt: on
+
+Any non-whitespace, non-delimiter sequence may form an identifier, and numeric
+lexemes follow the number formats described in Section \emph{Numbers}.
