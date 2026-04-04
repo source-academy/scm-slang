@@ -1,6 +1,7 @@
 import * as stdlib from "../stdlib/base.js";
 import { decode, encode } from "../index.js";
 import { evalSchemeExpression } from "./evaluator.js";
+import { formatSchemeValue } from "../utils/scheme-format.js";
 
 export interface Environment {
   values: Map<string, any>;
@@ -43,12 +44,12 @@ export function createGlobalEnvironment(
     return evalSchemeExpression(schemeExpr, envToUse);
   });
 
-  const defaultOutput = (msg: string) => {
-    console.log(msg);
-  };
-  const displayOutput = output ?? defaultOutput;
-  env.values.set("__displayOutput", displayOutput);
-  (globalThis as any).__displayOutput = displayOutput;
+  env.values.set("display", (value: any) => {
+    if (output) {
+      output(formatSchemeValue(value, { quoteStrings: false }));
+    }
+    return undefined;
+  });
 
   return env;
 }

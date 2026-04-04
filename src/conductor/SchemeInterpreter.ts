@@ -56,12 +56,6 @@ export class SchemeInterpreter {
       const envToUse = env || this.globalEnv;
       return this.evalSchemeExpression(schemeExpr, envToUse);
     });
-
-    const displayOutput = (msg: string) => {
-      console.log(msg);
-    };
-    this.globalEnv.values.set("__displayOutput", displayOutput);
-    (globalThis as any).__displayOutput = displayOutput;
   }
 
   // ==========================================================================

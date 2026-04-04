@@ -1073,14 +1073,3 @@ export const list$45$$62$string: Function = (l: core.List) => {
   }
   return result;
 };
-
-export const display: Function = (value: any) => {
-  const formatted = schemeToString(value);
-  const hook = (globalThis as any).__displayOutput;
-  if (typeof hook === "function") {
-    hook(formatted);
-  } else {
-    console.log(formatted);
-  }
-  return value;
-};
