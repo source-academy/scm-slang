@@ -20,10 +20,21 @@ jobs:
         with:
           node-version: 22
           cache: yarn
+      - name: Install TeX dependencies
+        run: |
+          sudo apt-get update && \
+          sudo apt-get install -y --no-install-recommends \
+          texlive texlive-fonts-extra texlive-lang-cjk latexmk latex-cjk-all
       - name: Install dependencies
         run: yarn install --frozen-lockfile
       - name: yarn run build
         run: yarn run build
+      - name: Build Scheme docs
+        run: |
+          cd docs/specs
+          make
+          mkdir -p ../../dist
+          cp scheme_3.pdf ../../dist/scheme_3.pdf
       - name: Upload artifacts
         id: deployment
         uses: actions/upload-pages-artifact@v3
