@@ -1,0 +1,99 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
+\usepackage{graphicx,bookman}
+\usepackage{graphics}
+\usepackage{latexsym}
+\usepackage{mathtools}
+\usepackage{amsmath,amssymb}
+\usepackage[T1]{fontenc}
+\usepackage[paper=210mm:297mm]{typearea}
+\usepackage{listings}
+\usepackage{url}
+\usepackage{hyperref}
+
+\lstdefinelanguage{Scheme}{
+  keywords={define, lambda, if, let, cond, else, quote, quasiquote, unquote,
+    unquote-splicing, begin, set!, delay, import, export},
+  morecomment=[l]{;},
+  morestring=[b]",
+  sensitive=true
+}
+
+\lstset{
+  language=Scheme,
+  basicstyle=\ttfamily,
+  showstringspaces=false,
+  showspaces=false,
+  escapechar={^}
+}
+
+\pagestyle{myheadings}
+
+% HORIZONTAL MARGINS
+\setlength{\oddsidemargin}{0in}
+\setlength{\textwidth}{6.5in}
+
+% VERTICAL MARGINS
+\setlength{\topmargin}{-0.5in}
+\setlength{\headheight}{0.25in}
+\setlength{\headsep}{0.25in}
+\setlength{\textheight}{10.0in}
+
+% PARAGRAPH INDENTATION
+\setlength{\parindent}{0in}
+
+% EVALUATION SYMBOL
+\newcommand{\evalsto}{$\Longrightarrow$}
+
+% VARIOUS CONVENIENT WIDTHS RELATIVE TO THE TEXT WIDTH, FOR BOXES.
+\newlength{\hlessmm}
+\setlength{\hlessmm}{\textwidth}
+\addtolength{\hlessmm}{-2em}
+
+% ``TIGHTLIST'' ENVIRONMENT
+\newenvironment{tightlist}%
+{
+  \begin{list}{$\bullet$}{%
+      \setlength{\topsep}{0in}
+      \setlength{\partopsep}{0in}
+      \setlength{\itemsep}{0in}
+      \setlength{\parsep}{0in}
+      \setlength{\leftmargin}{1.5em}
+      \setlength{\rightmargin}{0in}
+      \setlength{\itemindent}{0in}
+    }
+  }%
+  {
+  \end{list}
+}
+
+% FOR BNF
+\newcommand{\term}[1]{\textbf{\texttt{#1}}}
+
+% CODE FONT
+\newcommand{\cf}{\footnotesize\tt}
+
+% DOCUMENT HEADER
+\newcommand{\docheader}[4]{%
+
+  \thispagestyle{empty}
+
+  \markright{SICP, Scheme (scm-slang), #2 #3, #1}
+  \begin{center}
+    {\Large {\bf Specification of #2 #3}---#1 edition}\\[10mm]
+
+    {\large #4}\\[5mm]
+
+    {\large National University of Singapore \\
+    School of Computing}\\[10mm]
+
+    {\large \today}\\[10mm]
+  \end{center}
+}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=Maroon,
+  filecolor=Maroon,
+  urlcolor=Maroon
+}

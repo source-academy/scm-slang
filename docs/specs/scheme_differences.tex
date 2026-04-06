@@ -1,0 +1,23 @@
+\section*{Deviations from R5RS Scheme}
+
+scm-slang is intended to be compatible with R5RS where possible, but there are
+intentional deviations:
+
+\begin{itemize}
+\item Continuations are not supported by the parser itself. Continuations are
+  available only when executed in conjunction with the Source Academy Explicit
+  Control Evaluator.
+\item Macros are not implemented in the Chapter 3 language.
+\item Character and bytevector types are not implemented.
+\item Parentheses \texttt{( )} and brackets \texttt{[ ]} are interchangeable.
+\item Named \texttt{let} is not supported.
+\item Import/export uses a scm-slang specific syntax compatible with Source
+  Academy modules, e.g.
+\item \texttt{display} returns its argument instead of an unspecified value,
+  matching Source's display behavior for debugging convenience.
+\end{itemize}
+
+\begin{lstlisting}
+(import "runes" (stack beside))
+(export (define foo "bar"))
+\end{lstlisting}
