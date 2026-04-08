@@ -48,7 +48,7 @@ export function createGlobalEnvironment(
     if (output) {
       output(formatSchemeValue(value, { quoteStrings: false }));
     }
-    return undefined;
+    return value;
   });
 
   return env;
