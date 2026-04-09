@@ -79,21 +79,15 @@ export default class SchemeEvaluator extends BasicEvaluator {
       ) {
         const finished = result as Finished;
         const display = finished.representation.toString(finished.value);
-        const sanitized = {
-          status: "finished",
-          value: display,
-          representation: display,
-        };
-        (this as any).conductor.sendResult(sanitized);
+        (this as any).conductor.sendResult(display);
       } else if (
         result &&
         typeof result === "object" &&
         result.status === "suspended-cse-eval"
       ) {
-        const sanitized = { status: "suspended-cse-eval" };
-        (this as any).conductor.sendResult(sanitized);
+        (this as any).conductor.sendResult("[suspended]");
       } else {
-        (this as any).conductor.sendResult(result as Result);
+        (this as any).conductor.sendResult(String(result));
       }
     } catch (error) {
       const name = error instanceof Error ? error.name : "Error";
