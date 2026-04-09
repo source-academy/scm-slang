@@ -8,7 +8,7 @@
  */
 
 // @ts-ignore - conductor is ESM, we're CommonJS; dynamic import in src/index.ts handles this
-import { BasicEvaluator } from "@sourceacademy/conductor/runner";
+import { BasicEvaluator, RunnerStatus } from "@sourceacademy/conductor/runner";
 // @ts-ignore - same reason
 import type { IRunnerPlugin } from "@sourceacademy/conductor/runner/types";
 import type { Finished, Result } from "../types.js";
@@ -53,6 +53,7 @@ export default class SchemeEvaluator extends BasicEvaluator {
 
   async evaluateChunk(chunk: string): Promise<void> {
     try {
+      (this as any).conductor.updateStatus(RunnerStatus.RUNNING, true);
       const result = await runInContext(chunk, this.context, {
         ...this.options,
         output: (text: string) => {
@@ -97,6 +98,8 @@ export default class SchemeEvaluator extends BasicEvaluator {
       const name = error instanceof Error ? error.name : "Error";
       const message = error instanceof Error ? error.message : String(error);
       (this as any).conductor.sendError({ name, message });
+    } finally {
+      (this as any).conductor.updateStatus(RunnerStatus.RUNNING, false);
     }
   }
 
