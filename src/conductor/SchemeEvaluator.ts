@@ -79,21 +79,9 @@ export default class SchemeEvaluator extends BasicEvaluator {
       ) {
         const finished = result as Finished;
         const display = finished.representation.toString(finished.value);
-        const sanitized = {
-          status: "finished",
-          value: display,
-          representation: display,
-        };
-        (this as any).conductor.sendResult(sanitized);
-      } else if (
-        result &&
-        typeof result === "object" &&
-        result.status === "suspended-cse-eval"
-      ) {
-        const sanitized = { status: "suspended-cse-eval" };
-        (this as any).conductor.sendResult(sanitized);
+        (this as any).conductor.sendResult(display);
       } else {
-        (this as any).conductor.sendResult(result as Result);
+        (this as any).conductor.sendResult(this.formatResult(result));
       }
     } catch (error) {
       const name = error instanceof Error ? error.name : "Error";
@@ -114,7 +102,7 @@ export default class SchemeEvaluator extends BasicEvaluator {
       typeof result === "object" &&
       result.status === "suspended-cse-eval"
     ) {
-      return "[Evaluation paused]";
+      return "[suspended]";
     }
 
     // Handle raw values (from SchemeContext)
