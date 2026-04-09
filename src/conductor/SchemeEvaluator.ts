@@ -8,7 +8,8 @@
  */
 
 // @ts-ignore - conductor is ESM, we're CommonJS; dynamic import in src/index.ts handles this
-import { BasicEvaluator, RunnerStatus } from "@sourceacademy/conductor/runner";
+import { BasicEvaluator } from "@sourceacademy/conductor/runner";
+import { RunnerStatus } from "@sourceacademy/conductor/types";
 // @ts-ignore - same reason
 import type { IRunnerPlugin } from "@sourceacademy/conductor/runner/types";
 import type { Finished, Result } from "../types.js";
