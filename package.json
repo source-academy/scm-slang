@@ -32,7 +32,7 @@
     "@rollup/plugin-typescript": "^11.0.0",
     "@types/jest": "^30.0.0",
     "esbuild": "^0.27.4",
-    "eslint": "^10.0.1",
+    "eslint": "^10.2.0",
     "husky": "^9.1.7",
     "jest": "^30.3.0",
     "prettier": "^3.8.2",
